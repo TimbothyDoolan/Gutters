@@ -42,9 +42,19 @@ body{
   font-size:13px;
 }
 button{font-family:inherit}
+/* iPad: WebKit's touch defaults fight a drawing app. No grey flash on tapped elements, no long-press
+   callout or text selection (which brings up iOS's own magnifier loupe over the app), no long-press
+   lift-to-drag of images, no double-tap zoom. Text fields opt back in, or iOS won't let you type. */
+html,body{touch-action:manipulation}
+*{-webkit-tap-highlight-color:transparent}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+img,canvas,svg{-webkit-user-drag:none}
+input,textarea,[contenteditable],[contenteditable] *{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 input,select,textarea{font-family:inherit;font-size:13px}
 
 /* ---------- App shell ---------- */
+/* :hover rules are wrapped in @media (hover:hover): iPadOS applies :hover to whatever was tapped
+   last and leaves it there, so a dock tool's tooltip or a button's hover tint stuck on after a tap. */
 #app{display:flex;flex-direction:column;height:100vh;width:100vw}
 
 /* ---------- Top bar ---------- */
@@ -68,9 +78,9 @@ input,select,textarea{font-family:inherit;font-size:13px}
   background:#2c3c4d;color:#dce6ef;border:1px solid #3a4d61;border-radius:7px;
   padding:7px 12px;cursor:pointer;font-weight:600;font-size:12.5px;display:inline-flex;gap:7px;align-items:center;
 }
-.tb-btn:hover{background:#35495d}
+@media (hover:hover){.tb-btn:hover{background:#35495d}}
 .tb-btn.primary{background:var(--prime);border-color:var(--prime-dark);color:#fff}
-.tb-btn.primary:hover{background:#d8242f}
+@media (hover:hover){.tb-btn.primary:hover{background:#d8242f}}
 .tb-btn.ghost{background:transparent;border-color:#3a4d61}
 .tb-btn.attn{background:#a35a00;border-color:#c77700;color:#fff}
 .tb-btn.ptool{padding:6px 10px}
@@ -81,7 +91,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
   padding:6px 11px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;
   display:inline-flex;gap:6px;align-items:center;white-space:nowrap;
 }
-#saveWarn:hover{background:#932319}
+@media (hover:hover){#saveWarn:hover{background:#932319}}
 .page-tabs{display:flex;gap:4px;background:#0f161e;border-radius:8px;padding:3px}
 .page-tab{
   padding:6px 14px;border-radius:6px;cursor:pointer;color:#9fb0c0;font-weight:600;font-size:12.5px;border:0;background:transparent
@@ -94,10 +104,10 @@ input,select,textarea{font-family:inherit;font-size:13px}
 .opt-tab.active{background:var(--prime);border-color:var(--prime-dark);color:#fff}
 .opt-tab .opt-tot{font-weight:600;opacity:.85;font-variant-numeric:tabular-nums}
 .opt-tab .opt-x{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;background:rgba(255,255,255,.15);font-size:11px;line-height:1}
-.opt-tab .opt-x:hover{background:rgba(255,255,255,.3)}
+@media (hover:hover){.opt-tab .opt-x:hover{background:rgba(255,255,255,.3)}}
 .opt-tab .opt-ren{font-size:12px;opacity:.8;margin-left:-3px}
 .opt-add{border:1px solid #2c4257;background:#16273600;color:#9fc0e0;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-.opt-add:hover{background:#1a2c3d}
+@media (hover:hover){.opt-add:hover{background:#1a2c3d}}
 
 /* ---------- Body layout ---------- */
 #body{display:flex;flex:1;min-height:0}
@@ -169,7 +179,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
 
 .note{font-size:11px;color:var(--text-soft);line-height:1.5;background:#fff;border:1px dashed var(--line);border-radius:7px;padding:9px}
 .btn-sm{background:#eef1f4;border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-weight:700;font-size:11.5px;cursor:pointer;color:var(--text)}
-.btn-sm:hover{background:#e3e8ee}
+@media (hover:hover){.btn-sm:hover{background:#e3e8ee}}
 .btn-sm.danger{color:var(--prime);border-color:#f1c5c8}
 
 /* ---------- Center canvas ---------- */
@@ -183,7 +193,15 @@ input,select,textarea{font-family:inherit;font-size:13px}
 #diagUndoBar{position:absolute;left:calc(max(12px,env(safe-area-inset-left)) + 40px);bottom:calc(12px + env(safe-area-inset-bottom));z-index:25;display:flex;gap:6px}
 #diagUndoBar button{width:38px;height:32px;border-radius:8px;border:1px solid #3a4d61;background:#2c3c4d;color:#dce6ef;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 #diagUndoBar button:disabled{opacity:.4;cursor:default}
-#railToggle:hover{background:#35495d}
+/* the snap toggles ride in the same corner group, quiet until they matter: dim when off, a muted blue when on */
+#snapBar{display:none;gap:6px;margin-left:4px}
+#snapBar button{color:#7f90a1}
+#snapBar button.on{color:#fff;background:#2f5478;border-color:#4a7cab}
+body.plan-mode #snapBar{display:none!important}
+/* two ids: "#diagUndoBar button{display:flex}" outranks a lone #flipFrontBtn, which left it showing on load */
+#diagUndoBar #flipFrontBtn{display:none;margin-left:4px}
+body.plan-mode #flipFrontBtn{display:none!important}
+@media (hover:hover){#railToggle:hover{background:#35495d}}
 #drawBar{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:26;display:flex;gap:8px;background:rgba(20,28,38,.92);padding:8px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
 #drawBar button{padding:11px 18px;border-radius:9px;border:0;font-weight:800;font-size:14px;cursor:pointer}
 #drawBar .db-go{background:#1f9d55;color:#fff}
@@ -219,7 +237,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
   width:40px;height:40px;border-radius:9px;border:0;background:transparent;color:#aebccb;cursor:pointer;
   display:grid;place-items:center;position:relative;
 }
-.tool:hover{background:#2a3a4b;color:#fff}
+@media (hover:hover){.tool:hover{background:#2a3a4b;color:#fff}}
 .tool.active{background:var(--prime);color:#fff}
 .tool svg{width:20px;height:20px}
 .tool .tlbl{position:absolute;left:0;right:0;bottom:1px;font-size:7.5px;font-weight:800;text-align:center;letter-spacing:.2px;color:#8fa0b2}
@@ -229,7 +247,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
 .tool.active .kbd{color:rgba(255,255,255,.7)}
 .dock-div{height:1px;background:#2a3a4b;margin:3px 2px}
 .tip{position:absolute;left:52px;top:50%;transform:translateY(-50%);background:#0c131b;color:#fff;padding:5px 9px;border-radius:6px;font-size:11.5px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;font-weight:600}
-.tool:hover .tip{opacity:1}
+@media (hover:hover){.tool:hover .tip{opacity:1}}
 
 /* contextual options bar (top of canvas)
    The bar always overflows on iPad (the gutter tool alone is ~1160px of controls in a ~430px
@@ -306,6 +324,62 @@ input,select,textarea{font-family:inherit;font-size:13px}
   position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:5;
   background:rgba(27,37,48,.93);color:#fff;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;
   box-shadow:0 6px 18px rgba(0,0,0,.3);pointer-events:none;max-width:80%;text-align:center
+}
+
+/* Plan mode (top bar's Plan button): the plan's panel docks right, the drawing tools step aside */
+.tb-btn.on{background:#eef2f6;color:#1b2530;border-color:#eef2f6}
+#btnPlan[data-state]:not([data-state=""])::after{content:"";width:7px;height:7px;border-radius:50%;margin-left:-1px}
+#btnPlan[data-state="ok"]::after{background:#35c072}
+#btnPlan[data-state="warn"]::after{background:#f0a020}
+body.plan-mode #dock,body.plan-mode #optbarWrap,body.plan-mode #drawBar,
+body.plan-mode #selActionBar,body.plan-mode #diagLegend{display:none!important}
+body.plan-mode #hint{left:calc((100% - 352px)/2)}
+#planPanel{
+  position:absolute;top:12px;right:12px;width:340px;max-width:calc(100% - 24px);max-height:calc(100% - 70px);
+  z-index:26;display:none;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.22);overflow:hidden;color:var(--text)
+}
+.pl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.pl-title{font-weight:800;font-size:16px;letter-spacing:.2px}
+.pl-sub{font-size:11.5px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-done{background:var(--prime);color:#fff;border:0;border-radius:8px;padding:9px 18px;font-weight:800;font-size:13px;cursor:pointer;flex:0 0 auto}
+.pl-body{overflow-y:auto;padding:0 14px 6px;-webkit-overflow-scrolling:touch}
+.pl-sec{padding:13px 0;border-bottom:1px solid var(--line)}
+.pl-sec:last-child{border-bottom:0}
+.pl-h{display:flex;align-items:center;gap:8px;font-weight:800;font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:9px}
+.pl-step{width:19px;height:19px;border-radius:50%;background:#1b2530;color:#fff;display:grid;place-items:center;font-size:11px}
+.pl-badge{font-size:11px;padding:2px 9px;border-radius:10px;text-transform:none;letter-spacing:0}
+.pl-badge.ok{background:#e1f5e9;color:#1d7444}
+.pl-badge.warn{background:#fff0d4;color:#955800}
+.pl-btn{width:100%;background:var(--prime);color:#fff;border:0;border-radius:8px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;margin-top:8px}
+.pl-btn.alt{background:#fff;color:var(--text);border:1px solid var(--line)}
+.pl-btn:disabled{opacity:.45;cursor:default}
+.pl-tip{font-size:12px;color:var(--text-soft);line-height:1.45;margin:8px 0 0}
+.pl-fine{font-size:11px;color:var(--text-soft);line-height:1.4}
+.pl-lbl{font-size:11px;font-weight:700;color:var(--text-soft);margin:11px 0 5px}
+.pl-ftin{display:flex;align-items:center;gap:7px}
+.pl-ftin input{width:84px;font:700 20px var(--mono);padding:8px 10px;border:1px solid var(--line);border-radius:8px;text-align:right}
+.pl-ftin input:focus{outline:2px solid #f5b48a;border-color:#e8590c}
+.pl-ftin span{font-weight:700;color:var(--text-soft)}
+.pl-read{margin-top:10px;font-size:12px;background:#f4f6f8;border-radius:8px;padding:8px 10px;line-height:1.4}
+.pl-read.warn{background:#fff6e6;color:#7a4a00}
+.pl-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.pl-chk{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;padding:6px 0;cursor:pointer}
+.pl-chk input{width:18px;height:18px;margin:0;accent-color:var(--prime)}
+.pl-check{display:flex;justify-content:space-between;align-items:baseline;background:#ebf7f5;border:1px solid #bfe3dd;border-radius:8px;padding:9px 11px;font-size:12px;font-weight:600}
+.pl-check b{font:800 19px var(--mono);color:#0f8a7e}
+.pl-flash{background:#eef5fd;border:1px solid #c8dcf3;color:#1d4f86;border-radius:8px;padding:8px 10px;font-size:12px;margin-top:12px;line-height:1.4}
+.pl-sheet{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.pl-sheet img{width:68px;height:50px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff;flex:0 0 auto}
+.pl-sheet b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-empty{text-align:center;padding:26px 6px 14px}
+.pl-empty-t{font-weight:800;font-size:15px;margin:8px 0 2px}
+@media (pointer:coarse){
+  .pl-chk{font-size:14px;padding:8px 0}
+  .pl-chk input{width:22px;height:22px}
+  .pl-tip{font-size:13px}
+  #planPanel .btn-sm{padding:9px 12px;font-size:13px}
+  #planPanel .seg-toggle button{padding:9px 4px;font-size:12.5px}
 }
 
 /* floating inline editor */
@@ -404,7 +478,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
 .pc-menu .pm-row{display:flex;gap:2px}
 .pc-menu button{flex:1;text-align:left;background:none;border:0;border-radius:5px;padding:8px 10px;font-weight:700;font-size:12.5px;color:var(--text);cursor:pointer;white-space:nowrap}
 .pc-menu .pm-row button{text-align:center;background:#eef1f4}
-.pc-menu button:hover{background:#e3e8ee}
+@media (hover:hover){.pc-menu button:hover{background:#e3e8ee}}
 .pc-menu button.danger{color:var(--prime)}
 #photoLayoutPick .pl-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 8px}
 #photoLayoutPick .pl-btn.active{background:var(--prime);border-color:var(--prime);color:#fff}
@@ -459,7 +533,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
 .modal-b{padding:18px 20px}
 .modal-x{border:0;background:#eef1f4;border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:17px}
 .stamp-preset{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:8px;margin-bottom:7px;cursor:pointer}
-.stamp-preset:hover{border-color:var(--prime)}
+@media (hover:hover){.stamp-preset:hover{border-color:var(--prime)}}
 .swatch-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:6px 0}
 .swatch-grid button{height:26px;border-radius:6px;border:2px solid rgba(0,0,0,.15);cursor:pointer}
 .swatch-grid button.sel{border-color:var(--ink);box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
@@ -491,6 +565,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
     </div>
     <div class="tb-spacer"></div>
     <button id="saveWarn" title="Tap for details" style="display:none"></button>
+    <button class="tb-btn ghost" id="btnPlan" title="Trace over a house plan (PDF or image)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 11h8V4M11 15v5M15 11h6"/></svg>Plan</button>
     <button class="tb-btn ghost" id="btnSettings" title="Your profile, takeoff rules & drawing settings">⚙ Settings</button>
     <button class="tb-btn ghost" id="btnNew">New</button>
     <button class="tb-btn ghost" id="btnLoad">Open</button>
@@ -536,6 +611,13 @@ input,select,textarea{font-family:inherit;font-size:13px}
       <div id="diagUndoBar">
         <button id="diagUndo" title="Undo">↶</button>
         <button id="diagRedo" title="Redo">↷</button>
+        <!-- snap toggles, only for the line tools + Select — see updateSnapBar() -->
+        <span id="snapBar">
+          <button id="snapGrid" aria-pressed="true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M9.3 4v16M14.7 4v16M4 9.3h16M4 14.7h16"/></svg></button>
+          <button id="snapAngle" aria-pressed="true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19h16M4 19L17.5 7.5"/><path d="M11 19a7 7 0 0 0-1.8-4.7" stroke-width="1.4"/></svg></button>
+          <button id="tapDrawBtn" aria-pressed="false"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18L9.5 8.5 15 15.5 20 6"/><circle cx="4" cy="18" r="1.9" fill="currentColor"/><circle cx="9.5" cy="8.5" r="1.9" fill="currentColor"/><circle cx="15" cy="15.5" r="1.9" fill="currentColor"/><circle cx="20" cy="6" r="1.9" fill="currentColor"/></svg></button>
+        </span>
+        <button id="flipFrontBtn" title="Flip front — which side faces away from the house; decides inside vs outside miters for the run and every run joined to it"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M8 9.5V3.5M5.5 6L8 3.5 10.5 6"/><path d="M16 14.5v6M13.5 18l2.5 2.5 2.5-2.5"/></svg></button>
       </div>
 
       <!-- tool dock -->
@@ -550,6 +632,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
 
       <!-- finish/cancel an in-progress run (no keyboard needed on iPad) -->
       <div id="drawBar" style="display:none">
+        <button id="drawUndoPt" class="db-x">↶ Point</button>
         <button id="drawFinish" class="db-go">✓ Finish run</button>
         <button id="drawCancel" class="db-x">✕ Cancel</button>
       </div>
@@ -559,6 +642,9 @@ input,select,textarea{font-family:inherit;font-size:13px}
         <button id="selDeleteBtn" class="db-del">🗑 <span id="selDelLabel">Delete</span></button>
         <button id="selClearBtn" class="db-x">Deselect</button>
       </div>
+
+      <!-- Plan mode's panel (top bar's Plan button) — see PLAN UNDERLAY -->
+      <div id="planPanel"></div>
 
       <!-- inline editor -->
       <div id="floatEdit"></div>
@@ -790,6 +876,8 @@ function defaultProject(){
       straightMax:165,            // >this interior angle = treated as straight (no corner)
       autoMeasure:true,           // auto-fill segment lengths from drawn scale
       feetPerSquare:2,            // feet represented by one grid square when auto-measuring
+      planLoupe:true,             // magnifier under the finger while the Gutter tool traces over a plan
+      tapDraw:false,              // point-by-point gutter drawing on touch (tap/drag each corner, ✓ to finish); a new plan turns it on
       customProducts:[],          // [{id,name,pricePerFoot,color,mode}] user-defined products; mode: line|demo|screen
       pricingMode:"itemized",     // flat | itemized
       flatGutterRate:9,
@@ -1098,18 +1186,20 @@ function evtPos(e){
 /* world unit: 1 unit = 1 px at scale 1. Grid square = 20 world units */
 const GRID = 20;
 
+/* feet per grid square. A plan with its scale set owns it (planFps(), re-derived on every read);
+   otherwise it's the drawing's own setting (ft/square on the Gutter bar, or Calibrate) */
+function drawingFps(){ return planFps() || (+P.settings.feetPerSquare||0); }
 /* convert a drawn world-distance to feet using the current scale */
-function autoFeet(worldDist){
-  const fps = +P.settings.feetPerSquare || 0;
-  if(fps<=0) return 0;
-  const ft = (worldDist / GRID) * fps;
-  return Math.round(ft*2)/2;   // nearest half-foot
+function autoFeetAt(worldDist,fps){
+  if(!(fps>0)) return 0;
+  return Math.round((worldDist/GRID)*fps*2)/2;   // nearest half-foot
 }
+function autoFeet(worldDist){ return autoFeetAt(worldDist, drawingFps()); }
 function autoLen(a,b){ return autoFeet(dist(a,b)); }
 
 /* inverse of autoFeet: feet -> drawn world length at current scale */
 function feetToWorld(ft){
-  const fps=+P.settings.feetPerSquare||0;
+  const fps=drawingFps();
   if(fps<=0) return 0;
   return (ft/fps)*GRID;
 }
@@ -1126,7 +1216,7 @@ function screenTypeDef(id){ return SCREEN_TYPES.find(t=>t.id===id) || SCREEN_TYP
 function pathFeetRaw(pts){
   if(!pts||pts.length<2) return 0;
   let d=0; for(let i=1;i<pts.length;i++) d+=dist(pts[i-1],pts[i]);
-  const fps=+P.settings.feetPerSquare||0;
+  const fps=drawingFps();
   return fps>0 ? (d/GRID)*fps : 0;
 }
 // rounding by stroke mode: demo -> next whole ft; screen -> next multiple of 4
@@ -1469,14 +1559,28 @@ function runFronts(){
   return out;
 }
 // the rep's correction: turn a run's whole connected group around
-function flipFront(run){
-  if(!run||run.t!=="gutter") return;
-  const {groups,orient}=runGroups();
-  const g=groups.find(x=>x.includes(run)); if(!g) return;
-  const f=runFronts().get(run.id)*orient.get(run.id);   // current front in the group's frame
+// one run or several; each joined group flips once, so two selected runs of one house don't cancel out
+function flipFront(runs){
+  runs=(Array.isArray(runs)?runs:[runs]).filter(r=>r&&r.t==="gutter"); if(!runs.length) return;
+  const {groups,orient}=runGroups(), fronts=runFronts(), done=new Set();
   recordHistory();
-  for(const r of g) r.front=-f*orient.get(r.id);
+  for(const run of runs){
+    const g=groups.find(x=>x.includes(run)); if(!g||done.has(g)) continue; done.add(g);
+    const f=fronts.get(run.id)*orient.get(run.id);   // current front in the group's frame
+    for(const r of g){ r.front=-f*orient.get(r.id); mirrorSegLabels(r); }
+  }
   refreshAll();
+}
+// Default length chips follow the front by themselves (segBackOffset); ones the rep dragged are mirrored
+// across their segment so they stay on the back, at the same spot along it: v' = 2(v·u)u − v.
+function mirrorSegLabels(r){
+  if(!r.segLabelOff) return;
+  for(const k of Object.keys(r.segLabelOff)){
+    const v=r.segLabelOff[k], a=r.pts[+k], b=r.pts[+k+1]; if(!v||!a||!b) continue;
+    const L=dist(a,b); if(!L) continue;
+    const ux=(b.x-a.x)/L, uy=(b.y-a.y)/L, t=(v.x||0)*ux+(v.y||0)*uy;
+    r.segLabelOff[k]={x:2*t*ux-(v.x||0), y:2*t*uy-(v.y||0)};
+  }
 }
 const cross2=(a,b)=>a.x*b.y-a.y*b.x;
 // Box/strip/bay by angle; ACUTE (≤ 90−bayDeviation) bills as a regular miter plus the acute add-on,
@@ -1952,7 +2056,7 @@ function drawScene(){
   const objs=[...P.objects].sort((a,b)=>(order[a.t]||9)-(order[b.t]||9));
   customTagOwner=customTagOwners();   // re-derived here, so the PDF replay groups exactly as the canvas does
   sceneFronts=runFronts();            // same: one pass for every corner and downspout arrow in this frame
-  for(const o of P.objects) if(o.t==="underlay" && o.print) drawUnderlay(o);   // under everything, and it prints
+  for(const o of P.objects) if(o.t==="underlay" && o.print && !o.hidden) drawUnderlay(o);   // under everything, and it prints
   for(const o of objs) drawObject(o);
 
   // miters where separate runs meet: painted once here, since they belong to no single object.
@@ -1970,11 +2074,12 @@ function junctionMarkSpots(){
   }
   return out;
 }
-/* Inside/outside letters on every miter mark, plus front-edge ticks on the selected run. Editor
+/* Inside/outside letters on every miter mark, plus front-side arrows on the selected run. Editor
    chrome only (called from draw(), not drawScene()), so the printed diagram is unchanged: the
    counts reach the PDF through the material list instead. */
 function drawCornerSides(){
   const k=cam.scale;
+  drawFrontArrows();
   if(k<0.35) return;   // the marks are specks this far out; letters would only be noise
   ctx.save();
   ctx.font="bold "+Math.max(6,8*k)+"px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
@@ -1985,17 +2090,33 @@ function drawCornerSides(){
     for(const c of runCorners(o,sceneFronts)) letter(worldToScreen(c.pt),c);
   }
   for(const {c,sp} of junctionMarkSpots()) letter(sp,c);
-  const one=sel.size===1 ? objById([...sel][0]) : null;
-  if(one && one.t==="gutter"){
-    const f=sceneFronts.get(one.id)||1;
-    ctx.strokeStyle="rgba(43,127,208,.75)"; ctx.lineWidth=1.5;
-    for(let i=0;i<one.pts.length-1;i++){
-      const a=worldToScreen(one.pts[i]), b=worldToScreen(one.pts[i+1]), n=frontNormal(a,b,f);
-      const len=dist(a,b), step=Math.max(18, GRID*2*k), cnt=Math.max(1,Math.floor(len/step));
-      for(let j=0;j<cnt;j++){
-        const t=(j+0.5)/cnt, x=a.x+(b.x-a.x)*t, y=a.y+(b.y-a.y)*t;
-        ctx.beginPath(); ctx.moveTo(x+n.x*5,y+n.y*5); ctx.lineTo(x+n.x*11,y+n.y*11); ctx.stroke();
-      }
+  ctx.restore();
+}
+/* Front-side arrows on the selected run (or, with the Gutter tool idle, the last run drawn — the one its
+   flip button acts on), pointing the way the gutter faces. Fixed screen size, starting
+   just outside the drawn gutter: the old 5–11px ticks sat inside the casing (wpx(9) wide, so it grows
+   with zoom) and vanished under it past ~110%, and their spacing grew with zoom too, thinning them to
+   one every few hundred px. Now every ~70px at any zoom, at least one per segment. */
+function drawFrontArrows(){
+  let one=sel.size===1 ? objById([...sel][0]) : null;
+  if(!(one&&one.t==="gutter") && tool==="gutter" && !drawing) one=lastRun();   // what the flip button would flip
+  if(!one || one.t!=="gutter" || one.pts.length<2) return;
+  const f=sceneFronts.get(one.id)||1, edge=wpx(gutterStyle(gutterSizeFor(one)).wide?9:7)/2+4, len=17, hd=6;
+  ctx.save(); ctx.lineCap="round"; ctx.lineJoin="round";
+  for(let i=0;i<one.pts.length-1;i++){
+    const a=worldToScreen(one.pts[i]), b=worldToScreen(one.pts[i+1]), L=dist(a,b);
+    if(L<14) continue;
+    // the length chip sits on the back of the run (segBackOffset), so the front side is the arrows' alone
+    const n=frontNormal(a,b,f), px=-n.y, py=n.x, cnt=Math.max(1,Math.round(L/70));
+    for(let j=0;j<cnt;j++){
+      const t=(j+0.5)/cnt, x=a.x+(b.x-a.x)*t, y=a.y+(b.y-a.y)*t;
+      const sx=x+n.x*edge, sy=y+n.y*edge, tx=x+n.x*(edge+len), ty=y+n.y*(edge+len), bx=tx-n.x*hd, by=ty-n.y*hd;
+      const head=()=>{ ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(bx+px*hd*0.75,by+py*hd*0.75); ctx.lineTo(bx-px*hd*0.75,by-py*hd*0.75); ctx.closePath(); };
+      // white halo first, so the arrow reads over the plan, the grid or another run
+      ctx.strokeStyle="rgba(255,255,255,.95)"; ctx.lineWidth=5;
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(bx,by); ctx.stroke(); head(); ctx.lineWidth=3; ctx.stroke();
+      ctx.strokeStyle="#2b7fd0"; ctx.fillStyle="#2b7fd0"; ctx.lineWidth=2.25;
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(bx,by); ctx.stroke(); head(); ctx.fill();
     }
   }
   ctx.restore();
@@ -2003,6 +2124,7 @@ function drawCornerSides(){
 
 draw = function(){
   if(!ctx) return;
+  loupeDrawn=false;
   if(typeof updateDrawBar==="function") updateDrawBar();
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.clearRect(0,0,view.w,view.h);
@@ -2014,12 +2136,13 @@ draw = function(){
 
   drawGrid();
   // a plan the rep isn't printing sits under the scene here, outside drawScene() — see drawUnderlay
-  for(const o of P.objects) if(o.t==="underlay" && !o.print) drawUnderlay(o);
+  for(const o of P.objects) if(o.t==="underlay" && !(o.print && !o.hidden)) drawUnderlay(o);
   drawScene();
   drawCornerSides();
 
   // in-progress drawing
   drawInProgress();
+  drawTraceLoupe();
   vertexDragChip();
   if(tool==="pages") drawPageFrames();
 
@@ -2033,7 +2156,7 @@ draw = function(){
   // highlight a snappable run end the cursor is near (gutter: a corner will form; custom line:
   // the two runs join into one labelled group)
   const customLineTool = tool==="custom" && !customStrokeMode() && productMode(productOf(activeCustom))!=="item";
-  if((tool==="gutter"||customLineTool) && cursorW && !calib){
+  if((tool==="gutter"||customLineTool) && cursorW && !calib && !planMode){
     const hit = tool==="gutter" ? snapEndNear(cursorW) : findCustomEndNear(cursorW,activeCustom);
     if(hit){
       const sp=worldToScreen(hit.pt);
@@ -2044,6 +2167,8 @@ draw = function(){
       ctx.restore();
     }
   }
+
+  drawPlanOverlay();
 
   // calibration overlay
   if(calib && calib.a){    const a=worldToScreen(calib.a);
@@ -2058,6 +2183,7 @@ draw = function(){
   // selection overlay
   drawSelection();
   updateSelActionBar();
+  updateFlipFrontBtn();
   updateLegendOverlay();
 
   // marquee
@@ -2069,6 +2195,7 @@ draw = function(){
     ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);
     ctx.restore();
   }
+  if(!loupeDrawn) loupeAnim=null;   // the loupe went away: the next one appears in place, unanimated
 };
 
 function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
@@ -2116,10 +2243,17 @@ function addLabelBox(kind,objId,sx,sy,w,h,extra){
   labelBoxes.push(Object.assign({kind,objId,x:sx,y:sy,w,h},extra||{}));
 }
 
+function chipFont(opt){ return (opt.bold?"700 ":"600 ")+(opt.size||12)+"px "+(opt.font||"var(--mono)").replace("var(--mono)","ui-monospace,Consolas,monospace"); }
+// a chip's box size without drawing it — same font and padding as chip()
+function chipDims(text,opt){
+  opt=opt||{}; ctx.save(); ctx.font=chipFont(opt);
+  const pad=opt.pad==null?5:opt.pad, tw=ctx.measureText(text).width; ctx.restore();
+  return {w:tw+pad*2, h:(opt.size||12)+pad*2};
+}
 function chip(text,sx,sy,opt){
   opt=opt||{};
   ctx.save();
-  ctx.font=(opt.bold?"700 ":"600 ")+(opt.size||12)+"px "+(opt.font||"var(--mono)").replace("var(--mono)","ui-monospace,Consolas,monospace");
+  ctx.font=chipFont(opt);
   const pad=opt.pad==null?5:opt.pad;
   const tw=ctx.measureText(text).width;
   const w=tw+pad*2, h=(opt.size||12)+pad*2;
@@ -2144,18 +2278,37 @@ function labelOffsetOf(o,key){
   if(key==="tag") return o.tagOff||null;
   return (o.segLabelOff && o.segLabelOff[key]) || null;
 }
-function segChip(o,key,mx,my,text,opt){
-  const off=labelOffsetOf(o,key);
+// auto: where the chip sits when the rep hasn't moved it (world offset from the anchor; default none)
+function segChip(o,key,mx,my,text,opt,auto){
+  const saved=labelOffsetOf(o,key), off=saved||auto||null;
   const ox=off?(off.x||0):0, oy=off?(off.y||0):0;
   const lx=mx+ox*cam.scale, ly=my+oy*cam.scale;
   if(typeof key==="number" && vertexDragSegs(o).includes(key)) return {x:lx,y:ly,w:0,h:0};   // riding above the finger
-  if(off && (Math.abs(ox)>1||Math.abs(oy)>1)){
+  const ax=auto?(auto.x||0):0, ay=auto?(auto.y||0):0;
+  if(saved && (Math.abs(ox-ax)>1||Math.abs(oy-ay)>1)){
     ctx.save();ctx.strokeStyle="rgba(60,72,88,.55)";ctx.lineWidth=1;ctx.setLineDash([3,3]);
     ctx.beginPath();ctx.moveTo(mx,my);ctx.lineTo(lx,ly);ctx.stroke();ctx.restore();
   }
   return chip(text,lx,ly,opt);
 }
 
+/* A gutter segment's length chip sits on the BACK of the run by default — the side away from its front,
+   over the house — just clear of the casing, leaving the outside to the front arrows and downspouts.
+   Re-derived from runFronts (sceneFronts) every draw, so flipping the front carries every default chip
+   across with it. Returned as a world offset from the segment's midpoint, the same frame as
+   segLabelOff, which wins outright once the rep drags the chip (flipFront mirrors those). chipPx and
+   wpx both scale with the zoom, so the world offset holds at any zoom and in the PDF replay.
+   segAutoOff keeps the last-drawn value so a drag can start from where the chip really is. */
+const segAutoOff=new Map();   // "runId:seg" -> {x,y}
+function segBackOffset(o,i,text,opt,halfW){
+  const f=sceneFronts.get(o.id); if(!f) return null;
+  const a=worldToScreen(o.pts[i]), b=worldToScreen(o.pts[i+1]); if(dist(a,b)<1) return null;
+  const n=frontNormal(a,b,-f), {w,h}=chipDims(text,opt);
+  const d=halfW+wpx(3)+Math.abs(n.x)*w/2+Math.abs(n.y)*h/2;   // casing, a gap, then the chip's half-depth across the run
+  const off={x:n.x*d/cam.scale, y:n.y*d/cam.scale};
+  segAutoOff.set(o.id+":"+i,off);
+  return off;
+}
 function drawObject(o){
   if(o.t==="gutter") return drawGutter(o);
   if(o.t==="custom") return drawCustom(o);
@@ -2200,8 +2353,9 @@ function drawGutter(o){
     const txt=(ft==null||ft==="")?"+":(ftStr(ft));
     const empty=(ft==null||ft==="");
     const _sz=chipPx(12);
-    const box=segChip(o,i,mx,my,txt,{size:_sz,pad:Math.max(2,_sz*0.42),bold:true,bg:empty?"#fff":"#1b2530",fg:empty?"#c8202a":"#fff",
-      bc:empty?"#c8202a":"#1b2530",bw:empty?1.5:1});
+    const opt={size:_sz,pad:Math.max(2,_sz*0.42),bold:true,bg:empty?"#fff":"#1b2530",fg:empty?"#c8202a":"#fff",
+      bc:empty?"#c8202a":"#1b2530",bw:empty?1.5:1};
+    const box=segChip(o,i,mx,my,txt,opt,segBackOffset(o,i,txt,opt,wpx(w6?9:7)/2));
     addLabelBox("seglen",o.id,box.x,box.y,box.w,box.h,{seg:i});
   }
   drawVertexHandles(o,pts);
@@ -2221,9 +2375,9 @@ function drawExistingGutter(o,pts,isSel){
     const a=pts[i], b=pts[i+1];
     const d=Math.hypot(b.x-a.x,b.y-a.y); if(d>best){ best=d; longest=i; }
     const ft=o.lengths[i], empty=(ft==null||ft==="");
-    const _sz=chipPx(12);
-    const box=segChip(o,i,(a.x+b.x)/2,(a.y+b.y)/2,empty?"+":ftStr(ft),{size:_sz,pad:Math.max(2,_sz*0.42),bold:true,
-      bg:"#fff",fg:"#5d6a78",bc:EXISTING_COL,bw:1});
+    const _sz=chipPx(12), txt=empty?"+":ftStr(ft);
+    const opt={size:_sz,pad:Math.max(2,_sz*0.42),bold:true,bg:"#fff",fg:"#5d6a78",bc:EXISTING_COL,bw:1};
+    const box=segChip(o,i,(a.x+b.x)/2,(a.y+b.y)/2,txt,opt,segBackOffset(o,i,txt,opt,wpx(4)/2));
     addLabelBox("seglen",o.id,box.x,box.y,box.w,box.h,{seg:i});
   }
   // one EXISTING tag per run, on its longest segment a quarter of the way along — the midpoint
@@ -2866,14 +3020,26 @@ function liveLengthChip(){
   const txt=ftStr(ft)+(pts.length>1?"  ·  run "+ftStr(run):"");
   chipAbovePointer(txt, worldToScreen(cursorW));
 }
+/* The part of the canvas no floating chrome covers — the dock (left), the options bar (top), the Plan
+   panel (right) — in canvas px, inset 6. Chips and loupes that ride the finger stay inside it: measured
+   against the bare canvas edges, the length tag slid under the options bar when drawing near the top. */
+function canvasClearRect(){
+  const cr=canvas.getBoundingClientRect(), out={l:0,t:0,r:view.w,b:view.h};
+  const box=id=>{ const el=byId(id); return el&&el.offsetParent!==null ? el.getBoundingClientRect() : null; };   // null while display:none
+  const d=box("dock"), ob=box("optbarWrap"), pp=box("planPanel");
+  if(d&&isFinite(d.right)) out.l=Math.max(out.l,d.right-cr.left);
+  if(ob&&isFinite(ob.bottom)) out.t=Math.max(out.t,ob.bottom-cr.top);
+  if(pp&&isFinite(pp.left)) out.r=Math.min(out.r,pp.left-cr.left);
+  return {l:out.l+6,t:out.t+6,r:out.r-6,b:out.b-6};
+}
 // a readable chip just above the finger/cursor at screen point c — shared by drawing and corner drags
 function chipAbovePointer(txt,c){
-  const lift=lastPtrType==="touch"?70:30, size=16;
-  // no room above (finger near the top edge): beside the finger instead, still clear of it
+  const lift=lastPtrType==="touch"?70:30, size=16, C=canvasClearRect();
+  // no room above (finger near the options bar): beside the finger instead, still clear of it
   let x=c.x, y=c.y-lift;
-  if(y<size+8){ y=c.y; x = c.x>view.w/2 ? c.x-lift-40 : c.x+lift+40; }
+  if(y<C.t+size){ y=Math.max(c.y,C.t+size); x = c.x>(C.l+C.r)/2 ? c.x-lift-40 : c.x+lift+40; }
   const hw=(txt.length*size*0.62+12)/2;   // ~mono advance; keeps it on-screen at the side edges
-  x=Math.min(Math.max(x,hw+4),view.w-hw-4);
+  x=Math.min(Math.max(x,C.l+hw),C.r-hw);
   chip(txt,x,y,{size,pad:6,bold:true,bg:"#1b2530",fg:"#fff",bc:"#fff",bw:1.5});
 }
 /* Dragging a corner of a drawn run: the segment(s) meeting that corner lift their length chip
@@ -2970,7 +3136,7 @@ function drawSelection(){
 /* object bounds in WORLD coords {x,y,w,h} */
 function objBounds(o){
   // an unprinted plan must not stretch the PDF's auto-fit around an empty page of blueprint
-  if(o.t==="underlay") return o.print ? {x:o.x,y:o.y,w:o.w,h:o.h} : null;
+  if(o.t==="underlay") return o.print && !o.hidden ? {x:o.x,y:o.y,w:o.w,h:o.h} : null;
   if(o.t==="gutter"||o.t==="hl"||o.t==="custom"||o.t==="demo"||o.t==="screen"){
     const xs=o.pts.map(p=>p.x),ys=o.pts.map(p=>p.y);
     const x=Math.min(...xs),y=Math.min(...ys);
@@ -3115,7 +3281,9 @@ function toolHint(t){
     select:"Tap to select • drag to move • drag the dots to adjust corners • box-drag to grab several • Delete removes",
     hand:"Drag to pan the diagram",
     pages:"Drag a page frame to move it • drag a corner to resize • × removes a page • drag empty space or pinch to pan",
-    gutter:"Drag to draw a run, lift to finish • start on an existing end (green ring) to add a corner • (mouse: click corners, then ✓ Finish)",
+    gutter:P.settings.tapDraw
+      ? "Tap or drag to each corner • hold to aim • ✓ Finish run when done • start on an existing end (green ring) to add to it"
+      : "Drag to draw a run, lift to finish • start on an existing end (green ring) to add a corner • (mouse: click corners, then ✓ Finish)",
     ds:"Tap to drop a downspout • then type its run, e.g. \"AAA 20\" — 1 outlet is automatic • change its color any time via Select",
     valley:"Tap an inside corner to place a Valley Shield (counts as 2 ft each)",
     splash:"Tap to drop a splash block • pick Plastic or Concrete above • change either any time via Select",
@@ -3413,7 +3581,14 @@ function wireTextStyleStrip(){
   if(g2("opTFill")) g2("opTFill").onclick=()=>pickColor("Background color",(target==="defaults"?textFill:target.fill)||"#ffffff",c=>textStripPatch(target,{fill:c},true));
   if(g2("opTFillNone")) g2("opTFillNone").onclick=()=>textStripPatch(target,{fill:null},true);
 }
+// ft/square + Calibrate, unless a plan's scale owns the drawing's scale — then one chip into Plan mode
+function optbarScale(){
+  const g=(t)=>'<div class="ob-grp">'+t+'</div>';
+  if(planFps()) return g('<label>Scale</label><button class="chip" id="opPlanScale" title="Set by the plan — open Plan to adjust">📐 From plan</button>');
+  return g('<label>ft / square</label><input id="opFps" type="number" min="0.5" step="0.5" value="'+(P.settings.feetPerSquare)+'" style="width:60px">')+(tool==="gutter"?g('<button class="chip" id="opCalib">Calibrate…</button>'):'');
+}
 function buildOptbar(){
+  updateSnapBar();
   const ob=document.getElementById("optbar");
   const g=(t)=>'<div class="ob-grp">'+t+'</div>';
   const dv='<div class="div"></div>';
@@ -3425,11 +3600,7 @@ function buildOptbar(){
       + g('<label>Brand</label><select id="opGutBrand">'+BRANDS.map(b=>'<option value="'+b+'"'+(b===gutterBrand()?' selected':'')+'>'+b+'</option>').join("")+'</select>')
       + g('<label>Color</label><span class="swatch" id="opGutSw" style="background:'+colorHex(gutterDrawColor||P.settings.gutterColor,gutterBrand())+'"></span><select id="opGutColor">'+colorOptions(gutterDrawColor||P.settings.gutterColor,gutterBrand())+'</select>')
       + dv + g('<label><input type="checkbox" id="opAuto" '+(P.settings.autoMeasure?"checked":"")+'> Auto-measure</label>')
-      + g('<label>ft / square</label><input id="opFps" type="number" min="0.5" step="0.5" value="'+(P.settings.feetPerSquare)+'" style="width:60px">')
-      + g('<button class="chip" id="opCalib">Calibrate…</button>')
-      + g('<button class="chip" id="opPlan">📄 '+(planOf()?'Plan…':'Draw on a plan…')+'</button>')
-      + dv + g('<label><input type="checkbox" id="opSnap" '+(snap?"checked":"")+'> Snap to grid</label>')
-      + g('<label><input type="checkbox" id="opAngleSnap" '+(angleSnap?"checked":"")+'> 22.5° angles</label>');
+      + optbarScale();
   } else if(tool==="ds"){
     const allowed=allowedDsSizes(gutterDrawSize||P.settings.gutterType);
     if(!allowed.includes(dsDrawSize||P.settings.defaultDownspoutSize)) dsDrawSize=allowed[0];
@@ -3465,8 +3636,7 @@ function buildOptbar(){
       h+= dv + '<span class="mini" style="color:var(--text-soft)">'+(sm==="screen"?'Screen mode — drag over runs · rounds up to next 4 ft':'Demo mode — drag over runs · rounds up to whole ft')+'</span>';
     } else {
       h+= dv + g('<label><input type="checkbox" id="opAuto" '+(P.settings.autoMeasure?"checked":"")+'> Auto-measure</label>')
-        + g('<label>ft / square</label><input id="opFps" type="number" min="0.5" step="0.5" value="'+(P.settings.feetPerSquare)+'" style="width:60px">')
-        + dv + g('<label><input type="checkbox" id="opSnap" '+(snap?"checked":"")+'> Snap</label>');
+        + optbarScale();
     }
   } else if(tool==="text"){
     // a tap with the Text tool selects an existing box rather than editing it immediately, so
@@ -3503,9 +3673,7 @@ function buildOptbar(){
       + dv + g('<label><input type="checkbox" id="opScreenErase" '+(screenErase?"checked":"")+'> Eraser</label>')
       + '<span class="mini" style="color:var(--text-soft)">'+(screenErase?'Drag over screen highlight to erase it (subtracts footage)':'Drag over runs · rounds up to next 4 ft')+'</span>';
   } else if(tool==="select"){
-    // Snap lives here too, so a rep tidying the layout needn't hop to the Gutter tool to flip it
-    h+='<span class="ob-title">SELECT</span>'+dv
-      + g('<label><input type="checkbox" id="opSnap" '+(snap?"checked":"")+'> Snap to grid</label>')+dv;
+    h+='<span class="ob-title">SELECT</span>'+dv;
     const one = sel.size===1 ? objById([...sel][0]) : null;
     if(one && one.t==="ds"){
       const oBrand=effBrand(one);                       // this spout's effective brand
@@ -3534,7 +3702,6 @@ function buildOptbar(){
         + g('<label>Style</label><select id="opSelGutSize"><option value="">Job default</option>'+GUTTER_STYLES.map(st=>'<option value="'+st.id+'"'+(one.size===st.id?' selected':'')+'>'+st.short+'</option>').join("")+'</select>')
         + g('<label>'+capChk(0)+' '+capLbl(0,'Start cap')+'</label>')
         + g('<label>'+capChk(1)+' '+capLbl(1,'End cap')+'</label>')
-        + g('<button class="chip" id="opSelFlipFront" title="Which side faces away from the house — decides inside vs outside miters for this run and every run joined to it">⇄ Flip front</button>')
         + g('<label title="Homeowner\'s existing gutter — drawn grey dashed, not priced"><input type="checkbox" id="opSelExisting" '+(one.existing?"checked":"")+'> Existing</label>') + dv;
     } else if(one && one.t==="stamp"){
       h+= g('<label>Stamp color</label><span class="swatch" id="opSelSw" style="background:'+(one.color||'#c8202a')+'"></span><button class="chip" id="opSelStampCol">Color…</button>') + dv;
@@ -3590,13 +3757,12 @@ function wireOptbar(){
     buildOptbar(); refreshAll();
   };
   if(byId("opGutColor")) byId("opGutColor").onchange=e=>{ gutterDrawColor=e.target.value; byId("opGutSw").style.background=colorHex(e.target.value,gutterBrand()); };
-  if(byId("opSnap")) byId("opSnap").onchange=e=>snap=e.target.checked;
-  if(byId("opAngleSnap")) byId("opAngleSnap").onchange=e=>angleSnap=e.target.checked;
-  if(byId("opAuto")) byId("opAuto").onchange=e=>{ P.settings.autoMeasure=e.target.checked; setHint(e.target.checked?("Auto-measure on — each grid square = "+P.settings.feetPerSquare+" ft. Lengths fill in as you draw."):toolHint(tool)); };
+  if(byId("opSnap")) byId("opSnap").onchange=e=>{ snap=e.target.checked; updateSnapBar(); };
+  if(byId("opAuto")) byId("opAuto").onchange=e=>{ P.settings.autoMeasure=e.target.checked; setHint(e.target.checked?("Auto-measure on — each grid square = "+(Math.round(drawingFps()*100)/100)+" ft. Lengths fill in as you draw."):toolHint(tool)); };
   if(byId("opFps")) byId("opFps").onchange=e=>{ P.settings.feetPerSquare=Math.max(0.5,+e.target.value||1); refreshAll(); };
   if(byId("opCalib")) byId("opCalib").onclick=startCalibration;
   if(byId("opQuiz")) byId("opQuiz").onclick=openJobQuiz;
-  if(byId("opPlan")) byId("opPlan").onclick=openPlanModal;
+  if(byId("opPlanScale")) byId("opPlanScale").onclick=enterPlanMode;
   if(byId("opCustEdit")) byId("opCustEdit").onclick=()=>openCustomProduct(activeCustom);
   if(byId("opCustCol")) byId("opCustCol").onclick=()=>{ const p=productOf(activeCustom); if(p) pickColor("Color for "+p.name,p.color,c=>{ recordHistory(); p.color=c; if(byId("opCustSw"))byId("opCustSw").style.background=c; refreshAll(); }); };
   if(byId("opDsSize")) byId("opDsSize").onchange=e=>{ dsDrawSize=e.target.value; };
@@ -3652,7 +3818,6 @@ function wireOptbar(){
   };
   if(byId("opSelGutColor")) byId("opSelGutColor").onchange=e=>{ const o=selOne(); if(o){ recordHistory(); o.color=e.target.value||null; if(byId("opSelSw"))byId("opSelSw").style.background=colorHex(o.color||P.settings.gutterColor,effBrand(o)); refreshAll(); } };
   if(byId("opSelGutSize")) byId("opSelGutSize").onchange=e=>{ const o=selOne(); if(o){ recordHistory(); o.size=e.target.value||null; refreshAll(); } };
-  if(byId("opSelFlipFront")) byId("opSelFlipFront").onclick=()=>{ flipFront(selOne()); };
   if(byId("opSelCap0")) byId("opSelCap0").onchange=e=>{ const o=selOne(); if(o){ recordHistory(); o.caps=o.caps||[true,true]; o.caps[0]=e.target.checked; refreshAll(); } };
   if(byId("opSelCap1")) byId("opSelCap1").onchange=e=>{ const o=selOne(); if(o){ recordHistory(); o.caps=o.caps||[true,true]; o.caps[1]=e.target.checked; refreshAll(); } };
   if(byId("opSelStampCol")) byId("opSelStampCol").onclick=()=>{ const o=selOne(); if(o) pickColor("Stamp color",o.color,c=>{ recordHistory(); o.color=c; if(byId("opSelSw"))byId("opSelSw").style.background=c; refreshAll(); }); };
@@ -3669,9 +3834,101 @@ let arrowColor="#c8202a", arrowWidth=3;
 /* ============================================================ */
 /* SNAP                                                         */
 /* ============================================================ */
+/* Snap toggles (grid, 22.5° angles) in the bottom-left corner beside undo/redo, shown only for the tools
+   that use both: Gutter, a custom line product, and Select (moving things, dragging corners). They used
+   to sit at the far end of each tool's options bar — off-screen on iPad, where that bar overflows.
+   snap/angleSnap stay session globals; planSnapOff() still turns grid snap off when a plan comes in.
+   Downspouts and custom items keep the plain "Snap" checkbox on their own bar. */
+function snapToolActive(){
+  if(planMode) return false;
+  if(tool==="gutter"||tool==="select") return true;
+  return tool==="custom" && !customStrokeMode() && productMode(productOf(activeCustom))!=="item";
+}
+function updateSnapBar(){
+  const bar=byId("snapBar"); if(!bar) return;
+  const show=snapToolActive(); bar.style.display=show?"flex":"none"; layoutHint(); if(!show) return;
+  [["snapGrid",snap,"Snap to grid"],["snapAngle",angleSnap,"Snap to 22.5° angles"],["tapDrawBtn",!!P.settings.tapDraw,"Point-by-point gutter drawing"]].forEach(([id,on,name])=>{
+    const b=byId(id); b.classList.toggle("on",on); b.setAttribute("aria-pressed",on?"true":"false"); b.title=name+": "+(on?"on":"off");
+  });
+  byId("tapDrawBtn").style.display = tool==="gutter" ? "" : "none";   // a Gutter-tool behaviour only
+}
+/* Flip front in the same corner group — it used to be a chip deep in the Select options bar. With Select
+   it flips the selected gutter runs; with the Gutter tool, the run drawn (or extended) most recently, so
+   a rep can fix which way a run faces right after drawing it without switching tools. Hidden mid-run.
+   Called every draw(), beside updateSelActionBar(), so it tracks the selection however it changed (tap,
+   marquee, undo, delete); only touches the DOM when visibility flips. */
+let lastRunId=null;   // the gutter run finishGutter() last created or extended (this session, any option)
+function lastRun(){ const o=lastRunId!=null&&objById(lastRunId); return o&&o.t==="gutter" ? o : null; }   // gone after undo/option switch
+function flipTargets(){
+  if(planMode) return [];
+  if(tool==="select") return [...sel].map(objById).filter(o=>o&&o.t==="gutter");
+  if(tool==="gutter" && !drawing){ const r=lastRun(); return r?[r]:[]; }
+  return [];
+}
+function updateFlipFrontBtn(){
+  const b=byId("flipFrontBtn"); if(!b) return;
+  const show=flipTargets().length>0;
+  if((b.style.display==="flex")!==show){ b.style.display=show?"flex":"none"; layoutHint(); }
+}
+// a brief word in the hint pill — the buttons are icons only, and iPad shows no tooltips
+function flashHint(msg){
+  setHint(msg); const h=byId("hint");
+  setTimeout(()=>{ if(h.textContent===msg) setHint(toolHint(tool)); },1500);
+}
+byId("snapGrid").onclick=()=>{ snap=!snap; updateSnapBar(); flashHint("Snap to grid "+(snap?"on":"off")); draw(); };
+byId("flipFrontBtn").onclick=()=>{
+  const runs=flipTargets(); if(!runs.length) return;
+  flipFront(runs);
+  flashHint(tool==="gutter" ? "Last run's front flipped — its arrows, lengths and miters turned around"
+                            : "Front flipped — the arrows and inside/outside miters turned around");
+};
+byId("tapDrawBtn").onclick=()=>{
+  setTapDraw(!P.settings.tapDraw);
+  flashHint(P.settings.tapDraw ? "Point-by-point drawing on — tap or drag to each corner, ✓ to finish" : "Point-by-point drawing off — one drag draws one run");
+};
+byId("snapAngle").onclick=()=>{ angleSnap=!angleSnap; updateSnapBar(); flashHint("22.5° angle snap "+(angleSnap?"on":"off")); draw(); };
+/* Point-by-point gutter drawing (P.settings.tapDraw, touch only — a mouse already clicks corner by
+   corner). A run no longer ends when the finger lifts: each lift commits a corner and the run waits for
+   the next. A finger coming down anywhere swings the run's new segment to it at once; holding and
+   sliding aims it, with the magnifier over a plan (tracePress); lifting places that corner. A drag still
+   lays a whole segment in one go, so dragging and tapping mix freely. ✓ Finish run (drawBar) ends it, or
+   landing back on the run's own start closes the loop and ends it. Like the Photos line tool. A new
+   plan turns it on (setPlanImage); also in Settings, the Plan panel and the corner group (Gutter tool). */
+let tapPress=null;   // {started}: this finger began the run (a tap then just leaves the start point)
+function setTapDraw(on){
+  OPTIONS.forEach(op=>{ if(op.settings) op.settings.tapDraw=!!on; }); P.settings.tapDraw=!!on;
+  scheduleSave(); updateSnapBar(); if(tool==="gutter"&&!planMode) setHint(toolHint(tool));
+}
+function tapDrawActive(e){ return P.settings.tapDraw && e.pointerType==="touch"; }
 function snapW(p){
   if(!snap) return p;
   return {x:Math.round(p.x/(GRID/1))*(GRID/1), y:Math.round(p.y/(GRID/1))*(GRID/1)};
+}
+/* Dragging a corner: the 22.5° snap is magnetic, not a constraint. snapAngleW() projects onto the
+   nearest 22.5° ray from one point at ALL times — right for drawing a run, but on a corner drag it pinned
+   the corner to its run's line (it could only slide along it, or jump a whole 22.5°), so over a plan it
+   couldn't be put where the plan's corner is. Here it squares up to a neighbour only within a few screen
+   px of one of its 22.5° lines; with both neighbours in range it takes the point where both snapped
+   lines cross — a true square corner. Anywhere else the corner goes exactly where it's dragged. */
+function snapCornerW(p, nbrs){
+  if(!angleSnap) return p;
+  const tol=(lastPtrType==="touch"?10:6)/cam.scale, step=Math.PI/8, rays=[];
+  for(const n of nbrs){
+    const dx=p.x-n.x, dy=p.y-n.y; if(Math.hypot(dx,dy)<1) continue;
+    const a=Math.round(Math.atan2(dy,dx)/step)*step, ux=Math.cos(a), uy=Math.sin(a);
+    const off=Math.abs(dx*uy-dy*ux);   // distance from the snapped line through n
+    if(off<=tol) rays.push({n,ux,uy,off});
+  }
+  if(!rays.length) return p;
+  if(rays.length>1){
+    const [r1,r2]=rays, den=r1.ux*r2.uy-r1.uy*r2.ux;
+    if(Math.abs(den)>1e-6){
+      const t=((r2.n.x-r1.n.x)*r2.uy-(r2.n.y-r1.n.y)*r2.ux)/den, q={x:r1.n.x+r1.ux*t, y:r1.n.y+r1.uy*t};
+      if(dist(q,p)<=tol*1.5) return q;
+    }
+  }
+  const r=rays.reduce((m,x)=>x.off<m.off?x:m), t=(p.x-r.n.x)*r.ux+(p.y-r.n.y)*r.uy;
+  return {x:r.n.x+r.ux*t, y:r.n.y+r.uy*t};
 }
 function snapAngleW(p, prev){
   if(!angleSnap || !prev) return p;
@@ -3727,6 +3984,7 @@ function restore(s){
     photoSelMarks = selIds ? resolvePhotoSel(selIds) : new Set();
   }
   refreshAll();
+  if(planMode){ planPlace=null; planEdit=null; renderPlanPanel(); planHint(); }
   if(curPage==="photos"){ if(typeof cancelPhotoLine==="function") cancelPhotoLine(); renderPhotos(); if(typeof updatePhotoSelBar==="function") updatePhotoSelBar(); if(typeof buildPhotoOptbar==="function") buildPhotoOptbar(); }
   updateUndoButtons();
 }
@@ -3753,9 +4011,10 @@ function activate(i){
   P.settings=o.settings; P.objects=o.objects; P.pres=o.pres=ensurePres(o.pres);
   history=o.history||[]; hidx=(o.hidx==null?history.length-1:o.hidx);
   sel.clear(); if(typeof segSel!=="undefined"&&segSel) segSel.clear();
-  ensurePrices();
+  ensurePrices(); planSnapOff();
   byId("paneJob").innerHTML=""; byId("panePricing").innerHTML="";
   buildDock(); buildOptbar(); buildOptionsBar(); updateUndoButtons(); refreshAll();
+  if(planMode){ planPlace=null; planEdit=null; planMethod=null; renderPlanPanel(); planHint(); }
 }
 function switchOption(i){ if(i===activeOpt||!OPTIONS[i]) return; captureActive(); activate(i); }
 function seedHistory(){ history=[snapshot()]; hidx=0; updateUndoButtons(); }
@@ -3877,9 +4136,6 @@ function hitTest(pt){
       for(let i=0;i<ps.length-1;i++){ if(ptSegDist(pt,ps[i],ps[i+1])<(o.width||18)*cam.scale/2+TOL/2) return {objId:o.id,kind:o.t+"line"}; }
     }
   }
-  // an UNLOCKED plan underlay, last: anything drawn over it still wins the tap
-  const ul=P.objects.find(o=>o.t==="underlay"&&!o.locked);
-  if(ul){ const w=screenToWorld(pt); if(w.x>=ul.x&&w.x<=ul.x+ul.w&&w.y>=ul.y&&w.y<=ul.y+ul.h) return {objId:ul.id,kind:"underlay"}; }
   return null;
 }
 /* arrow endpoint handle hit when single-selected */
@@ -3952,7 +4208,7 @@ function translateInto(o,clone,dx,dy){
 /* ============================================================ */
 /* POINTER EVENTS                                               */
 /* ============================================================ */
-let press=null, panning=null, spaceDown=false, arrowDrag=null, textResize=null, vertexDrag=null, underlayResize=null;
+let press=null, panning=null, spaceDown=false, arrowDrag=null, textResize=null, vertexDrag=null;
 let lastPtrType="mouse";   // updated on pointerdown; widens hit tolerance for touch
 let calib=null;   // {a, b} during scale calibration
 let lastClickT=0, lastClickPt=null;
@@ -3973,12 +4229,20 @@ function gestCenter(a,b){ return {x:(a.x+b.x)/2,y:(a.y+b.y)/2}; }
 function gestDist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y)||1; }
 // abort any single-finger interaction when a 2nd finger lands (make way for pan/zoom)
 function abortSingleTouch(){
-  drawing=null; gutterExtend=null;
-  press=null; arrowDrag=null; textResize=null; vertexDrag=null; underlayResize=null; marquee=null; pendingTap=null;
+  // a point-by-point run survives a pinch (reps zoom between corners); only the unplaced corner under
+  // the finger goes — unless that finger was the one starting the run
+  if(drawing&&drawing.tap&&!(tapPress&&tapPress.started)) cursorW=null;
+  else { drawing=null; gutterExtend=null; }
+  tapPress=null; tracePress=false;
+  press=null; arrowDrag=null; textResize=null; vertexDrag=null; marquee=null; pendingTap=null;
   panning=null;
+  // a pinch mid-placement drops the half-placed line (the tool stays armed); an end drag keeps where it got to
+  if(planEdit){ if(planEdit.kind==="place"&&planEdit.first&&planPlace) planPlace.a=planPlace.b=null;
+    if(planEdit.kind==="move"){ const o=planOf(); if(o){ o.x=planEdit.ox; o.y=planEdit.oy; } } planEdit=null; }
   // a pinch mid frame-drag puts the frame back rather than leaving an unrecorded half-move
   if(frameDrag){ const f=(P.pres.pages||[])[frameDrag.i]; if(f) Object.assign(f,frameDrag.orig); frameDrag=null; }
-  setHint(toolHint(tool)); draw();
+  if(planMode) planHint(); else setHint(toolHint(tool));
+  draw();
 }
 function applyGesture(){
   if(!gesture || activePointers.size<2) return;
@@ -4016,6 +4280,7 @@ function onDown(e){
     if(activePointers.size>2) return;
   }
   if(gesture) return;
+  if(planMode){ planDown(e); return; }
   if(calib){
     if(e.button!==0) return;
     const w=snapW(screenToWorld(evtPos(e)));
@@ -4060,7 +4325,6 @@ function onDown(e){
     // priority: arrow/text handles, then vertex handles of an already-selected run,
     // then any line/object body (drag = move whole run), then empty space = marquee.
     const ah=arrowHandleHit(pt); if(ah){ arrowDrag={o:ah.o,end:ah.end}; return; }
-    const uh=underlayHandleHit(pt); if(uh){ underlayResize={o:uh,aspect:uh.h/Math.max(1e-6,uh.w)}; return; }
     const th=textHandleHit(pt);
     if(th && th.corner){
       // anchor the opposite corner; scale = how far the grabbed corner moved along the diagonal
@@ -4087,7 +4351,7 @@ function onDown(e){
                   : hit.kind==="dssize" ? (o&&o.sizeOff)
                   : hit.kind==="strokelabel" ? (o&&o.labelOff)
                   : hit.kind==="customtag" ? (o&&o.tagOff)
-                  : (o&&o.segLabelOff&&o.segLabelOff[hit.seg]);
+                  : ((o&&o.segLabelOff&&o.segLabelOff[hit.seg]) || segAutoOff.get(hit.objId+":"+hit.seg));
         const startOff = cur ? {x:cur.x||0,y:cur.y||0} : {x:0,y:0};
         press={pt,mode:"moveLabel",hit,startOff,moved:false};
       }else{
@@ -4118,6 +4382,13 @@ function onDown(e){
     draw(); refreshSelInfo(); return;
   }
   if(tool==="gutter"){
+    tracePress=true;
+    if(tapDrawActive(e) && drawing && drawing.tap){
+      // the next corner: the new segment swings straight to the finger; lifting places it (onUp)
+      tapPress={started:false};
+      cursorW=snapAngleW(snapW(w), drawing.pts[drawing.pts.length-1]);
+      draw(); return;
+    }
     if(!drawing){
       // start a fresh run, or extend an existing run if we grabbed one of its open ends
       const hit=findGutterEndNear(w);
@@ -4129,6 +4400,7 @@ function onDown(e){
         drawing={t:"gutter",pts:[snapW(w)]};
         gutterExtend=null;
       }
+      if(tapDrawActive(e)){ drawing.tap=true; tapPress={started:true}; cursorW=drawing.pts[0]; }
     } else {
       // snap onto an existing gutter end (forms a clean corner / closes a loop), else grid
       const hit=snapEndNear(w);
@@ -4208,6 +4480,7 @@ function onMove(e){
     cam.y=panning.camy-(e.clientY-panning.y)/cam.scale;
     draw(); return;
   }
+  if(planMode){ planMoveEvt(e); return; }
   if(frameDrag){ dragPageFrame(w); draw(); return; }
   if(erasing){ cursorW=w; eraseStrokesAt(w, eraserRadiusWorld(), erasing); draw(); return; }
   // hover cursor for drawing tools
@@ -4216,23 +4489,22 @@ function onMove(e){
     if(drawing && (drawing.t==="gutter"||drawing.t==="custom") && drawing.pts.length>0){
       cw=snapAngleW(cw, drawing.pts[drawing.pts.length-1]);
     }
-    cursorW=cw;
+    // a point-by-point run's rubber band follows only a corner finger — not the one left on the glass
+    // after a pinch-zoom, which would drag the segment around the screen
+    if(!(e.pointerType==="touch" && drawing && drawing.tap && !tapPress)) cursorW=cw;
   } else if(tool==="demo"||tool==="screen"){
     cursorW=w;   // freehand highlight tools track the raw cursor (drives the eraser ring)
   }
 
   if(arrowDrag){ const o=arrowDrag.o; if(arrowDrag.end===0){o.x1=w.x;o.y1=w.y;}else{o.x2=w.x;o.y2=w.y;} draw(); return; }
-  if(underlayResize){ const o=underlayResize.o; o.w=Math.max(GRID*2,w.x-o.x); o.h=o.w*underlayResize.aspect; draw(); return; }
   if(vertexDrag){
     const o=vertexDrag.o, idx=vertexDrag.idx;
     const L=o.pts.length-1, closed=isClosedRun(o);
     let np=snapW(w);
     if(o.t==="gutter"||o.t==="custom"){
-      // on a closed run the vertex before index 0 is the one before the repeated end point
-      const ref = idx>0 ? o.pts[idx-1]
-                : closed ? o.pts[L-1]
-                : (o.pts.length>1 ? o.pts[1] : null);
-      np=snapAngleW(np, ref);
+      // both neighbours; a closed run's shared start/end corner sits between pts[L-1] and pts[1]
+      const nb=[idx>0?idx-1:(closed?L-1:-1), idx<L?idx+1:(closed?1:-1)].filter(j=>j>=0&&j!==idx).map(j=>o.pts[j]);
+      np=snapCornerW(np, nb);
     }
     const oldP={x:o.pts[idx].x,y:o.pts[idx].y};
     moveWeldedVertices(o, oldP, np);   // keep connected corners attached
@@ -4312,6 +4584,7 @@ function onMove(e){
 }
 
 function onUp(e){
+  if(tracePress){ tracePress=false; draw(); }
   if(e.pointerType==="touch"){
     activePointers.delete(e.pointerId);
     if(gesture){
@@ -4325,11 +4598,11 @@ function onUp(e){
       pendingTap=null; return;
     }
   }
-  if(panning){ panning=null; canvas.style.cursor=(tool==="hand"?"grab":(tool==="select"?"default":"crosshair")); return; }
+  if(panning){ panning=null; canvas.style.cursor=(planMode?"default":tool==="hand"?"grab":(tool==="select"?"default":"crosshair")); return; }
+  if(planMode){ planUp(e); return; }
   if(frameDrag){ frameDrag=null; recordHistory(); scheduleSave(); return; }
   if(erasing){ erasing=null; refreshAll(); return; }
   if(arrowDrag){ arrowDrag=null; recordHistory(); return; }
-  if(underlayResize){ underlayResize=null; recordHistory(); saveLocal(); return; }
   if(vertexDrag){ vertexDrag=null; recordHistory(); refreshAll(); return; }
   if(textResize){ const wasCorner=!!textResize.corner; textResize=null; recordHistory(); if(wasCorner) buildOptbar(); return; }
 
@@ -4378,6 +4651,27 @@ function onUp(e){
       else if(sel.size) setHint(sel.size+" item"+(sel.size>1?"s":"")+" selected — drag any one of them to move the whole selection • Delete removes "+(sel.size>1?"them":"it")+".");
     }
     press=null; draw(); refreshSelInfo(); return;
+  }
+
+  // touch, point-by-point: a lift commits a corner and the run carries on (see tapDrawActive)
+  if(drawing && drawing.t==="gutter" && drawing.tap && e.pointerType==="touch"){
+    // Only a finger that came down on the canvas for a corner (onDown sets tapPress) may place one. onUp
+    // hears every lift in the window, and pointerup fires before click: lifting off ✓ Finish run (or
+    // ↶ Point, Cancel, a corner toggle) committed a stray corner at the button, then the click finished
+    // the run with it; and the last finger of a pinch-zoom placed a corner wherever it lifted.
+    if(!tapPress){ cursorW=null; draw(); return; }
+    const upPt=evtPos(e), started=tapPress.started; tapPress=null;
+    const moved = drawDownPt ? Math.hypot(upPt.x-drawDownPt.x, upPt.y-drawDownPt.y) : 0;
+    const prev=drawing.pts[drawing.pts.length-1];
+    if(started && moved<=10){ cursorW=null; updateDrawBar(); draw(); return; }   // a tap began the run: keep the start, wait
+    // commit what the rubber band showed (cursorW), as the drag-to-draw path below does
+    const w=cursorW||snapAngleW(snapW(screenToWorld(upPt)),prev), hit=snapEndNear(w);
+    const np=hit?{x:hit.pt.x,y:hit.pt.y}:{x:w.x,y:w.y};
+    cursorW=null;
+    if(dist(np,prev)>=1) drawing.pts.push(np);   // a tap on the last corner adds nothing
+    if(hit&&hit.self){ finishGutter(); updateDrawBar(); return; }   // back on its own start: the loop is closed
+    setHint("Next corner — tap it, or hold to aim • ✓ Finish run when done");
+    updateDrawBar(); draw(); return;
   }
 
   // touch: a gutter/custom run is one drag — lift the finger to finish the run
@@ -4489,6 +4783,8 @@ function centerScreenPoint(sx,sy){
   glideCam(dx/cam.scale, dy/cam.scale);
 }
 function onDbl(e){
+  if(planMode) return;
+  if(drawing&&drawing.tap&&lastPtrType==="touch") return;   // two quick corner taps aren't "finish"
   if(drawing&&drawing.t==="gutter"){ finishGutter(); return; }
   if(drawing&&drawing.t==="custom"){ finishCustom(); return; }
   // double-tap a label that has been dragged away -> snap it back to its anchor,
@@ -4505,7 +4801,7 @@ function onDbl(e){
     else if(hit.kind==="strokelabel" && o.labelOff){ o.labelOff=null; cleared=true; }
     else if(hit.kind==="customtag" && o.tagOff){ o.tagOff=null; cleared=true; }
     else if(hit.kind==="seglen" && o.segLabelOff && o.segLabelOff[hit.seg]){ delete o.segLabelOff[hit.seg]; cleared=true; }
-    if(cleared){ recordHistory(); setHint("Label snapped back to its anchor."); refreshAll(); }
+    if(cleared){ recordHistory(); setHint(hit.kind==="seglen"?"Length moved back to the back of the run.":"Label snapped back to its anchor."); refreshAll(); }
   }
 }
 
@@ -4550,7 +4846,7 @@ function finishGutter(){
         firstNewSeg=0;
       }
       markClosed(R);
-      sel=new Set([R.id]); drawing=null; const wasAuto=auto; const rid=R.id; gutterExtend=null; refreshAll();
+      sel=new Set([R.id]); lastRunId=R.id; drawing=null; const wasAuto=auto; const rid=R.id; gutterExtend=null; refreshAll();
       if(!wasAuto){ setTimeout(()=>openSeg(rid,firstNewSeg),30); }
       return;
     }
@@ -4564,7 +4860,7 @@ function finishGutter(){
   if(auto){ for(let i=0;i<pts.length-1;i++){ lengths[i]=autoLen(pts[i],pts[i+1]); } }
   const o={t:"gutter",id:uid(),pts,lengths,size:gutterDrawSize,color:gutterDrawColor,caps:[true,true]};
   markClosed(o);
-  P.objects.push(o); sel=new Set([o.id]); drawing=null; refreshAll();
+  P.objects.push(o); sel=new Set([o.id]); lastRunId=o.id; drawing=null; refreshAll();
   if(!auto){ setTimeout(()=>openSeg(o.id,0),30); }
 }
 function cancelDrawing(){ if(drawing){drawing=null;gutterExtend=null;draw();} }
@@ -4632,6 +4928,19 @@ function layoutHint(){
     const br=b.getBoundingClientRect();
     if(br.height) lift=Math.max(lift, sr.bottom-br.top+10);   // 10px gap above the bar
   });
+  // On the bottom row it shares the line with the corner groups — undo/redo + snap toggles (left) and
+  // zoom (right) — and its 80% max-width ran into the snap toggles on an iPad. Narrow it to the gap
+  // between them (it wraps to more lines); if the gap is too tight to read, lift it over them instead.
+  let maxW="";
+  if(!lift && hint.offsetParent!==null){   // (hidden, it has no centre to measure from)
+    const hr=hint.getBoundingClientRect(), cx=hr.left+hr.width/2, vis=el=>el&&el.offsetParent!==null;
+    let l=sr.left, r=sr.right, top=sr.bottom;
+    ["railToggle","diagUndoBar"].forEach(id=>{ const el=byId(id); if(vis(el)){ const b=el.getBoundingClientRect(); l=Math.max(l,b.right); top=Math.min(top,b.top); } });
+    ["statusbar","planPanel"].forEach(id=>{ const el=byId(id); if(vis(el)){ const b=el.getBoundingClientRect(); if(b.bottom>sr.bottom-60){ r=Math.min(r,b.left); top=Math.min(top,b.top); } } });
+    const room=2*Math.min(cx-l,r-cx)-20;
+    if(room>=240) maxW=room+"px"; else lift=sr.bottom-top+10;
+  }
+  hint.style.maxWidth=maxW;
   hint.style.bottom = lift ? lift+"px" : "";                  // "" falls back to the CSS 14px
 }
 
@@ -4641,12 +4950,37 @@ function updateDrawBar(){
   if(!bar) return;
   const show = !!(drawing && (drawing.t==="gutter"||(drawing.t==="custom"&&!drawing.stroke)) && drawing.pts && drawing.pts.length>=1);
   bar.style.display = show ? "flex" : "none";
+  // back one corner — a mis-tap otherwise costs the whole run
+  const u=byId("drawUndoPt"); if(u) u.style.display = show && drawing.pts.length>=2 && !drawing.stroke ? "" : "none";
+  clearCornerGroups(bar);
   layoutHint();
+}
+/* The bottom-centre bars (Finish/Cancel, Delete/Deselect) share the bottom row with the corner groups —
+   undo/redo + the toggles on the left, zoom on the right — and on an iPad the left group grew under
+   "↶ Point". Slide the bar right just enough to clear it; with no room between the groups, lift it over
+   the row. Measured from the centred position (not the shifted one), and only written on change, since
+   this runs every draw(). */
+function clearCornerGroups(bar){
+  let left="", bottom="";
+  if(bar.style.display!=="none"){
+    const sr=byId("stage").getBoundingClientRect(), w=bar.offsetWidth, cx=sr.left+sr.width/2, bl=cx-w/2, br=cx+w/2;
+    const box=id=>{ const el=byId(id); return el&&el.offsetParent!==null ? el.getBoundingClientRect() : null; };
+    const L=box("diagUndoBar"), R=box("statusbar");
+    const lEdge=L?L.right+10:sr.left, rEdge=R?R.left-10:sr.right;
+    if(bl<lEdge || br>rEdge){
+      if(rEdge-lEdge>=w) left=`calc(50% + ${Math.round(bl<lEdge ? lEdge-bl : rEdge-br)}px)`;
+      else bottom=Math.round(sr.bottom-Math.min(L?L.top:sr.bottom, R?R.top:sr.bottom)+10)+"px";
+    }
+  }
+  if(bar.style.left!==left) bar.style.left=left;
+  if(bar.style.bottom!==bottom) bar.style.bottom=bottom;
 }
 (function(){
   const fin=document.getElementById("drawFinish"), can=document.getElementById("drawCancel");
   if(fin) fin.onclick=()=>{ if(drawing&&drawing.t==="gutter")finishGutter(); else if(drawing&&drawing.t==="custom")finishCustom(); updateDrawBar(); };
   if(can) can.onclick=()=>{ cancelDrawing(); updateDrawBar(); };
+  const und=document.getElementById("drawUndoPt");
+  if(und) und.onclick=()=>{ if(!drawing) return; if(drawing.pts.length<=1) cancelDrawing(); else drawing.pts.pop(); cursorW=null; updateDrawBar(); draw(); };
 })();
 
 function updateSelActionBar(){
@@ -4664,6 +4998,7 @@ function updateSelActionBar(){
       lab.textContent="Delete "+parts.join(" + ");
     }
   }
+  clearCornerGroups(bar);
   layoutHint();   // after the label is set — its length can change the bar's height
 }
 function selectInMarquee(m){
@@ -5725,6 +6060,8 @@ function openSettings(){
   h+=`<div class="note">Auto-measure and feet-per-square live on the Gutter tool's bar, beside Calibrate — they're the drawing's scale.</div>`;
   h+=`<div class="fld"><label><input type="checkbox" id="stDsSize" ${s.showDsSize?"checked":""}> Show the downspout size tag (3×4) on the diagram</label></div>`;
   h+=`<div class="fld"><label><input type="checkbox" id="stLegend" ${s.showLegend!==false?"checked":""}> Show a symbol legend on the diagram and PDF</label></div>`;
+  h+=`<div class="fld"><label><input type="checkbox" id="stPlanLoupe" ${s.planLoupe!==false?"checked":""}> Magnifier while tracing gutters over a plan</label></div>`;
+  h+=`<div class="fld"><label><input type="checkbox" id="stTapDraw" ${s.tapDraw?"checked":""}> Point-by-point gutter drawing — tap or drag to each corner, ✓ to finish the run</label></div>`;
   if(multi) h+=`<div class="note">Takeoff rules and drawing settings apply to every option in this job.</div>`;
   openModal("Settings",h);
   const b=byId("modalBody");
@@ -5745,8 +6082,11 @@ function openSettings(){
   { const ls=byId("stLabelSize"); ls.oninput=()=>{ setAll("labelSize",+ls.value); byId("stLabelPct").textContent=Math.round(+ls.value*100)+"%"; draw(); }; }
   byId("stDsSize").onchange=e=>{ setAll("showDsSize",e.target.checked); buildOptbar(); refreshAll(); };
   byId("stLegend").onchange=e=>{ setAll("showLegend",e.target.checked); refreshAll(); };
+  byId("stPlanLoupe").onchange=e=>setPlanLoupe(e.target.checked);
+  byId("stTapDraw").onchange=e=>setTapDraw(e.target.checked);
 }
 byId("btnSettings").onclick=openSettings;
+byId("btnPlan").onclick=()=>planMode?exitPlanMode():enterPlanMode();
 
 /* ============================================================ */
 /* PAGE SWITCH  (Diagram / Photos / PDF View)                 */
@@ -5757,6 +6097,7 @@ let curPage="diagram";
    auto-hide it and the rep's own choice is put back on the way back to Diagram. */
 let railWasHidden=false;
 function setPage(pg){
+  if(pg!=="diagram" && planMode) exitPlanMode();
   const prev=curPage;
   curPage=pg;
   byId("tabDiagram").classList.toggle("active",pg==="diagram");
@@ -6362,13 +6703,14 @@ function importPhotoFiles(files){
 /* Plans and add-on pages (a financing flyer…) arrive as images or PDFs. WKWebView has no PDF
    rasterizer and pdf.js would add megabytes to this single file, so in the app a PDF goes to
    WebView.swift (gutterPdfImport), which renders each page with PDFKit and calls back
-   pdfImportPage() per page, then pdfImportDone()/pdfImportFailed(). A plain browser has no bridge,
+   pdfImportPage() per page (with its printed size in points), then pdfImportDone()/pdfImportFailed(). A plain browser has no bridge,
    so there a PDF is refused with a message and images still work. Every page comes back as an
    ordinary {dataUrl,w,h,name} entry and is stored like a photo: blob store + IndexedDB, id on P. */
 const PLAN_MAX_EDGE=3000;   // a plan is read for detail when tracing — more than a photo's 2000
 const PAGE_MAX_EDGE=2200;   // a full letter page at ~200dpi
 const _pdfImports=new Map();   // import id -> {pages, name, resolve, reject}
-function pdfImportPage(id,i,n,dataUrl,w,h){ const j=_pdfImports.get(id); if(j) j.pages[i]={dataUrl,w,h,name:j.name+(n>1?" — page "+(i+1):"")}; }
+// ptW/ptH: the page's printed size in PDF points (1/72 in) — what a plan's "Printed scale" reads
+function pdfImportPage(id,i,n,dataUrl,w,h,ptW,ptH){ const j=_pdfImports.get(id); if(j) j.pages[i]={dataUrl,w,h,ptW:+ptW||0,ptH:+ptH||0,name:j.name+(n>1?" — page "+(i+1):"")}; }
 function pdfImportDone(id){ const j=_pdfImports.get(id); if(!j) return; _pdfImports.delete(id); j.resolve(j.pages.filter(Boolean)); }
 function pdfImportFailed(id,msg){ const j=_pdfImports.get(id); if(!j) return; _pdfImports.delete(id); j.reject(new Error(msg||"That PDF couldn't be read.")); }
 function isPdfFile(f){ return !!f && (f.type==="application/pdf" || /\.pdf$/i.test(f.name||"")); }
@@ -6415,16 +6757,50 @@ byId("docInput").onchange=async e=>{
 };
 
 /* ---- plan underlay ----
-   {t:"underlay", id, img, x, y, w, h, opacity, locked, print} in P.objects — one per option, so a
-   Duplicate carries it. It draws under everything, takes no part in the takeoff, and is invisible to
-   hit testing while locked (the default), so tracing over it never grabs the plan. Unlocked, it can
-   be dragged and scaled from its corner. Scale comes from the existing Calibrate (world distance ->
-   feetPerSquare), so lengths traced over a calibrated plan auto-measure true. print:false keeps it
-   off the PDF — it's drawn from draw(), not drawScene(); print:true moves it into drawScene(). */
+   {t:"underlay", id, img, x, y, w, h, opacity, print, hidden, name, pageIn, scale, check, lastFps} in
+   P.objects — one per option, so a Duplicate carries it. It draws under everything, takes no part in
+   the takeoff, and is never hit-tested or marquee-selected: it's only edited in Plan mode (the top
+   bar's Plan button), so tracing over it can never grab it.
+   The scale is an object ON the plan, not a setting: scale = {mode:"line", a, b, ft} (a dimension line
+   laid over a dimension printed on the sheet) or {mode:"ratio", ftPerIn, label} (the sheet's printed
+   scale — needs pageIn, the page size in inches, which only a PDF import knows). Line ends (the scale
+   line's and the check line's) are plan-local {u,v}, both as fractions of the plan's WIDTH, so they ride
+   along when the sheet moves. drawingFps() derives feet-per-square from it on every read rather than
+   copying it into settings, so undo, Duplicate, moving or replacing the sheet can never leave the plan
+   and the drawing disagreeing. Plan points never snap to the grid — a blueprint has nothing to do with
+   it; "Keep level" squares a line to the SHEET's axes instead.
+   print:false keeps it off the PDF — it's drawn from draw(), not drawScene(); print:true moves it into
+   drawScene(). hidden takes it off the canvas and the PDF everywhere but Plan mode. */
 function planOf(){ return P.objects.find(o=>o.t==="underlay")||null; }
+function planW(o,p){ return {x:o.x+p.u*o.w, y:o.y+p.v*o.w}; }
+function planLocal(o,w){ return {u:(w.x-o.x)/o.w, v:(w.y-o.y)/o.w}; }
+function planLineOf(o,line){ return line==="scale" ? (o.scale&&o.scale.mode==="line"?o.scale:null) : o.check; }
+// feet per world unit the plan's scale implies, or 0 while it has none
+function planFtPerWorld(o){
+  const s=o&&o.scale; if(!s||!(o.w>0)) return 0;
+  if(s.mode==="line"){ const d=Math.hypot(s.b.u-s.a.u,s.b.v-s.a.v)*o.w; return (d>0&&s.ft>0)?s.ft/d:0; }
+  if(s.mode==="ratio") return (o.pageIn&&o.pageIn.w>0&&s.ftPerIn>0) ? o.pageIn.w*s.ftPerIn/o.w : 0;
+  return 0;
+}
+function planFps(){ return planFtPerWorld(planOf())*GRID; }
+// grid snap is a session toggle that starts on, so reopening a job or switching to an option with a
+// plan turns it back off — otherwise traced runs land on grid points instead of the plan's corners
+function planSnapOff(){ if(planOf()) snap=false; }
+// 32.5 -> 32' 6"; quarter-inch resolution, finer than anyone reads a plan
+function fmtFtIn(ft){
+  if(!(ft>0)) return "—";
+  const q=Math.round(ft*48), f=Math.floor(q/48), r=q-f*48;
+  return f+"' "+Math.floor(r/4)+["","¼","½","¾"][r%4]+'"';
+}
+const PLAN_SCALES=[   // [label, feet per inch of paper]
+  ["Architectural",[['1/16" = 1\'-0"',16],['3/32" = 1\'-0"',32/3],['1/8" = 1\'-0"',8],['3/16" = 1\'-0"',16/3],['1/4" = 1\'-0"',4],['3/8" = 1\'-0"',8/3],['1/2" = 1\'-0"',2],['3/4" = 1\'-0"',4/3],['1" = 1\'-0"',1]]],
+  ["Engineering",[['1" = 10\'',10],['1" = 20\'',20],['1" = 30\'',30],['1" = 40\'',40],['1" = 50\'',50],['1" = 60\'',60],['1" = 100\'',100]]]
+];
+const PLAN_SCALE_COLOR="#e8590c", PLAN_CHECK_COLOR="#0f8a7e";
+
 function choosePlanPage(pages){
   if(pages.length===1){ setPlanImage(pages[0]); return; }
-  const h=`<div class="note" style="margin-bottom:8px">This PDF has ${pages.length} pages. Tap the one to draw on.</div>
+  const h=`<div class="note" style="margin-bottom:8px">This PDF has ${pages.length} pages. Tap the sheet to trace — usually the roof plan.</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">${pages.map((pg,i)=>
       `<button data-pg="${i}" style="border:1px solid var(--line);border-radius:6px;background:#fff;padding:4px;cursor:pointer"><img src="${pg.dataUrl}" style="width:100%;display:block"><div style="font-size:11px;margin-top:3px">Page ${i+1}</div></button>`).join("")}</div>`;
   openModal("Choose a plan page",h);
@@ -6433,67 +6809,510 @@ function choosePlanPage(pages){
 function setPlanImage(pg){
   recordHistory();
   const id=newPhotoId(); putBlob(id,pg.dataUrl);
+  const pageIn=pg.ptW>0&&pg.ptH>0 ? {w:pg.ptW/72, h:pg.ptH/72} : null;
   let o=planOf();
-  if(o){ // replacing keeps the placement's width, so a calibrated scale survives a re-export of the same sheet
-    o.img=id; o.h=o.w*pg.h/Math.max(1,pg.w);
+  if(o){ // a revised sheet keeps its placement, scale and check line: same sheet, same scale, runs stay put
+    o.img=id; o.h=o.w*pg.h/Math.max(1,pg.w); o.name=pg.name||o.name; o.pageIn=pageIn;
+    planNote="Sheet replaced. Its scale was kept — confirm it with a check line if this sheet's scale differs.";
   } else {
-    const w=view.w*0.8/cam.scale, h=w*pg.h/Math.max(1,pg.w), c=screenToWorld({x:view.w/2,y:view.h/2});
-    o={t:"underlay",id:uid(),img:id,x:c.x-w/2,y:c.y-h/2,w,h,opacity:0.5,locked:true,print:false};
+    // fit the canvas beside the Plan panel (an import always lands in Plan mode, so it's open by then)
+    const avail=view.w-360, fit=Math.min(avail*0.9/Math.max(1,pg.w), view.h*0.9/Math.max(1,pg.h));
+    const w=pg.w*fit/cam.scale, h=pg.h*fit/cam.scale, c=screenToWorld({x:avail/2,y:view.h/2});
+    o={t:"underlay",id:uid(),img:id,x:c.x-w/2,y:c.y-h/2,w,h,opacity:0.6,print:false,hidden:false,
+       name:pg.name||"Plan",pageIn,scale:null,check:null};
     P.objects.unshift(o);
+    // the grid has nothing to do with the plan either: runs must land on its corners, not on grid points
+    snap=false; setPlanLoupe(true); setTapDraw(true);
+    planNote="Grid snap is off so runs land on the plan's corners, not grid points.";
   }
-  refreshAll(); saveLocal(); openPlanModal();
+  if(!planMode) enterPlanMode(); else { planMethod=null; renderPlanPanel(); planHint(); }
+  refreshAll(); saveLocal();
 }
 const _planImgs=new Map();   // blob id -> decoded <img>, so a redraw never re-decodes a 3000px plan
-function drawUnderlay(o){
-  const src=photoSrc(o.img); if(!src) return;
+function planImage(o){
+  const src=photoSrc(o.img); if(!src) return null;
   let im=_planImgs.get(o.img);
   if(!im){ im=new Image(); im.onload=()=>draw(); im.src=src; _planImgs.set(o.img,im); }
-  if(!im.complete || !im.naturalWidth) return;
+  return im.complete && im.naturalWidth ? im : null;
+}
+function drawUnderlay(o){
+  if(o.hidden && !planMode) return;
+  const im=planImage(o); if(!im) return;
   const a=worldToScreen({x:o.x,y:o.y});
   ctx.save();
-  ctx.globalAlpha=o.opacity==null?0.5:o.opacity;
+  ctx.globalAlpha=o.opacity==null?0.6:o.opacity;
   ctx.drawImage(im,a.x,a.y,o.w*cam.scale,o.h*cam.scale);
   ctx.restore();
-  if(sel.has(o.id)){
-    ctx.save(); ctx.setLineDash([6,4]); ctx.lineWidth=1.5; ctx.strokeStyle="#2b7fd0";
-    ctx.strokeRect(a.x,a.y,o.w*cam.scale,o.h*cam.scale); ctx.setLineDash([]);
-    const bx=a.x+o.w*cam.scale, by=a.y+o.h*cam.scale;
-    ctx.fillStyle="#fff"; ctx.lineWidth=2.5; ctx.fillRect(bx-7,by-7,14,14); ctx.strokeRect(bx-7,by-7,14,14);
-    ctx.restore();
-  }
 }
-function underlayHandleHit(pt){
-  if(sel.size!==1) return null;
-  const o=objById([...sel][0]); if(!o||o.t!=="underlay"||o.locked) return null;
-  const b=worldToScreen({x:o.x+o.w,y:o.y+o.h});
-  return Math.hypot(pt.x-b.x,pt.y-b.y) < (lastPtrType==="touch"?26:14) ? o : null;
+
+/* ---- Plan mode ----
+   The top bar's Plan button. The plan's own panel docks beside the canvas (not a modal, so the sheet
+   stays in view while it's tuned), the dock and option bar step aside, and the canvas only edits the
+   plan: drag a line's ends, drag the sheet (with Move on), or pan. Done hands the canvas back. */
+let planMode=false;
+let planPlace=null;    // armed line placement {line:"scale"|"check", a, b}
+let planEdit=null;     // drag in progress: {kind:"place"|"end"|"move", ...}
+let planMove=false;    // "Move plan": a drag on the sheet moves it instead of panning
+let planLevel=true;    // lines square up to the sheet within 3° — plan dimensions are nearly all level or plumb
+let planMethod=null;   // which scale tab the panel shows; null = follow the plan's scale
+let planNote="";       // one-shot message for the next panel render
+
+function enterPlanMode(){
+  if(curPage!=="diagram") setPage("diagram");
+  commitEditor(); cancelDrawing(); calib=null; sel.clear(); segSel.clear();
+  planMode=true; planPlace=null; planEdit=null; planMove=false; planMethod=null;
+  document.body.classList.add("plan-mode");
+  byId("planPanel").style.display="flex";
+  renderPlanPanel(); planHint(); updatePlanButton(); draw();
 }
-function openPlanModal(){
+function exitPlanMode(){
+  if(!planMode) return;
+  planPlace=null; planEdit=null; planMode=false; planNote="";
+  document.body.classList.remove("plan-mode");
+  byId("planPanel").style.display="none";
+  normalizePlanWorld();
+  setHint(toolHint(tool)); buildOptbar(); updatePlanButton(); refreshAll();
+}
+function updatePlanButton(){
+  const b=byId("btnPlan"); if(!b) return;
   const o=planOf();
-  let h="";
-  if(!o){
-    h+=`<div class="note" style="margin-bottom:10px">Bring in a site plan or blueprint (PDF or image) and trace the gutters over it. Then use <b>Set scale</b> on a dimension printed on the plan so traced lengths measure true.</div>`;
-    h+=`<button class="btn-sm" id="plImport" style="background:var(--prime);color:#fff;border-color:var(--prime)">Import plan…</button>`;
-  } else {
-    h+=`<div style="text-align:center;margin-bottom:8px"><img src="${photoSrc(o.img)}" style="max-width:100%;max-height:160px;border:1px solid var(--line);border-radius:6px"></div>`;
-    h+=`<div class="fld"><label>Opacity <span id="plOpPct" style="color:var(--text-soft);font-weight:600">${Math.round((o.opacity==null?.5:o.opacity)*100)}%</span></label><input type="range" id="plOp" min="0.1" max="1" step="0.05" value="${o.opacity==null?.5:o.opacity}" style="width:100%"></div>`;
-    h+=`<div class="fld"><label>Plan position</label><div class="seg-toggle"><button data-lk="1" class="${o.locked?"on":""}">Locked</button><button data-lk="0" class="${o.locked?"":"on"}">Move &amp; resize</button></div></div>`;
-    h+=`<div class="note">Unlocked, drag the plan to line it up and pull its corner to size it — then lock it and set the scale.</div>`;
-    h+=`<div class="fld"><label><input type="checkbox" id="plPrint" ${o.print?"checked":""}> Print the plan under the diagram on the PDF</label></div>`;
-    h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn-sm" id="plScale" style="background:var(--prime);color:#fff;border-color:var(--prime)">Set scale…</button><button class="btn-sm" id="plImport">Replace…</button><button class="btn-sm danger" id="plRemove">Remove plan</button></div>`;
-    h+=`<div class="note">Set scale: tap both ends of a dimension printed on the plan and enter its length in feet.</div>`;
+  b.classList.toggle("on",planMode);
+  b.dataset.state=!o?"":(planFps()?"ok":"warn");
+  b.title=!o?"Trace over a house plan (PDF or image)":(planFps()?"Plan — scale set":"Plan — scale not set yet");
+}
+function planHint(){
+  if(!planMode) return;
+  const o=planOf(), touch=lastPtrType==="touch";
+  if(!o) return setHint("Import a plan to trace over");
+  if(planPlace) return setHint(planPlace.a ? "Now the other end — tap it, or drag to place it"
+    : "Drag from one end of a printed dimension to the other, or tap each end");
+  if(planMove) return setHint("Drag the sheet to line it up"+(touch?" · pinch to zoom":""));
+  setHint("Drag a line's ends to fine-tune · "+(touch?"pinch":"scroll")+" to zoom in close · drag the sheet to pan");
+}
+/* A sheet comes in at whatever size fits the screen, so its scale could land anywhere: a site plan
+   can make a 60 ft house three grid squares wide, with every downspout symbol and length tag swamping
+   it. While the plan is the only thing in the option, leaving Plan mode resizes the sheet so the
+   drawing keeps the standard 2 ft/square, and moves the camera to match, so nothing visibly moves.
+   Once anything else is drawn it's left alone: resizing would pull the plan out from under it. */
+function normalizePlanWorld(){
+  const o=planOf(), fps=planFps(), target=2;
+  if(!o||!fps||P.objects.some(x=>x.t!=="underlay")) return;
+  const k=fps/target; if(Math.abs(k-1)<1e-3) return;
+  const c=screenToWorld({x:view.w/2,y:view.h/2});
+  o.x=c.x+(o.x-c.x)*k; o.y=c.y+(o.y-c.y)*k; o.w*=k; o.h*=k;
+  cam.scale/=k; cam.x=c.x-(c.x-cam.x)*k; cam.y=c.y-(c.y-cam.y)*k;
+  if(cam.scale<.15||cam.scale>6){ cam.scale=Math.max(.15,Math.min(6,cam.scale)); cam.x=c.x-view.w/2/cam.scale; cam.y=c.y-view.h/2/cam.scale; }
+  o.lastFps=planFps(); updateZoomLabel(); recordHistory();
+}
+/* The scale just changed. A run keeps the lengths it was given when drawn (autoLen at draw time), so
+   retuning the scale after tracing would leave every traced length stale. Re-measure the segments that
+   still read exactly what auto-measure gave them at the old scale; anything else was typed in by hand
+   (off a plan dimension or a tape) and is kept. o.lastFps is the scale the runs were last measured at. */
+function commitPlanScale(){
+  const o=planOf(); if(!o) return;
+  const nf=planFps(), of=+o.lastFps||+P.settings.feetPerSquare||0;
+  if(!nf){ recordHistory(); scheduleSave(); updatePlanButton(); return; }
+  let n=0;
+  if(of>0 && Math.abs(nf-of)>1e-9){
+    for(const r of P.objects){
+      if((r.t!=="gutter"&&r.t!=="custom")||!r.pts||!Array.isArray(r.lengths)||r.lengths.length!==r.pts.length-1) continue;
+      for(let i=0;i<r.lengths.length;i++){
+        if(r.lengths[i]===""||r.lengths[i]==null) continue;
+        const d=dist(r.pts[i],r.pts[i+1]), was=autoFeetAt(d,of);
+        if(was>0 && +r.lengths[i]===was){ const now=autoFeetAt(d,nf); if(now!==was){ r.lengths[i]=now; n++; } }
+      }
+    }
   }
-  openModal("Plan underlay",h);
-  byId("plImport").onclick=()=>{ closeModal(); pickDoc("plan"); };
-  if(!o) return;
-  const op=byId("plOp"); op.oninput=()=>{ o.opacity=+op.value; byId("plOpPct").textContent=Math.round(o.opacity*100)+"%"; draw(); }; op.onchange=()=>saveLocal();
-  byId("modalBody").querySelectorAll("[data-lk]").forEach(b=>b.onclick=()=>{
-    o.locked=(b.dataset.lk==="1"); if(o.locked) sel.delete(o.id); else { setTool("select"); sel=new Set([o.id]); }
-    openPlanModal(); draw(); saveLocal();
-  });
-  byId("plPrint").onchange=e=>{ recordHistory(); o.print=e.target.checked; saveLocal(); };
-  byId("plScale").onclick=()=>{ closeModal(); if(!o.locked){ o.locked=true; sel.delete(o.id); } startCalibration(); setHint("SET SCALE: tap one end of a dimension printed on the plan."); };
-  byId("plRemove").onclick=()=>{ recordHistory(); P.objects=P.objects.filter(x=>x!==o); sel.delete(o.id); closeModal(); refreshAll(); saveLocal(); };
+  o.lastFps=nf; P.settings.autoMeasure=true;
+  planNote=n ? `Updated ${n} traced length${n>1?"s":""} to the new scale. Lengths typed in by hand were kept.` : "";
+  recordHistory(); refreshAll(); updatePlanButton();
+}
+function commitPlanLine(o,line,a,b){
+  if(line==="check"){ o.check={a,b}; recordHistory(); scheduleSave(); renderPlanPanel(); planHint(); draw(); return; }
+  // a redrawn line keeps its length: it's usually the same dimension, placed more carefully
+  const keep=o.scale&&o.scale.mode==="line"&&o.scale.ft>0 ? o.scale.ft : null;
+  o.scale={mode:"line",a,b,ft:keep}; planMethod="line";
+  commitPlanScale(); renderPlanPanel(); planHint(); draw();
+  // focus inside the pointerup that placed the line, or iOS won't raise the keyboard
+  if(!keep){ const f=byId("plFt"); if(f){ f.focus(); if(f.select) f.select(); } }
+}
+function removePlan(){
+  const o=planOf(); if(!o) return;
+  // the drawing keeps the plan's scale, so anything traced keeps measuring the same
+  const f=planFps(); if(f) P.settings.feetPerSquare=f;
+  P.objects=P.objects.filter(x=>x!==o); planPlace=null; planEdit=null; planNote="";
+  recordHistory(); refreshAll(); saveLocal(); renderPlanPanel(); planHint(); updatePlanButton();
+}
+function zoomToPlan(){
+  const o=planOf(); if(!o) return;
+  const avail=view.w-(planMode?360:0), pad=30;
+  cam.scale=Math.max(.15,Math.min(6,Math.min((avail-pad*2)/o.w,(view.h-pad*2)/o.h)));
+  cam.x=o.x+o.w/2-avail/(2*cam.scale); cam.y=o.y+o.h/2-view.h/(2*cam.scale);
+  updateZoomLabel(); draw();
+}
+
+/* ---- Plan mode pointer handling (called from onDown/onMove/onUp ahead of the drawing tools) ---- */
+// within 3° of the sheet's own axes, square the line up — the sheet's axes, never the grid
+function planLevelPt(a,p){
+  if(!planLevel||!a) return p;
+  const ang=Math.abs(Math.atan2(p.v-a.v,p.u-a.u))*180/Math.PI;
+  if(ang<3||ang>177) return {u:p.u,v:a.v};
+  if(Math.abs(ang-90)<3) return {u:a.u,v:p.v};
+  return p;
+}
+function planHandleHit(o,pt){
+  let best=null, bd=lastPtrType==="touch"?28:12;
+  for(const line of ["check","scale"]){   // scale wins a tie — it's the one that matters
+    const L=planLineOf(o,line); if(!L) continue;
+    for(const end of ["a","b"]){
+      const s=worldToScreen(planW(o,L[end])), d=Math.hypot(s.x-pt.x,s.y-pt.y);
+      if(d<=bd){ bd=d; best={line,end}; }
+    }
+  }
+  return best;
+}
+function planDown(e){
+  if(e.button===2) return;
+  const pt=evtPos(e), o=planOf(), w=screenToWorld(pt);
+  try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+  const pan=()=>{ panning={x:e.clientX,y:e.clientY,camx:cam.x,camy:cam.y}; canvas.style.cursor="grabbing"; };
+  if(!o||e.button===1||spaceDown){ pan(); return; }
+  const p=planLocal(o,w);
+  if(planPlace){
+    if(!planPlace.a){ planPlace.a=p; planPlace.b=p; planEdit={kind:"place",first:true,downPt:pt}; planHint(); }
+    else { planPlace.b=planLevelPt(planPlace.a,p); planEdit={kind:"place",first:false,downPt:pt}; }
+    draw(); return;
+  }
+  const h=planHandleHit(o,pt);
+  if(h){
+    const s=worldToScreen(planW(o,planLineOf(o,h.line)[h.end]));
+    // keep the finger's offset from the handle, so grabbing it never jumps the end under the finger
+    planEdit={kind:"end",line:h.line,end:h.end,off:{x:s.x-pt.x,y:s.y-pt.y}};
+    draw(); return;
+  }
+  if(planMove && w.x>=o.x&&w.x<=o.x+o.w&&w.y>=o.y&&w.y<=o.y+o.h){
+    planEdit={kind:"move",start:w,ox:o.x,oy:o.y}; canvas.style.cursor="grabbing"; return;
+  }
+  pan();
+}
+function planMoveEvt(e){
+  const o=planOf(); if(!o) return;
+  const pt=evtPos(e);
+  if(!planEdit){
+    // mouse: the far end of a line being placed follows the cursor
+    if(planPlace&&planPlace.a&&e.pointerType!=="touch"){ planPlace.b=planLevelPt(planPlace.a,planLocal(o,screenToWorld(pt))); draw(); }
+    return;
+  }
+  if(planEdit.kind==="place"){
+    if(Math.hypot(pt.x-planEdit.downPt.x,pt.y-planEdit.downPt.y)>6) planEdit.moved=true;
+    planPlace.b=planLevelPt(planPlace.a,planLocal(o,screenToWorld(pt)));
+    renderPlanReadouts(); draw(); return;
+  }
+  if(planEdit.kind==="end"){
+    const L=planLineOf(o,planEdit.line); if(!L){ planEdit=null; return; }
+    L[planEdit.end]=planLevelPt(L[planEdit.end==="a"?"b":"a"], planLocal(o,screenToWorld({x:pt.x+planEdit.off.x,y:pt.y+planEdit.off.y})));
+    renderPlanReadouts(); draw(); return;
+  }
+  if(planEdit.kind==="move"){
+    const w=screenToWorld(pt); o.x=planEdit.ox+(w.x-planEdit.start.x); o.y=planEdit.oy+(w.y-planEdit.start.y); draw();
+  }
+}
+function planUp(){
+  const o=planOf(), ed=planEdit; planEdit=null;
+  if(!ed||!o){ draw(); return; }
+  if(ed.kind==="place"){
+    if(ed.first && !ed.moved){ planHint(); draw(); return; }   // a tap: wait for the other end
+    const {a,b,line}=planPlace;
+    if(Math.hypot(b.u-a.u,b.v-a.v)*o.w*cam.scale<8){ planPlace.a=planPlace.b=null; planHint(); draw(); return; }   // too short to mean anything
+    planPlace=null; commitPlanLine(o,line,a,b); return;
+  }
+  if(ed.kind==="end"){
+    if(ed.line==="scale") commitPlanScale(); else { recordHistory(); scheduleSave(); }
+    renderPlanReadouts(); draw(); return;
+  }
+  if(ed.kind==="move"){ canvas.style.cursor="default"; recordHistory(); scheduleSave(); draw(); }
+}
+
+/* ---- Plan mode canvas overlay: editor chrome only (called from draw(), never prints) ---- */
+function drawPlanOverlay(){
+  const o=planOf(); if(!planMode||!o) return;
+  const a=worldToScreen({x:o.x,y:o.y});
+  ctx.save();
+  ctx.strokeStyle=planMove?"#2b7fd0":"rgba(27,37,48,.35)"; ctx.lineWidth=planMove?2:1; ctx.setLineDash(planMove?[]:[6,4]);
+  ctx.strokeRect(a.x,a.y,o.w*cam.scale,o.h*cam.scale);
+  ctx.restore();
+  const placing=line=>planPlace&&planPlace.line===line&&planPlace.a;
+  const s=planLineOf(o,"scale");
+  if(s && !placing("scale")) drawPlanDim(o,s.a,s.b,PLAN_SCALE_COLOR, s.ft>0?fmtFtIn(s.ft):"Enter its length");
+  if(o.check && !placing("check")) drawPlanDim(o,o.check.a,o.check.b,PLAN_CHECK_COLOR, planLineFeetLabel(o,o.check));
+  if(planPlace&&planPlace.a){
+    const sc=planPlace.line==="scale", b=planPlace.b||planPlace.a;
+    drawPlanDim(o,planPlace.a,b, sc?PLAN_SCALE_COLOR:PLAN_CHECK_COLOR, sc?(s&&s.ft>0?fmtFtIn(s.ft):""):planLineFeetLabel(o,{a:planPlace.a,b}));
+  }
+  // magnifier on the point being placed or dragged — the finger covers it
+  let fp=null, other=null, col=PLAN_SCALE_COLOR;
+  if(planEdit&&planEdit.kind==="place"&&planPlace){ fp=planPlace.b; other=planEdit.first&&!planEdit.moved?null:planPlace.a; col=planPlace.line==="scale"?PLAN_SCALE_COLOR:PLAN_CHECK_COLOR; }
+  else if(planEdit&&planEdit.kind==="end"){ const L=planLineOf(o,planEdit.line); if(L){ fp=L[planEdit.end]; other=L[planEdit.end==="a"?"b":"a"]; col=planEdit.line==="scale"?PLAN_SCALE_COLOR:PLAN_CHECK_COLOR; } }
+  if(fp) drawPlanLoupe(o,planW(o,fp),other&&planW(o,other),col);
+}
+// what a line on the plan measures at the current scale
+function planLineFeetLabel(o,L){
+  const f=drawingFps(); if(!f) return "";
+  return fmtFtIn(Math.hypot(L.b.u-L.a.u,L.b.v-L.a.v)*o.w/GRID*f);
+}
+function drawPlanDim(o,pa,pb,color,label){
+  const A=worldToScreen(planW(o,pa)), B=worldToScreen(planW(o,pb));
+  const L=Math.hypot(B.x-A.x,B.y-A.y), touch=lastPtrType==="touch";
+  ctx.save(); ctx.lineCap="round";
+  if(L>1){
+    const ux=(B.x-A.x)/L, uy=(B.y-A.y)/L, nx=-uy, ny=ux, t=9;
+    const path=()=>{ ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y);
+      for(const q of [A,B]){ ctx.moveTo(q.x+nx*t,q.y+ny*t); ctx.lineTo(q.x-nx*t,q.y-ny*t); } };
+    ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.lineWidth=5; path(); ctx.stroke();   // casing: reads over dense linework
+    ctx.strokeStyle=color; ctx.lineWidth=2; path(); ctx.stroke();
+    if(label){
+      ctx.font="bold 13px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      // below a level line, right of a plumb one: a plan prints its dimension text above/left, so this never covers it
+      const tw=ctx.measureText(label).width+16, th=22, side=nx+ny<0?-1:1;   // the normal pointing down/right
+      const mx=(A.x+B.x)/2+nx*side*(14+tw/2*Math.abs(nx)), my=(A.y+B.y)/2+ny*side*20;
+      ctx.fillStyle=color; roundRect(ctx,mx-tw/2,my-th/2,tw,th,6); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.fillText(label,mx,my+0.5);
+    }
+  }
+  // ends: a hollow ring (so the plan shows through) around a dot that IS the exact point
+  for(const q of [A,B]){
+    ctx.beginPath(); ctx.arc(q.x,q.y,touch?11:7,0,7); ctx.fillStyle="rgba(255,255,255,.35)"; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle=color; ctx.stroke();
+    ctx.beginPath(); ctx.arc(q.x,q.y,1.8,0,7); ctx.fillStyle=color; ctx.fill();
+  }
+  ctx.restore();
+}
+/* Where the loupe sits around the finger: above it, or below when above would run under the options
+   bar. The flip animates — the bubble swings around the finger, on the side with more room, rather than
+   jumping (or sliding straight through the fingertip). Only the flip eases: following the finger and
+   the sideways edge clamp stay instant, or the bubble would trail the finger. The position is an angle
+   around the finger (-90° above, +90° below) at radius rho; loupeAnim persists while the loupe stays on
+   screen and draw() drops it on the first frame without one, so a fresh loupe appears in place. */
+let loupeAnim=null, loupeDrawn=false, loupeRaf=0;
+const LOUPE_SWING_MS=matchMedia("(prefers-reduced-motion: reduce)").matches?0:240;
+function loupeSpot(fs,R,rho,C){
+  loupeDrawn=true;
+  const now=performance.now(), UP=-Math.PI/2, DOWN=Math.PI/2;
+  const room=fs.y-rho-R-C.t;   // space left above the bubble when it sits over the finger
+  if(!loupeAnim){ const a=room<0?DOWN:UP; loupeAnim={from:a,to:a,t0:0}; }
+  const A=loupeAnim, cur=loupeAngle(A,now), below=Math.sin(A.to)>0;
+  // 12px of hysteresis, so a finger resting at the boundary doesn't swing the bubble back and forth
+  const want = below ? (room>12?UP:DOWN) : (room<0?DOWN:UP);
+  if(Math.sin(want)>0!==below){
+    let d=want-cur; d=((d+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;   // shortest turn, (-π,π]
+    if(Math.abs(Math.abs(d)-Math.PI)<0.05){
+      // straight across the finger: go round the roomier side (clockwise via the right = increasing angle from above)
+      const right=(C.r-fs.x)>=(fs.x-C.l), fromAbove=Math.sin(cur)<0;
+      d = (right===fromAbove) ? Math.PI : -Math.PI;
+    }
+    loupeAnim={from:cur,to:cur+d,t0:now};
+  }
+  const a=loupeAngle(loupeAnim,now);
+  if(now-loupeAnim.t0<LOUPE_SWING_MS && !loupeRaf) loupeRaf=requestAnimationFrame(()=>{ loupeRaf=0; draw(); });
+  return {cx:Math.max(C.l+R,Math.min(C.r-R,fs.x+rho*Math.cos(a))), cy:fs.y+rho*Math.sin(a)};
+}
+function loupeAngle(A,now){
+  const p=LOUPE_SWING_MS?Math.min(1,(now-A.t0)/LOUPE_SWING_MS):1, e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;   // ease-in-out cubic
+  return A.from+(A.to-A.from)*e;
+}
+// ow: the point(s) the focus connects to — one line end, or both neighbours of a dragged corner
+function drawPlanLoupe(o,fw,ow,color,lift){
+  const im=planImage(o); if(!im) return;
+  const touch=lastPtrType==="touch", R=touch?66:54, C=canvasClearRect();
+  if(lift==null) lift=touch?64:34;
+  const fs=worldToScreen(fw), {cx,cy}=loupeSpot(fs,R,R+lift,C);
+  // 4x the view, but never past 2 screen px per image px — beyond that it only blurs
+  const s=Math.max(cam.scale,Math.min(cam.scale*4, 2*im.naturalWidth/o.w)), half=R/s;
+  const L=p=>({x:cx+(p.x-fw.x)*s, y:cy+(p.y-fw.y)*s});
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.save(); ctx.clip();
+  ctx.fillStyle=getCSS("--paper")||"#fff"; ctx.fillRect(cx-R,cy-R,R*2,R*2);
+  const x0=Math.max(o.x,fw.x-half), y0=Math.max(o.y,fw.y-half), x1=Math.min(o.x+o.w,fw.x+half), y1=Math.min(o.y+o.h,fw.y+half);
+  if(x1>x0&&y1>y0){
+    const kx=im.naturalWidth/o.w, ky=im.naturalHeight/o.h;
+    ctx.drawImage(im,(x0-o.x)*kx,(y0-o.y)*ky,(x1-x0)*kx,(y1-y0)*ky, cx+(x0-fw.x)*s,cy+(y0-fw.y)*s,(x1-x0)*s,(y1-y0)*s);
+  }
+  ctx.strokeStyle=color; ctx.globalAlpha=.8; ctx.lineWidth=1.5;
+  for(const p of (Array.isArray(ow)?ow:ow?[ow]:[])){ const q=L(p); ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(cx,cy); ctx.stroke(); }
+  ctx.globalAlpha=1;
+  ctx.strokeStyle=color; ctx.lineWidth=1.25; ctx.beginPath();
+  ctx.moveTo(cx-R,cy); ctx.lineTo(cx-5,cy); ctx.moveTo(cx+5,cy); ctx.lineTo(cx+R,cy);
+  ctx.moveTo(cx,cy-R); ctx.lineTo(cx,cy-5); ctx.moveTo(cx,cy+5); ctx.lineTo(cx,cy+R); ctx.stroke();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7);
+  ctx.lineWidth=4; ctx.strokeStyle="#fff"; ctx.stroke();
+  ctx.lineWidth=1.5; ctx.strokeStyle="rgba(27,37,48,.8)"; ctx.stroke();
+  ctx.restore();
+}
+
+/* The gutter magnifier over a plan: a finger covers the exact corner being placed, so while it's down
+   the loupe shows the plan under it at full opacity with a crosshair on the point that will land.
+   Two cases: tracing with the Gutter tool (focus cursorW — after angle snap, as the rubber band shows —
+   with the run's new segment), and dragging a gutter run's corner (focus the corner, with both
+   segments meeting at it). Only over the sheet: off it there's nothing finer to see.
+   P.settings.planLoupe, on by default and switched back on with every new plan; toggled in Settings
+   and in the Plan panel. */
+let tracePress=false;   // a pointer is down drawing a gutter run (set in onDown, cleared in onUp)
+function setPlanLoupe(on){
+  OPTIONS.forEach(op=>{ if(op.settings) op.settings.planLoupe=!!on; }); P.settings.planLoupe=!!on; scheduleSave();
+}
+function drawTraceLoupe(){
+  if(planMode||P.settings.planLoupe===false) return;
+  let fw=null, others=[];
+  if(tracePress&&tool==="gutter"&&drawing&&drawing.t==="gutter"&&cursorW){
+    fw=cursorW; const prev=drawing.pts[drawing.pts.length-1];
+    if(prev&&dist(prev,cursorW)>0.5) others=[prev];
+  } else if(vertexDrag&&vertexDrag.o.t==="gutter"){
+    const v=vertexDrag.o, i=vertexDrag.idx, L=v.pts.length-1, closed=isClosedRun(v);
+    fw=v.pts[i];
+    // its neighbours; a closed run's shared start/end corner sits between pts[L-1] and pts[1]
+    const nb=[i>0?i-1:(closed?L-1:-1), i<L?i+1:(closed?1:-1)];
+    others=nb.filter(j=>j>=0&&j!==i).map(j=>v.pts[j]);
+  }
+  if(!fw) return;
+  const o=planOf(); if(!o||o.hidden) return;
+  if(fw.x<o.x||fw.x>o.x+o.w||fw.y<o.y||fw.y>o.y+o.h) return;
+  // lifted higher than Plan mode's, so the length chip (70px above the finger) sits clear below it
+  drawPlanLoupe(o,fw,others,"#2b7fd0",lastPtrType==="touch"?100:44);
+}
+
+/* ---- Plan panel ---- */
+function planImpliedScale(o){   // "matches 1/4" = 1'-0"": catches a mistyped length before it costs a run
+  const f=planFtPerWorld(o); if(!f||!o.pageIn) return "";
+  const fpi=f*o.w/o.pageIn.w;
+  for(const [,list] of PLAN_SCALES) for(const [l,v] of list) if(Math.abs(fpi/v-1)<0.015) return "Matches "+esc(l)+" on the printed sheet.";
+  return "Works out to 1\" = "+(fpi>=10?fpi.toFixed(1):fpi.toFixed(2))+" ft on the sheet — not a standard scale, so double-check the length.";
+}
+function renderPlanReadouts(){
+  const o=planOf(); if(!planMode||!o) return;
+  const ok=!!planFtPerWorld(o), st=byId("plStatus");
+  if(st) st.innerHTML=ok?'<span class="pl-badge ok">✓ Set</span>':'<span class="pl-badge warn">Not set</span>';
+  const rd=byId("plRead");
+  if(rd){
+    const s=o.scale;
+    rd.innerHTML = !ok ? "Until the scale is set, traced lengths won't match the plan."
+      : s.mode==="ratio" ? `<b>${esc(s.label||"Custom scale")}</b>`+(o.pageIn?` · ${(+o.pageIn.w).toFixed(1)} × ${(+o.pageIn.h).toFixed(1)} in sheet`:"")
+      : `<b>${fmtFtIn(s.ft)}</b> reference line`+(planImpliedScale(o)?`<div class="pl-fine" style="margin-top:3px">${planImpliedScale(o)}</div>`:"");
+    rd.classList.toggle("warn",!ok);
+  }
+  const cv=byId("plCheckVal"); if(cv&&o.check) cv.textContent=planLineFeetLabel(o,o.check)||"—";
+  const dc=byId("plDrawCheck"); if(dc) dc.disabled=!ok;
+}
+function renderPlanPanel(){
+  const el=byId("planPanel"); if(!el||!planMode) return;
+  const o=planOf(), native=!!geNative("gutterPdfImport");
+  const sub=o?esc(o.name||"Plan")+(o.pageIn?` · ${Math.round(o.pageIn.w)}×${Math.round(o.pageIn.h)} in`:""):"No plan yet";
+  let h=`<div class="pl-head"><div style="min-width:0"><div class="pl-title">Plan</div><div class="pl-sub">${sub}</div></div><button class="pl-done" id="plDone">Done</button></div><div class="pl-body">`;
+  if(planNote) h+=`<div class="pl-flash">${esc(planNote)}</div>`;
+  planNote="";
+  if(!o){
+    h+=`<div class="pl-empty">
+      <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#9aa7b4" stroke-width="1.4"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 11h8V4M11 15v5M15 11h6"/></svg>
+      <div class="pl-empty-t">Trace a house from its plans</div>
+      <div class="pl-tip">For new construction: bring in the roof or floor plan, set its scale from a dimension printed on the sheet, then draw the gutters right over it. Lengths measure true to the plan.</div>
+      <button class="pl-btn" id="plImport">Import plan — PDF or image</button>
+      ${native?"":'<div class="pl-fine" style="margin-top:8px">In a browser only images import. PDFs import in the iPad app.</div>'}
+    </div></div>`;
+    el.innerHTML=h;
+    byId("plDone").onclick=exitPlanMode;
+    byId("plImport").onclick=()=>pickDoc("plan");
+    return;
+  }
+  const s=o.scale, method=planMethod||(s&&s.mode==="ratio"?"ratio":"line"), line=planLineOf(o,"scale"), ok=!!planFtPerWorld(o);
+  // 1 · scale
+  h+=`<div class="pl-sec"><div class="pl-h"><span class="pl-step">1</span>Scale<span id="plStatus" style="margin-left:auto"></span></div>
+    <div class="seg-toggle"><button data-pm="line" class="${method==="line"?"on":""}">Measure a dimension</button><button data-pm="ratio" class="${method==="ratio"?"on":""}">Printed scale</button></div>`;
+  if(method==="line"){
+    if(!line){
+      h+=`<div class="pl-tip">Pick a long dimension printed on the sheet — an overall wall length is best. Drag from one end of it to the other, or tap each end. A magnifier shows exactly where the point lands.</div>
+        <button class="pl-btn" id="plDrawScale">${planPlace&&planPlace.line==="scale"?"Placing… (tap to cancel)":"Draw scale line"}</button>`;
+    } else {
+      const ftv=line.ft>0?line.ft:0, fw=Math.floor(ftv+1e-9), inch=Math.round((ftv-fw)*12*100)/100;
+      h+=`<div class="pl-lbl">Real length of the orange line</div>
+        <div class="pl-ftin"><input id="plFt" type="number" inputmode="decimal" min="0" step="1" value="${ftv?fw:""}" placeholder="0"><span>ft</span><input id="plIn" type="number" inputmode="decimal" min="0" max="11.99" step="0.25" value="${ftv?inch:""}" placeholder="0"><span>in</span></div>
+        <div class="pl-tip">Drag either end to fine-tune — zoom in for the most accuracy.</div>
+        <div class="pl-row"><label class="pl-chk" style="flex:1"><input type="checkbox" id="plLevel" ${planLevel?"checked":""}>Keep level / plumb</label><button class="btn-sm" id="plDrawScale">${planPlace&&planPlace.line==="scale"?"Cancel":"Redraw"}</button></div>`;
+    }
+  } else {
+    const cur=s&&s.mode==="ratio"?s:null;
+    const isStd=cur&&PLAN_SCALES.some(([,l])=>l.some(([lb])=>lb===cur.label));
+    h+=`<div class="fld" style="margin-top:9px"><label>Scale printed on the sheet</label><select id="plRatio" ${o.pageIn?"":"disabled"}><option value="">Choose…</option>`
+      + PLAN_SCALES.map(([g,l])=>`<optgroup label="${g}">`+l.map(([lb,v])=>`<option value="${v}" ${cur&&cur.label===lb?"selected":""}>${esc(lb)}</option>`).join("")+`</optgroup>`).join("")
+      + `<option value="custom" ${cur&&!isStd?"selected":""}>Custom…</option></select></div>`;
+    if(cur&&!isStd) h+=`<div class="pl-ftin"><input id="plRIn" type="number" inputmode="decimal" min="0" step="0.125" value="${cur.paperIn||1}"><span>in =</span><input id="plRFt" type="number" inputmode="decimal" min="0" step="1" value="${cur.realFt||(+cur.ftPerIn).toFixed(2)}"><span>ft</span></div>`;
+    h+= o.pageIn
+      ? `<div class="pl-tip">Uses the sheet size from the PDF. Only right if the PDF is the original full-size sheet, not a reduced or rescanned set — confirm with a check line.</div>`
+      : `<div class="pl-tip">This plan came in as an image, so its printed size is unknown. Measure a dimension instead.</div>`;
+  }
+  h+=`<div class="pl-read" id="plRead"></div></div>`;
+  // 2 · check
+  h+=`<div class="pl-sec"><div class="pl-h"><span class="pl-step">2</span>Check it</div>`;
+  if(o.check){
+    h+=`<div class="pl-check"><span>Check line measures</span><b id="plCheckVal"></b></div>
+      <div class="pl-tip">Compare it with the dimension printed on the sheet. If they match, the scale is right.</div>
+      <div class="pl-row"><button class="btn-sm" id="plDrawCheck">${planPlace&&planPlace.line==="check"?"Cancel":"Redraw"}</button><button class="btn-sm" id="plClearCheck">Remove</button></div>`;
+  } else {
+    h+=`<div class="pl-tip">Measure a different printed dimension. If it reads the same as the plan, the scale is right.</div>
+      <button class="pl-btn alt" id="plDrawCheck" ${ok?"":"disabled"}>${planPlace&&planPlace.line==="check"?"Placing… (tap to cancel)":"Measure a check line"}</button>`;
+  }
+  h+=`</div>`;
+  // 3 · display
+  const op=o.opacity==null?0.6:o.opacity;
+  h+=`<div class="pl-sec"><div class="pl-h">Display</div>
+    <div class="fld"><label>Opacity <span id="plOpPct" style="float:right">${Math.round(op*100)}%</span></label><input type="range" id="plOp" min="0.1" max="1" step="0.05" value="${op}" style="width:100%"></div>
+    <label class="pl-chk"><input type="checkbox" id="plShow" ${o.hidden?"":"checked"}>Show on the drawing</label>
+    <label class="pl-chk"><input type="checkbox" id="plLoupe" ${P.settings.planLoupe!==false?"checked":""}>Magnifier while tracing gutters</label>
+    <label class="pl-chk"><input type="checkbox" id="plTapDraw" ${P.settings.tapDraw?"checked":""}>Point-by-point gutter drawing</label>
+    <label class="pl-chk"><input type="checkbox" id="plPrint" ${o.print?"checked":""} ${o.hidden?"disabled":""}>Print under the diagram on the PDF</label></div>`;
+  // 4 · sheet
+  h+=`<div class="pl-sec"><div class="pl-h">Sheet</div>
+    <div class="pl-sheet"><img src="${photoSrc(o.img)}" alt=""><div style="min-width:0"><b>${esc(o.name||"Plan")}</b><div class="pl-fine">${o.pageIn?`${(+o.pageIn.w).toFixed(1)} × ${(+o.pageIn.h).toFixed(1)} in · PDF`:"Image"}</div></div></div>
+    <label class="pl-chk"><input type="checkbox" id="plMove" ${planMove?"checked":""}>Move plan — drag the sheet to line it up</label>
+    <div class="pl-row"><button class="btn-sm" id="plFit">Zoom to plan</button><button class="btn-sm" id="plReplace">Replace sheet…</button><button class="btn-sm danger" id="plRemove">Remove</button></div></div>`;
+  h+=`</div>`;
+  el.innerHTML=h;
+  renderPlanReadouts();
+
+  const arm=line=>{ planPlace = planPlace&&planPlace.line===line ? null : {line,a:null,b:null}; renderPlanPanel(); planHint(); draw(); };
+  byId("plDone").onclick=exitPlanMode;
+  el.querySelectorAll("[data-pm]").forEach(b=>b.onclick=()=>{ planMethod=b.dataset.pm; planPlace=null; renderPlanPanel(); planHint(); draw(); });
+  if(byId("plDrawScale")) byId("plDrawScale").onclick=()=>arm("scale");
+  if(byId("plDrawCheck")) byId("plDrawCheck").onclick=()=>arm("check");
+  if(byId("plClearCheck")) byId("plClearCheck").onclick=()=>{ o.check=null; recordHistory(); scheduleSave(); renderPlanPanel(); draw(); };
+  if(byId("plLevel")) byId("plLevel").onchange=e=>{ planLevel=e.target.checked; };
+  if(byId("plFt")){
+    // live while typing; the re-measure and undo step happen once, when the field is left
+    const read=()=>{ const v=(+byId("plFt").value||0)+(+byId("plIn").value||0)/12; line.ft=v>0?v:null; };
+    ["plFt","plIn"].forEach(id=>{ const f=byId(id);
+      f.oninput=()=>{ read(); renderPlanReadouts(); draw(); };
+      f.onchange=()=>{ read(); commitPlanScale(); renderPlanReadouts(); draw(); };
+      f.onkeydown=ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); f.blur(); } };
+    });
+  }
+  if(byId("plRatio")) byId("plRatio").onchange=e=>{
+    const v=e.target.value; if(!v) return;
+    if(v==="custom") o.scale={mode:"ratio",ftPerIn:(s&&s.mode==="ratio"&&s.ftPerIn)||4,paperIn:1,realFt:(s&&s.mode==="ratio"&&s.ftPerIn)||4,label:"Custom"};
+    else { const lb=e.target.selectedOptions[0].textContent; o.scale={mode:"ratio",ftPerIn:+v,label:lb}; }
+    commitPlanScale(); renderPlanPanel(); draw();
+  };
+  if(byId("plRIn")){
+    const upd=commit=>{ const pi=+byId("plRIn").value||0, rf=+byId("plRFt").value||0; if(pi>0&&rf>0){ o.scale={mode:"ratio",ftPerIn:rf/pi,paperIn:pi,realFt:rf,label:`${pi}" = ${rf}'`}; } if(commit) commitPlanScale(); renderPlanReadouts(); draw(); };
+    ["plRIn","plRFt"].forEach(id=>{ byId(id).oninput=()=>upd(false); byId(id).onchange=()=>upd(true); });
+  }
+  const opEl=byId("plOp"); opEl.oninput=()=>{ o.opacity=+opEl.value; byId("plOpPct").textContent=Math.round(o.opacity*100)+"%"; draw(); }; opEl.onchange=()=>{ recordHistory(); scheduleSave(); };
+  byId("plShow").onchange=e=>{ o.hidden=!e.target.checked; recordHistory(); scheduleSave(); renderPlanPanel(); draw(); };
+  byId("plPrint").onchange=e=>{ o.print=e.target.checked; recordHistory(); scheduleSave(); draw(); };
+  byId("plLoupe").onchange=e=>setPlanLoupe(e.target.checked);
+  byId("plTapDraw").onchange=e=>setTapDraw(e.target.checked);
+  byId("plMove").onchange=e=>{ planMove=e.target.checked; planPlace=null; planHint(); draw(); };
+  byId("plFit").onclick=zoomToPlan;
+  byId("plReplace").onclick=()=>pickDoc("plan");
+  byId("plRemove").onclick=removePlan;
 }
 
 /* ---- extra PDF pages ----
@@ -7844,6 +8663,7 @@ function applyLoaded(d){
   P.settings=o.settings; P.objects=o.objects; P.pres=o.pres;
   ensurePrices(); seedHistory(); o.history=history; o.hidx=hidx;
   applyProfile(P.meta);
+  planSnapOff();
 }
 /* when running inside the native iOS shell, hand saves/prints to Swift;
    in a normal browser these return null and the web path runs unchanged */
@@ -8528,12 +9348,23 @@ window.addEventListener("keydown",e=>{
   }
   // PDF View is read-only: don't let tool hotkeys act on the hidden diagram
   if(curPage==="pdf") return;
+  if(planMode){
+    const k=e.key.toLowerCase();
+    if(e.ctrlKey||e.metaKey){
+      if(k==="z"){ e.preventDefault(); if(e.shiftKey)redo(); else undo(); }
+      else if(k==="y"){ e.preventDefault(); redo(); }
+      else if(k==="s"){ e.preventDefault(); byId("btnSave").click(); }
+      return;
+    }
+    if(e.key==="Escape"){ if(planPlace){ planPlace=null; renderPlanPanel(); planHint(); draw(); } else exitPlanMode(); }
+    return;
+  }
   if((e.ctrlKey||e.metaKey)){
     if(e.key.toLowerCase()==="z"){ e.preventDefault(); if(e.shiftKey)redo(); else undo(); return; }
     if(e.key.toLowerCase()==="y"){ e.preventDefault(); redo(); return; }
     if(e.key.toLowerCase()==="d"){ e.preventDefault(); duplicateSelected(); return; }
     if(e.key.toLowerCase()==="s"){ e.preventDefault(); byId("btnSave").click(); return; }
-    if(e.key.toLowerCase()==="a"){ e.preventDefault(); sel=new Set(P.objects.map(o=>o.id)); draw(); refreshSelInfo(); return; }
+    if(e.key.toLowerCase()==="a"){ e.preventDefault(); sel=new Set(P.objects.filter(o=>o.t!=="underlay").map(o=>o.id)); draw(); refreshSelInfo(); return; }
     return;
   }
   // segSel counts too — the on-screen Delete button and the hint text both promise it
@@ -8551,7 +9382,7 @@ window.addEventListener("keyup",e=>{
 let _autosaveT=0;
 function scheduleSave(){ clearTimeout(_autosaveT); _autosaveT=setTimeout(saveLocal,1200); }
 const _origRefreshAll=refreshAll;
-refreshAll=function(){ _origRefreshAll(); scheduleSave(); if(curPage==="pdf") refreshPdfView(); };
+refreshAll=function(){ _origRefreshAll(); scheduleSave(); updatePlanButton(); updateSnapBar(); if(curPage==="pdf") refreshPdfView(); };
 
 /* ============================================================ */
 /* INIT                                                        */
@@ -8580,6 +9411,7 @@ function init(){
   setTool("gutter");
   buildOptbar();
   buildOptionsBar();
+  updatePlanButton();
   updateZoomLabel();
   centerView();
   setHint(toolHint("gutter"));

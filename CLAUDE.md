@@ -122,7 +122,9 @@ outside of the group's shoelace area, else away from the drawing's centroid, els
 Every corner from `runCorners()`/`junctionCorners()` carries `inside` (turn toward the front) and
 `acute`. `flipFront(run)` rewrites the whole group so explicit values never disagree. Each
 downspout's front arrow (`dsFrontOf()`, nearest segment within 2 GRID) prints; the I/O letters
-on miter marks (`drawCornerSides()`) are screen-only.
+on miter marks (`drawCornerSides()`) are screen-only. Segment length chips default to the run's *back* (`segBackOffset()`,
+re-derived from the front every draw); `segLabelOff` (a rep's drag, measured from the midpoint) wins, and
+`flipFront()` mirrors those across their segment so they stay on the back.
 
 **Photo blobs never live in `P`.** `P.photos` and `P.meta.titleImage` hold only ids; base64 sits
 in the `photoBlobs` Map, mirrored to IndexedDB. This is deliberate — blobs in `P` made undo
@@ -242,11 +244,26 @@ which `#photoStage` also sits inside), just computing its screen rect differentl
 keyboard.
 
 **Plan underlay + extra pages** (DOCUMENT IMPORT banner). Both store their images in the
-photo blob store by id, like photos. `{t:"underlay",img,x,y,w,h,opacity,locked,print}` is one per
-option; it's skipped by the takeoff, by marquee, and by hit testing while `locked`. `print:false`
+photo blob store by id, like photos. `{t:"underlay",img,x,y,w,h,opacity,print,hidden,pageIn,scale,check,lastFps}`
+is one per option; it's skipped by the takeoff, by marquee, and by hit testing — it's only edited in
+**Plan mode** (top bar's Plan button → `enterPlanMode()`/`exitPlanMode()`, `#planPanel`, which routes
+canvas pointers to `planDown`/`planMoveEvt`/`planUp` and hides the dock/optbar via `body.plan-mode`).
+The scale is an object on the plan: `scale` = `{mode:"line",a,b,ft}` (a dimension line, ends as
+plan-local `{u,v}` fractions of the plan's width, so they ride with the sheet) or
+`{mode:"ratio",ftPerIn,label}` (needs `pageIn`, the PDF page size, sent by `gutterPdfImport`).
+**`drawingFps()` is the only scale reader**: it derives ft/square from the plan (`planFps()`) or falls
+back to `settings.feetPerSquare` — never copy the plan's scale into settings. Plan points never snap to
+the grid. Stored run lengths don't follow a scale change, so `commitPlanScale()` re-measures segments
+still equal to their auto length at `o.lastFps` and keeps hand-typed ones. `normalizePlanWorld()` resizes
+a lone plan to 2 ft/square on Done (camera-compensated) so symbols aren't out of proportion. `print:false`
 draws from `draw()` and `objBounds()` returns null for it, so it neither prints nor stretches the PDF
-fit. `print:true` draws inside `drawScene()`, which is why the recorder has `drawImage`. Scale comes
-from the existing Calibrate. `P.meta.extraPages` (shared, carried over by **New**) print as full
+fit. `print:true` draws inside `drawScene()`, which is why the recorder has `drawImage`. Scale/check
+lines and the loupe are `draw()` chrome only. The same loupe (`drawPlanLoupe`) magnifies under the finger while the
+Gutter tool traces over a plan or a gutter corner is dragged over one (`drawTraceLoupe()`, gated by
+`tracePress`/`vertexDrag` + `settings.planLoupe`, which a new plan switches back on). Finger-riding chrome
+(the length chip, loupes) stays inside `canvasClearRect()` — the canvas minus dock, options bar, Plan panel. `settings.tapDraw`
+(point-by-point drawing, touch only; a new plan turns it on) keeps a touch run open across lifts — each lift
+commits a corner, ✓ Finish run (`drawBar`) or closing on its own start ends it — via `drawing.tap`/`tapPress`. `P.meta.extraPages` (shared, carried over by **New**) print as full
 pages just before the customer info page. `serialize(true)` embeds both under `blobs`, and
 `extraBlobIds()` keeps `idbGC()` from deleting them at startup. Add any new blob-backed field there.
 
@@ -263,6 +280,12 @@ scale from their corners (size and width together) and set width from their side
 quiz writes a normal `{t:"text",quiz:true}` box.
 
 ## Conventions
+
+- **iPad touch hygiene lives in CSS near the top of the `<style>`:** `user-select:none` +
+  `-webkit-touch-callout:none` on `body` (inputs/textareas opt back in, or iOS won't let you type),
+  transparent tap highlight, `touch-action:manipulation`, and every `:hover` rule wrapped in
+  `@media (hover:hover)` — iPadOS leaves `:hover` stuck on the last thing tapped. New hover styles go
+  inside that media query too.
 
 - The estimator must stay **offline and single-file** — no CDN links, no external assets, no
   build step. Inline anything new.

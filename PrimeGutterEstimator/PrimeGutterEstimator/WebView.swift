@@ -41,6 +41,8 @@ struct WebView: UIViewRepresentable {
         webView.scrollView.bounces = false
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.allowsBackForwardNavigationGestures = false
+        // no long-press peek/preview of images and links — the web side handles its own long presses
+        webView.allowsLinkPreview = false
         context.coordinator.mainWebView = webView
 
         if let url = Bundle.main.url(forResource: "gutter-estimator", withExtension: "html") {
@@ -131,7 +133,8 @@ struct WebView: UIViewRepresentable {
                     let url = "data:image/jpeg;base64," + jpg.base64EncodedString()
                     // thumbnail() may come back at screen scale (2x) — report the real pixel size
                     let pxW = img.cgImage?.width ?? Int(size.width), pxH = img.cgImage?.height ?? Int(size.height)
-                    let js = "pdfImportPage('\(jsId)',\(i),\(n),'\(url)',\(pxW),\(pxH))"
+                    // pw/ph: the printed page size in points, so the web side can apply a plan's printed scale
+                    let js = "pdfImportPage('\(jsId)',\(i),\(n),'\(url)',\(pxW),\(pxH),\(Double(pw)),\(Double(ph)))"
                     DispatchQueue.main.async { self?.callJS(js) }
                 }
                 DispatchQueue.main.async { self?.callJS("pdfImportDone('\(jsId)',\(n))") }
