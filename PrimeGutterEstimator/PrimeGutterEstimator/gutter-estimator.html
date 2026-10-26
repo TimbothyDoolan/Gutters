@@ -876,7 +876,10 @@ function defaultProject(){
       straightMax:165,            // >this interior angle = treated as straight (no corner)
       autoMeasure:true,           // auto-fill segment lengths from drawn scale
       feetPerSquare:2,            // feet represented by one grid square when auto-measuring
-      planLoupe:true,             // magnifier under the finger while the Gutter tool traces over a plan
+      // magnifier under the finger drawing gutters / dragging corners, plan or not; a new plan turns it on.
+      // Not "gutterLoupe": an earlier build defaulted that to true and saved it into every job's settings,
+      // so the old key would have left the magnifier on in jobs nobody ever switched it on in.
+      gutterLoupe:false,
       tapDraw:false,              // point-by-point gutter drawing on touch (tap/drag each corner, ✓ to finish); a new plan turns it on
       customProducts:[],          // [{id,name,pricePerFoot,color,mode}] user-defined products; mode: line|demo|screen
       pricingMode:"itemized",     // flat | itemized
@@ -2142,7 +2145,6 @@ draw = function(){
 
   // in-progress drawing
   drawInProgress();
-  drawTraceLoupe();
   vertexDragChip();
   if(tool==="pages") drawPageFrames();
 
@@ -2168,6 +2170,7 @@ draw = function(){
     }
   }
 
+  drawTraceLoupe();   // after the snap ring, which the no-plan loupe magnifies along with the drawing
   drawPlanOverlay();
 
   // calibration overlay
@@ -6060,7 +6063,7 @@ function openSettings(){
   h+=`<div class="note">Auto-measure and feet-per-square live on the Gutter tool's bar, beside Calibrate — they're the drawing's scale.</div>`;
   h+=`<div class="fld"><label><input type="checkbox" id="stDsSize" ${s.showDsSize?"checked":""}> Show the downspout size tag (3×4) on the diagram</label></div>`;
   h+=`<div class="fld"><label><input type="checkbox" id="stLegend" ${s.showLegend!==false?"checked":""}> Show a symbol legend on the diagram and PDF</label></div>`;
-  h+=`<div class="fld"><label><input type="checkbox" id="stPlanLoupe" ${s.planLoupe!==false?"checked":""}> Magnifier while tracing gutters over a plan</label></div>`;
+  h+=`<div class="fld"><label><input type="checkbox" id="stGutterLoupe" ${s.gutterLoupe?"checked":""}> Magnifier while drawing gutters and dragging corners</label></div>`;
   h+=`<div class="fld"><label><input type="checkbox" id="stTapDraw" ${s.tapDraw?"checked":""}> Point-by-point gutter drawing — tap or drag to each corner, ✓ to finish the run</label></div>`;
   if(multi) h+=`<div class="note">Takeoff rules and drawing settings apply to every option in this job.</div>`;
   openModal("Settings",h);
@@ -6082,7 +6085,7 @@ function openSettings(){
   { const ls=byId("stLabelSize"); ls.oninput=()=>{ setAll("labelSize",+ls.value); byId("stLabelPct").textContent=Math.round(+ls.value*100)+"%"; draw(); }; }
   byId("stDsSize").onchange=e=>{ setAll("showDsSize",e.target.checked); buildOptbar(); refreshAll(); };
   byId("stLegend").onchange=e=>{ setAll("showLegend",e.target.checked); refreshAll(); };
-  byId("stPlanLoupe").onchange=e=>setPlanLoupe(e.target.checked);
+  byId("stGutterLoupe").onchange=e=>setGutterLoupe(e.target.checked);
   byId("stTapDraw").onchange=e=>setTapDraw(e.target.checked);
 }
 byId("btnSettings").onclick=openSettings;
@@ -6772,6 +6775,11 @@ byId("docInput").onchange=async e=>{
    print:false keeps it off the PDF — it's drawn from draw(), not drawScene(); print:true moves it into
    drawScene(). hidden takes it off the canvas and the PDF everywhere but Plan mode. */
 function planOf(){ return P.objects.find(o=>o.t==="underlay")||null; }
+// any option in the job has a plan (the live option's objects are P.objects, which may not be captured yet)
+function anyPlan(){
+  const opts=OPTIONS.length?OPTIONS:[{objects:P.objects}];
+  return opts.some((op,i)=>((OPTIONS.length&&i===activeOpt)?P.objects:(op.objects||[])).some(x=>x&&x.t==="underlay"));
+}
 function planW(o,p){ return {x:o.x+p.u*o.w, y:o.y+p.v*o.w}; }
 function planLocal(o,w){ return {u:(w.x-o.x)/o.w, v:(w.y-o.y)/o.w}; }
 function planLineOf(o,line){ return line==="scale" ? (o.scale&&o.scale.mode==="line"?o.scale:null) : o.check; }
@@ -6822,7 +6830,7 @@ function setPlanImage(pg){
        name:pg.name||"Plan",pageIn,scale:null,check:null};
     P.objects.unshift(o);
     // the grid has nothing to do with the plan either: runs must land on its corners, not on grid points
-    snap=false; setPlanLoupe(true); setTapDraw(true);
+    snap=false; setGutterLoupe(true); setTapDraw(true);
     planNote="Grid snap is off so runs land on the plan's corners, not grid points.";
   }
   if(!planMode) enterPlanMode(); else { planMethod=null; renderPlanPanel(); planHint(); }
@@ -6941,6 +6949,7 @@ function removePlan(){
   // the drawing keeps the plan's scale, so anything traced keeps measuring the same
   const f=planFps(); if(f) P.settings.feetPerSquare=f;
   P.objects=P.objects.filter(x=>x!==o); planPlace=null; planEdit=null; planNote="";
+  if(!anyPlan()) setGutterLoupe(false);   // a plain drawing again: the magnifier's default there is off
   recordHistory(); refreshAll(); saveLocal(); renderPlanPanel(); planHint(); updatePlanButton();
 }
 function zoomToPlan(){
@@ -7121,25 +7130,35 @@ function loupeAngle(A,now){
   return A.from+(A.to-A.from)*e;
 }
 // ow: the point(s) the focus connects to — one line end, or both neighbours of a dragged corner
+/* o: the plan when the focus is over it — the loupe then re-draws the plan image at up to 4x for real
+   detail, plus the line(s) being placed. o null (no plan, or off the sheet): it magnifies the drawing
+   itself, 3x, by copying the canvas as painted so far this frame (drawTraceLoupe runs late in draw()),
+   so the grid, other runs, corner handles and the snap ring all show and the lines need no re-drawing. */
 function drawPlanLoupe(o,fw,ow,color,lift){
-  const im=planImage(o); if(!im) return;
+  const im=o?planImage(o):null;
   const touch=lastPtrType==="touch", R=touch?66:54, C=canvasClearRect();
   if(lift==null) lift=touch?64:34;
   const fs=worldToScreen(fw), {cx,cy}=loupeSpot(fs,R,R+lift,C);
-  // 4x the view, but never past 2 screen px per image px — beyond that it only blurs
-  const s=Math.max(cam.scale,Math.min(cam.scale*4, 2*im.naturalWidth/o.w)), half=R/s;
-  const L=p=>({x:cx+(p.x-fw.x)*s, y:cy+(p.y-fw.y)*s});
   ctx.save();
   ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.save(); ctx.clip();
   ctx.fillStyle=getCSS("--paper")||"#fff"; ctx.fillRect(cx-R,cy-R,R*2,R*2);
-  const x0=Math.max(o.x,fw.x-half), y0=Math.max(o.y,fw.y-half), x1=Math.min(o.x+o.w,fw.x+half), y1=Math.min(o.y+o.h,fw.y+half);
-  if(x1>x0&&y1>y0){
-    const kx=im.naturalWidth/o.w, ky=im.naturalHeight/o.h;
-    ctx.drawImage(im,(x0-o.x)*kx,(y0-o.y)*ky,(x1-x0)*kx,(y1-y0)*ky, cx+(x0-fw.x)*s,cy+(y0-fw.y)*s,(x1-x0)*s,(y1-y0)*s);
+  if(im){
+    // 4x the view, but never past 2 screen px per image px — beyond that it only blurs
+    const s=Math.max(cam.scale,Math.min(cam.scale*4, 2*im.naturalWidth/o.w)), half=R/s;
+    const L=p=>({x:cx+(p.x-fw.x)*s, y:cy+(p.y-fw.y)*s});
+    const x0=Math.max(o.x,fw.x-half), y0=Math.max(o.y,fw.y-half), x1=Math.min(o.x+o.w,fw.x+half), y1=Math.min(o.y+o.h,fw.y+half);
+    if(x1>x0&&y1>y0){
+      const kx=im.naturalWidth/o.w, ky=im.naturalHeight/o.h;
+      ctx.drawImage(im,(x0-o.x)*kx,(y0-o.y)*ky,(x1-x0)*kx,(y1-y0)*ky, cx+(x0-fw.x)*s,cy+(y0-fw.y)*s,(x1-x0)*s,(y1-y0)*s);
+    }
+    ctx.strokeStyle=color; ctx.globalAlpha=.8; ctx.lineWidth=1.5;
+    for(const p of (Array.isArray(ow)?ow:ow?[ow]:[])){ const q=L(p); ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(cx,cy); ctx.stroke(); }
+    ctx.globalAlpha=1;
+  } else {
+    // source rect in backing pixels (DPR), clamped to the canvas — the loupe sits well clear of it
+    const m=3, h=R/m, x0=Math.max(0,fs.x-h), y0=Math.max(0,fs.y-h), x1=Math.min(view.w,fs.x+h), y1=Math.min(view.h,fs.y+h);
+    if(x1>x0&&y1>y0) ctx.drawImage(canvas, x0*DPR,y0*DPR,(x1-x0)*DPR,(y1-y0)*DPR, cx+(x0-fs.x)*m,cy+(y0-fs.y)*m,(x1-x0)*m,(y1-y0)*m);
   }
-  ctx.strokeStyle=color; ctx.globalAlpha=.8; ctx.lineWidth=1.5;
-  for(const p of (Array.isArray(ow)?ow:ow?[ow]:[])){ const q=L(p); ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(cx,cy); ctx.stroke(); }
-  ctx.globalAlpha=1;
   ctx.strokeStyle=color; ctx.lineWidth=1.25; ctx.beginPath();
   ctx.moveTo(cx-R,cy); ctx.lineTo(cx-5,cy); ctx.moveTo(cx+5,cy); ctx.lineTo(cx+R,cy);
   ctx.moveTo(cx,cy-R); ctx.lineTo(cx,cy-5); ctx.moveTo(cx,cy+5); ctx.lineTo(cx,cy+R); ctx.stroke();
@@ -7150,19 +7169,19 @@ function drawPlanLoupe(o,fw,ow,color,lift){
   ctx.restore();
 }
 
-/* The gutter magnifier over a plan: a finger covers the exact corner being placed, so while it's down
-   the loupe shows the plan under it at full opacity with a crosshair on the point that will land.
+/* The gutter magnifier: a finger covers the exact corner being placed, so while it's down the loupe
+   shows what's under it with a crosshair on the point that will land — the plan at full opacity and full
+   detail when over one, otherwise the drawing itself (see drawPlanLoupe).
    Two cases: tracing with the Gutter tool (focus cursorW — after angle snap, as the rubber band shows —
    with the run's new segment), and dragging a gutter run's corner (focus the corner, with both
-   segments meeting at it). Only over the sheet: off it there's nothing finer to see.
-   P.settings.planLoupe, on by default and switched back on with every new plan; toggled in Settings
-   and in the Plan panel. */
+   segments meeting at it). P.settings.gutterLoupe: off by default,
+   switched on with every new plan; toggled in Settings and in the Plan panel. */
 let tracePress=false;   // a pointer is down drawing a gutter run (set in onDown, cleared in onUp)
-function setPlanLoupe(on){
-  OPTIONS.forEach(op=>{ if(op.settings) op.settings.planLoupe=!!on; }); P.settings.planLoupe=!!on; scheduleSave();
+function setGutterLoupe(on){
+  OPTIONS.forEach(op=>{ if(op.settings) op.settings.gutterLoupe=!!on; }); P.settings.gutterLoupe=!!on; scheduleSave();
 }
 function drawTraceLoupe(){
-  if(planMode||P.settings.planLoupe===false) return;
+  if(planMode||!P.settings.gutterLoupe) return;
   let fw=null, others=[];
   if(tracePress&&tool==="gutter"&&drawing&&drawing.t==="gutter"&&cursorW){
     fw=cursorW; const prev=drawing.pts[drawing.pts.length-1];
@@ -7175,10 +7194,9 @@ function drawTraceLoupe(){
     others=nb.filter(j=>j>=0&&j!==i).map(j=>v.pts[j]);
   }
   if(!fw) return;
-  const o=planOf(); if(!o||o.hidden) return;
-  if(fw.x<o.x||fw.x>o.x+o.w||fw.y<o.y||fw.y>o.y+o.h) return;
+  const o=planOf(), onPlan=o&&!o.hidden&&fw.x>=o.x&&fw.x<=o.x+o.w&&fw.y>=o.y&&fw.y<=o.y+o.h;
   // lifted higher than Plan mode's, so the length chip (70px above the finger) sits clear below it
-  drawPlanLoupe(o,fw,others,"#2b7fd0",lastPtrType==="touch"?100:44);
+  drawPlanLoupe(onPlan?o:null,fw,others,"#2b7fd0",lastPtrType==="touch"?100:44);
 }
 
 /* ---- Plan panel ---- */
@@ -7266,7 +7284,7 @@ function renderPlanPanel(){
   h+=`<div class="pl-sec"><div class="pl-h">Display</div>
     <div class="fld"><label>Opacity <span id="plOpPct" style="float:right">${Math.round(op*100)}%</span></label><input type="range" id="plOp" min="0.1" max="1" step="0.05" value="${op}" style="width:100%"></div>
     <label class="pl-chk"><input type="checkbox" id="plShow" ${o.hidden?"":"checked"}>Show on the drawing</label>
-    <label class="pl-chk"><input type="checkbox" id="plLoupe" ${P.settings.planLoupe!==false?"checked":""}>Magnifier while tracing gutters</label>
+    <label class="pl-chk"><input type="checkbox" id="plLoupe" ${P.settings.gutterLoupe?"checked":""}>Magnifier while tracing gutters</label>
     <label class="pl-chk"><input type="checkbox" id="plTapDraw" ${P.settings.tapDraw?"checked":""}>Point-by-point gutter drawing</label>
     <label class="pl-chk"><input type="checkbox" id="plPrint" ${o.print?"checked":""} ${o.hidden?"disabled":""}>Print under the diagram on the PDF</label></div>`;
   // 4 · sheet
@@ -7307,7 +7325,7 @@ function renderPlanPanel(){
   const opEl=byId("plOp"); opEl.oninput=()=>{ o.opacity=+opEl.value; byId("plOpPct").textContent=Math.round(o.opacity*100)+"%"; draw(); }; opEl.onchange=()=>{ recordHistory(); scheduleSave(); };
   byId("plShow").onchange=e=>{ o.hidden=!e.target.checked; recordHistory(); scheduleSave(); renderPlanPanel(); draw(); };
   byId("plPrint").onchange=e=>{ o.print=e.target.checked; recordHistory(); scheduleSave(); draw(); };
-  byId("plLoupe").onchange=e=>setPlanLoupe(e.target.checked);
+  byId("plLoupe").onchange=e=>setGutterLoupe(e.target.checked);
   byId("plTapDraw").onchange=e=>setTapDraw(e.target.checked);
   byId("plMove").onchange=e=>{ planMove=e.target.checked; planPlace=null; planHint(); draw(); };
   byId("plFit").onclick=zoomToPlan;
@@ -8655,6 +8673,11 @@ function applyLoaded(d){
       objects:proj.objects||[], pres:ensurePres(proj.pres), history:[], hidx:-1 }];
     optSeq=2; activeOpt=0;
   }
+  // gutterLoupe is newer than some saves: a job that never stored it takes it from whether it has a plan
+  // (on for plans, off for a plain drawing) — the same rule a plan import applies
+  { const raw=d&&Array.isArray(d.options) ? d.options.map(o=>o.settings||{}) : [((d&&d.project)||d||{}).settings||{}];
+    // (OPTIONS directly: P.objects still holds the previous job here)
+    if(!raw.some(st=>"gutterLoupe" in st)){ const on=OPTIONS.some(o=>(o.objects||[]).some(x=>x&&x.t==="underlay")); OPTIONS.forEach(o=>{ o.settings.gutterLoupe=on; }); } }
   absorbPhotoBlobs(d);
   if(typeof photoSelMarks!=="undefined" && photoSelMarks) photoSelMarks.clear();   // loading a job invalidates any old mark references
   nextId=(d&&d.nextId) || (OPTIONS.reduce((m,o)=>Math.max(m,(o.objects||[]).reduce((mm,x)=>Math.max(mm,x.id||0),0)),0)+1);

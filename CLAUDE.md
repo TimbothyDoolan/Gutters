@@ -259,8 +259,11 @@ a lone plan to 2 ft/square on Done (camera-compensated) so symbols aren't out of
 draws from `draw()` and `objBounds()` returns null for it, so it neither prints nor stretches the PDF
 fit. `print:true` draws inside `drawScene()`, which is why the recorder has `drawImage`. Scale/check
 lines and the loupe are `draw()` chrome only. The same loupe (`drawPlanLoupe`) magnifies under the finger while the
-Gutter tool traces over a plan or a gutter corner is dragged over one (`drawTraceLoupe()`, gated by
-`tracePress`/`vertexDrag` + `settings.planLoupe`, which a new plan switches back on). Finger-riding chrome
+Gutter tool draws or a gutter corner is dragged (`drawTraceLoupe()`, gated by `tracePress`/`vertexDrag` +
+`settings.gutterLoupe` — off for plain drawings, on for plans: a plan import switches it on, removing the
+last plan switches it off, and `applyLoaded()` sets it from whether a job has a plan when the save predates
+the key; renamed from `planLoupe`, whose old default of true was saved into jobs). Over a
+plan it re-draws the plan image; elsewhere it copies the canvas as painted so far, so it's called late in `draw()`. Finger-riding chrome
 (the length chip, loupes) stays inside `canvasClearRect()` — the canvas minus dock, options bar, Plan panel. `settings.tapDraw`
 (point-by-point drawing, touch only; a new plan turns it on) keeps a touch run open across lifts — each lift
 commits a corner, ✓ Finish run (`drawBar`) or closing on its own start ends it — via `drawing.tap`/`tapPress`. `P.meta.extraPages` (shared, carried over by **New**) print as full
