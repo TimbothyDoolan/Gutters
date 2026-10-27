@@ -94,9 +94,26 @@ worksheet and the printed estimate disagree. Two deliberate pricing-only excepti
 `settings.newConstruction` zeroes end caps/outlets (and their flat-mode LF allowances) in `compute()`
 but `materialList()` still lists them; `settings.priceOverride` (>0) replaces the turnkey (`r.overridden`,
 `r.calcTurnkey`), deposit/card fee follow it, and `pdfPriceRows()` then prints only deposit + card fee. Acute corners
-(≤ 90−`bayDeviation`, inside or outside) bill the regular miter (never bay) **plus** `prices.acute`
+(≤ 90−`bayDeviation`, inside or outside) bill the style's strip miter (never bay) **plus** `prices.acute`
 (hand-edited add-on, $60 default, charged in flat mode too); `materialList()` splits miter rows
 "— inside"/"— outside" and adds one style-less "Acute miter" row.
+
+**Products are data: the catalog / price book** (PRODUCT CATALOG banner, Products page). Every
+quotable product — gutters, downspouts, screens, services, accessories, custom runs, the shared
+valley/acute parts — is one entry in `CATALOG.products`, device-wide in
+`localStorage["primeGutterCatalog"]` (built-ins in `BUILTIN_PRODUCTS` are merged in on every load, can be
+hidden, never deleted). `kind` decides behaviour and components (`COMPONENTS`: a gutter gets end caps +
+its own strip + bay miters (`stripKey`/`bayKey`, e.g. `strip6hr`/`bay6hr`), a downspout gets outlet/elbows/offsets; each is priced "follow" — parent $/ft ×
+the Settings allowance, as always — or "fixed"). `applyCatalog()` refills `GUTTER_STYLES`, `DS_STYLES`,
+`SCREEN_TYPES`, `PRICE_KEYS`, `DERIVED_KEYS`, `LINES` and `BOOK` **in place** — they're consts other code
+holds; never reassign them, and call `catalogChanged()` after any catalog edit. Pickers go through
+`pickable()` so hidden products drop out while jobs using them still draw and price. The catalog is a
+**price book**: a job copies a key's book price into `settings.prices` the first time `ensurePrices()` meets
+it and keeps it; `applyPriceBook()` is the explicit push. Every product's job price — demo, screens, custom
+products too — is `settings.prices[priceKey]`; flat/hourly service quantities are `settings.qty[priceKey]`.
+`migrateLegacyPricing()` (inside `ensurePrices`) converts old saves' `demoRate`/`screen*Rate` and per-job
+`customProducts`; `normalizeProduct()` upgrades older product shapes (the retired one-"own miter" gutter). Saves embed the non-built-in products they use (`jobProducts()` → `adoptProducts()` on
+load, added hidden), so a job opens on an iPad whose catalog never had them.
 
 **Options are estimate variants.** `OPTIONS[]` each own their own `settings`, `objects` and
 undo `history`; `meta` (customer), `photos` and stamp presets are *shared*. `captureActive()` /
@@ -294,5 +311,5 @@ quiz writes a normal `{t:"text",quiz:true}` box.
   build step. Inline anything new.
 - Comments in this file explain *why*, usually citing the bug the code prevents. Match that when
   touching non-obvious logic; keep the existing terse, dense style rather than reformatting.
-- Domain vocabulary is load-bearing: *miter* (corner) is box/strip/bay by angle, *end cap* only
+- Domain vocabulary is load-bearing: *miter* (corner) is strip or bay by angle, and every gutter style has its own of each (no box miters, no shared miters), *end cap* only
   on free ends, *run* is one polyline of gutter, *outlet/elbow/offset* belong to downspouts.

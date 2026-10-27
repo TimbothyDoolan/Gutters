@@ -504,6 +504,77 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 .pdf-empty{color:#fff;text-align:center;margin-top:40px;font-weight:700}
 @media (max-width:1100px){ #pdfBarTitle{display:none} }
 
+/* Products page — same overlay idiom as #pdfStage. Tree of products (left) with their components
+   nested under them; the editor (right) works on one product. Narrow screens show one at a time. */
+#prodStage{position:absolute;inset:0;display:none;flex-direction:column;background:var(--rail)}
+#prodBar{min-height:46px;background:var(--ink);display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:7px 14px;color:#dce6ef;flex:0 0 auto}
+#prodBar .tb-spacer{flex:1 1 0;min-width:0}
+#prodBar .mini{color:#9fb0c0;font-size:11px;font-weight:600}
+#prodBar .tb-btn:disabled{opacity:.4;cursor:default}
+#prodBody{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,430px)}
+#prodTree{overflow-y:auto;padding:12px 16px 60px;-webkit-overflow-scrolling:touch}
+#prodEdit{overflow-y:auto;padding:14px 16px 60px;background:#fff;border-left:1px solid var(--line);-webkit-overflow-scrolling:touch}
+.pk-sec{margin-bottom:16px}
+.pk-h{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.8px;color:var(--steel);text-transform:uppercase;margin:4px 0 7px}
+.pk-h .pk-n{background:#e3e8ee;border-radius:10px;padding:1px 7px;font-size:10px}
+.pk-h .btn-sm{margin-left:auto;text-transform:none;letter-spacing:0}
+.pk-list{background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.pk-row{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 4px;border-top:1px solid var(--line-2);cursor:pointer;min-height:48px}
+.pk-list>.pk-row:first-child{border-top:0}
+.pk-row.sel{background:#fdecee;box-shadow:inset 3px 0 0 var(--prime)}
+.pk-row.hid .pk-main,.pk-row.hid .pk-price{opacity:.5}
+.pk-tw{width:28px;height:30px;border:0;background:none;font-size:16px;color:var(--steel-2);cursor:pointer;padding:0;flex:0 0 28px}
+.pk-sw{width:12px;height:12px;border-radius:50%;flex:0 0 12px;border:1px solid rgba(0,0,0,.18)}
+.pk-main{flex:1;min-width:0}
+.pk-name{font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pk-sub{font-size:11px;color:var(--text-soft);margin-top:2px}
+.pk-badge{font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;border-radius:3px;padding:1px 5px;background:#e9edf1;color:var(--steel)}
+.pk-badge.warn{background:#fff4e5;color:#a35a00}
+.pk-price{font-family:var(--mono);font-size:12.5px;font-weight:700;text-align:right;white-space:nowrap}
+.pk-price small{font-weight:600;color:var(--steel-2);font-size:10px;margin-left:1px}
+.pk-job{font-size:10px;color:var(--prime);font-weight:700;font-family:var(--ui)}
+/* a component row: indented under its product with a tree branch drawn in */
+.pk-kid{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 44px;border-top:1px solid var(--line-2);font-size:12px;background:#fafbfc;cursor:pointer;position:relative;min-height:38px}
+.pk-kid::before{content:"";position:absolute;left:17px;top:0;bottom:0;border-left:1.5px solid #d2d9e1}
+.pk-kid.last::before{bottom:50%}
+.pk-kid::after{content:"";position:absolute;left:17px;top:50%;width:18px;border-top:1.5px solid #d2d9e1}
+.pk-kid .pk-name{font-size:12px;font-weight:700}
+.pk-kid .pk-price{font-size:11.5px}
+.pe-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pe-kind{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--steel)}
+.pe-title{font-size:19px;font-weight:800;margin:0 0 10px}
+.pe-back{display:none}
+.pe-kinds{display:grid;gap:8px}
+.pe-kindcard{text-align:left;border:1px solid var(--line);border-radius:9px;background:#fff;padding:11px 12px;cursor:pointer;color:var(--text);font:inherit}
+.pe-kindcard b{display:block;font-size:13.5px;margin-bottom:3px}
+.pe-kindcard span{font-size:11.5px;color:var(--text-soft);line-height:1.45}
+.pe-checks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.pe-checks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-weight:700;font-size:12px;background:#fff;cursor:pointer}
+.pe-checks input{margin:0;width:16px;height:16px}
+.pe-comp{border:1px solid var(--line);border-radius:9px;padding:10px 10px 2px;margin-bottom:9px;background:#fafbfc}
+.pe-comp-h{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:12.5px;margin-bottom:7px}
+.pe-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.pe-empty{color:var(--text-soft);text-align:center;margin-top:40px;font-weight:600;line-height:1.6}
+@media (hover:hover){
+  .pk-row:hover,.pk-kid:hover{background:#f3f6f9}
+  .pk-row.sel:hover{background:#fbe2e5}
+  .pe-kindcard:hover{border-color:#b9c4cf;background:#f8fafb}
+}
+@media (max-width:820px){
+  #prodBody{grid-template-columns:1fr}
+  #prodEdit{display:none;border-left:0}
+  #prodBody.editing #prodTree{display:none}
+  #prodBody.editing #prodEdit{display:block}
+  .pe-back{display:inline-block}
+  #prodBar .mini{display:none}
+}
+@media (max-width:1100px){ #prodBarTitle{display:none} }
+@media (pointer:coarse){
+  .pk-row{min-height:54px}
+  .pk-kid{min-height:44px}
+  .pe-checks label{padding:9px 12px;font-size:13.5px}
+}
+
 /* modal */
 #modalWrap{position:fixed;inset:0;background:rgba(15,22,30,.55);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
 
@@ -562,6 +633,7 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
       <button class="page-tab active" data-page="diagram" id="tabDiagram">Diagram</button>
       <button class="page-tab" data-page="photos" id="tabPhotos">Photos</button>
       <button class="page-tab" data-page="pdf" id="tabPdf">PDF View</button>
+      <button class="page-tab" data-page="products" id="tabProducts">Products</button>
     </div>
     <div class="tb-spacer"></div>
     <button id="saveWarn" title="Tap for details" style="display:none"></button>
@@ -738,6 +810,21 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
         </div>
         <div id="pdfHost"><div class="pdf-empty" id="pdfEmpty" style="display:none">Choose at least one option to include in the PDF.</div></div>
       </div>
+
+      <!-- PRODUCTS — the device's price book + product builder (CATALOG, not the job) -->
+      <div id="prodStage">
+        <div id="prodBar">
+          <strong id="prodBarTitle" style="letter-spacing:.4px">PRODUCTS &amp; PRICE BOOK</strong>
+          <span class="mini">Saved on this iPad · new jobs start from these prices</span>
+          <div class="tb-spacer"></div>
+          <button class="tb-btn" id="prodApply" title="Copy the book's prices into the open job">⇣ Apply to this job</button>
+          <button class="tb-btn" id="prodExport" title="Save the price book as a file — a backup, or to load on another iPad">⇪ Export</button>
+          <button class="tb-btn" id="prodImport" title="Load products from an exported price book">Import…</button>
+          <button class="tb-btn primary" id="prodNew">＋ New product</button>
+          <input type="file" id="prodFile" accept=".json,application/json" style="display:none">
+        </div>
+        <div id="prodBody"><div id="prodTree"></div><div id="prodEdit"></div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -843,6 +930,95 @@ const BOX_COLORS = ["#ffffff","#fde2e2","#ffe9cc","#fff7cc","#e2f4dd","#d9ecf7",
   "#c8202a","#ff8a00","#ffcc00","#1f8a52","#2b7fd0","#7048c4","#1b2530","#9aa6b1"];
 
 /* ============================================================ */
+/* PRODUCT CATALOG (price book)                                 */
+/* ============================================================ */
+/* Every product the app can quote lives in ONE device-wide list (CATALOG.products), saved under
+   CATALOG_KEY like the rep's profile and edited on the Products page — so a new gutter, screen or
+   service is data, not code. A product's `kind` decides its behaviour and the components it gets:
+     gutter     drawn with the Gutter tool; its own end caps, strip miters and bay miters
+     downspout  drawn with the Downspout tool; outlet, elbows (A/B), offsets (2/4/6)
+     screen     highlighted with the Screen tool, footage rounded up to `round` ft
+     service    mode: stroke (highlight, rounds to `round`) | item (tapped, each) | flat | hour (typed qty)
+     item       an accessory tapped onto the diagram, priced each
+     line       a custom run — mode: line (measured polyline) | stroke (highlight)
+     part       the shared gutter parts (valley, acute add-on) — built in, never created
+   `fixed` marks a built-in whose behaviour is wired into its own tool (Demo, splash, valley, diverters,
+   leaf guard); only its prices are editable.
+   The catalog is a PRICE BOOK: a job copies a product's price into its own settings.prices the first
+   time ensurePrices() meets the key, and keeps it — re-pricing the book never silently changes a quote
+   already given. applyPriceBook() is the deliberate push. Saved jobs embed the non-built-in products
+   they use (serialize → adoptProducts), so they still open on an iPad whose catalog never had them. */
+const CATALOG_KEY="primeGutterCatalog";
+// Component rule: "follow" = parent $/ft × that component's footage allowance (Settings), as the
+// app always priced them; "fixed" = its own $ each, set in the book and editable per job.
+const BUILTIN_PRODUCTS = [
+  {id:"5K",  kind:"gutter", name:'5" K-style',    short:'5"K',  wide:false, price:10,   min:9,  priceKey:"gutter5",   endKey:"endcap5",   ds:["3x4","2x3"],    dsDefault:"3x4",    stripKey:"strip5",   bayKey:"bay5"},
+  {id:"6K",  kind:"gutter", name:'6" K-style',    short:'6"K',  wide:true,  price:10.5, min:9.5,priceKey:"gutter6",   endKey:"endcap6",   ds:["3x4","4round"], dsDefault:"3x4",    stripKey:"strip6",   bayKey:"bay6"},
+  {id:"6HR", kind:"gutter", name:'6" Half-round', short:'6"HR', wide:true,  price:16,   min:15, priceKey:"gutter6hr", endKey:"endcap6hr", ds:["4round"],       dsDefault:"4round", stripKey:"strip6hr", bayKey:"bay6hr"},
+  {id:"7K",  kind:"gutter", name:'7" K-style',    short:'7"K',  wide:true,  price:15,   min:14, priceKey:"gutter7",   endKey:"endcap7",   ds:["3x4","4x5"],    dsDefault:"3x4",    stripKey:"strip7",   bayKey:"bay7"},
+  {id:"2x3",    kind:"downspout", name:'2"×3"',    short:'2×3',      price:10,   min:9,     priceKey:"ds2x3",    outletKey:"outlet2x3",    elbowKey:"elbow2x3",    offsetKey:"offset2x3"},
+  {id:"3x4",    kind:"downspout", name:'3"×4"',    short:'3×4',      price:10.5, min:9.5,   priceKey:"ds3x4",    outletKey:"outlet3x4",    elbowKey:"elbow3x4",    offsetKey:"offset3x4"},
+  {id:"4round", kind:"downspout", name:'4" Round', short:'4″ Round', price:14.5, min:13.5,  priceKey:"ds4round", outletKey:"outlet4round", elbowKey:"elbow4round", offsetKey:"offset4round"},
+  {id:"4x5",    kind:"downspout", name:'4"×5"',    short:'4×5',      price:29,   min:28.53, priceKey:"ds4x5",    outletKey:"outlet4x5",    elbowKey:"elbow4x5",    offsetKey:"offset4x5"},
+  {id:"ez",   kind:"screen", name:"EZ Lock",     priceKey:"scrEz",   price:0, round:4},
+  {id:"eav",  kind:"screen", name:"Eav N Flow",  priceKey:"scrEav",  price:0, round:4},
+  {id:"leaf", kind:"screen", name:"Leafblaster", priceKey:"scrLeaf", price:0, round:4},
+  {id:"demo", kind:"service", fixed:"demo", name:"Demo gutter", mode:"stroke", round:1, priceKey:"demo", price:0, color:"#ff3b30"},
+  {id:"valley", kind:"part", fixed:"valley", name:"Valley shield",priceKey:"valley"},
+  {id:"acute",  kind:"part", fixed:"acute",  name:"Acute miter (add-on)", priceKey:"acute", price:60},
+  {id:"splashPlastic",  kind:"item", fixed:"splash", name:"Splash block — plastic",  priceKey:"splashPlastic",  price:10},
+  {id:"splashConcrete", kind:"item", fixed:"splash", name:"Splash block — concrete", priceKey:"splashConcrete", price:30},
+  {id:"diverters", kind:"item", fixed:"entry", name:"Diverters",      priceKey:"diverters", price:0, unit:"ea"},
+  {id:"leaf6",     kind:"item", fixed:"entry", name:'Leaf guard 6"',  priceKey:"leaf6",     price:0, unit:"ft"},
+  {id:"leaf5",     kind:"item", fixed:"entry", name:'Leaf guard 5"',  priceKey:"leaf5",     price:0, unit:"ft"},
+];
+const BOOK_FLAT_DEFAULT={gutter:9, gutterList:null, gutterMin:0, ds:9, dsList:null, dsMin:0};
+function loadCatalog(){
+  let c=null;
+  try{ c=JSON.parse(localStorage.getItem(CATALOG_KEY)||"null"); }catch(e){}
+  if(!c || !Array.isArray(c.products)) c={v:1, products:[]};
+  // a built-in can be hidden or re-priced but never deleted, and one added in a later build must
+  // reach a catalog saved before it existed — so merge the seed in rather than seed once
+  c.products=c.products.filter(p=>p && !(p.kind==="part" && ["strip","box","bay"].includes(p.id)));   // box miters are gone; strip/bay belong to each gutter now
+  const have=new Set(c.products.map(p=>p.id));
+  BUILTIN_PRODUCTS.forEach(b=>{ if(!have.has(b.id)) c.products.push(JSON.parse(JSON.stringify(b))); });
+  c.products.forEach(p=>{
+    const b=BUILTIN_PRODUCTS.find(x=>x.id===p.id);
+    if(b){
+      p.builtin=true; p.kind=b.kind; if(b.fixed) p.fixed=b.fixed;
+      // price keys are structure, not the rep's data: a built-in always carries the seed's
+      PRODUCT_KEY_FIELDS.forEach(k=>{ if(b[k]) p[k]=b[k]; });
+    }
+    normalizeProduct(p);
+  });
+  c.flat=Object.assign({}, BOOK_FLAT_DEFAULT, c.flat||{});
+  return c;
+}
+const PRODUCT_KEY_FIELDS=["priceKey","endKey","stripKey","bayKey","outletKey","elbowKey","offsetKey"];
+/* Bring an older product shape up to date — a stored catalog, one embedded in a saved job, or an
+   imported book. An earlier build gave a gutter one optional "own miter" (miterKey/miterRule…) and
+   otherwise shared strip/box/bay parts; every gutter now owns a strip AND a bay miter. */
+function normalizeProduct(p){
+  if(p.kind!=="gutter") return p;
+  if(!p.stripKey) p.stripKey=p.priceKey+"_strip";
+  if(!p.bayKey)   p.bayKey=p.priceKey+"_bay";
+  if(p.miterRule==="fixed"){
+    if(!p.stripRule){ p.stripRule="fixed"; p.stripPrice=+p.miterPrice||0; }
+    if(!p.bayRule){ p.bayRule="fixed"; p.bayPrice=+p.miterPrice||0; }
+  }
+  ["miter","miterKey","miterLabel","miterRule","miterPrice"].forEach(k=>delete p[k]);
+  return p;
+}
+let CATALOG=loadCatalog();
+function saveCatalog(){ try{ localStorage.setItem(CATALOG_KEY,JSON.stringify(CATALOG)); }catch(e){ setSaveTrouble("Products couldn't be saved on this device — use Export"); } }
+function catalogProduct(id){ return CATALOG.products.find(p=>sameProductId(p.id,id)) || null; }
+// Product ids come from uid() (a number) on legacy saves but reach us as strings from data-* attributes,
+// so every lookup compares loosely — a strict === here silently broke Edit and Delete.
+function sameProductId(a,b){ return a!=null && b!=null && String(a)===String(b); }
+// unique across devices: a job saved on one iPad must not collide with another iPad's products
+function newProductId(){ return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+/* ============================================================ */
 /* STATE                                                        */
 /* ============================================================ */
 
@@ -856,7 +1032,6 @@ function defaultProject(){
       gutterColor:"Colonial Gray",
       downspoutBrand:"Spectra",   // Spectra | ABC  — manufacturer color chart for downspouts
       downspoutColor:"Colonial Gray",
-      regularMiter:"strip",         // box | strip  (for ~90° corners)
       footagePerCorner:1,         // ft added to total per corner
       footagePerOutlet:1,         // ft added to total per outlet
       footagePerValley:2,         // ft per valley shield
@@ -881,24 +1056,22 @@ function defaultProject(){
       // so the old key would have left the magnifier on in jobs nobody ever switched it on in.
       gutterLoupe:false,
       tapDraw:false,              // point-by-point gutter drawing on touch (tap/drag each corner, ✓ to finish); a new plan turns it on
-      customProducts:[],          // [{id,name,pricePerFoot,color,mode}] user-defined products; mode: line|demo|screen
       pricingMode:"itemized",     // flat | itemized
-      flatGutterRate:9,
-      flatDownspoutRate:9,
+      flatGutterRate:CATALOG.flat.gutter,      // flat rates start from the price book (Products page)
+      flatDownspoutRate:CATALOG.flat.ds,
       // Discount pricing: listPrices is the standard $/ft the discount % is measured against,
       // minPrices is a hard floor the charged rate can never drop below (0 = no floor).
       // Both are keyed by style price key (STYLE_PRICE_KEYS); seeded in ensurePrices().
       listPrices:{},
       minPrices:{},
       discountName:"",            // e.g. "Military", "Senior" — labels the discount row ("" = plain "Discount")
-      flatGutterList:null,        // null = seed from the charged rate, so old jobs open at 0% off
-      flatDownspoutList:null,
-      flatGutterMin:0,
-      flatDownspoutMin:0,
-      demoRate:0,                 // $/ft for the Demo highlight tool (footage rounds up to whole ft)
-      screenEzRate:0,             // $/ft — EZ Lock gutter screen (footage rounds up to mult of 4)
-      screenEavRate:0,            // $/ft — Eav N Flow gutter screen
-      screenLeafRate:0,           // $/ft — Leafblaster gutter screen
+      flatGutterList:CATALOG.flat.gutterList,  // null = seed from the charged rate, so old jobs open at 0% off
+      flatDownspoutList:CATALOG.flat.dsList,
+      flatGutterMin:+CATALOG.flat.gutterMin||0,
+      flatDownspoutMin:+CATALOG.flat.dsMin||0,
+      // Demo / screen / custom-product $ live in `prices` under the product's priceKey; older saves
+      // carried demoRate, screen*Rate and a per-job customProducts list — ensurePrices() migrates them.
+      qty:{},                     // typed quantities for flat / hourly service products, by priceKey
       cardFee:3,
       amexFee:4,                  // shown in the PDF payment note (Amex surcharge)
       depositPct:25,
@@ -971,67 +1144,112 @@ let P = defaultProject();
 let nextId = 1;
 function uid(){ return nextId++; }
 
-/* ---- gutter & downspout style catalogs ----
-   One consolidated gutter tool + one downspout tool; the style/size is chosen from a dropdown.
-   `ds` = downspout sizes allowed for that gutter style; `dsDefault` = the size auto-selected. */
-const GUTTER_STYLES = [
-  {id:"5K",  label:'5" K-style',     short:'5"K',  wide:false, priceKey:"gutter5",   endKey:"endcap5",   ds:["3x4","2x3"],    dsDefault:"3x4"},
-  {id:"6K",  label:'6" K-style',     short:'6"K',  wide:true,  priceKey:"gutter6",   endKey:"endcap6",   ds:["3x4","4round"], dsDefault:"3x4"},
-  {id:"6HR", label:'6" Half-round',  short:'6"HR', wide:true,  priceKey:"gutter6hr", endKey:"endcap6hr", ds:["4round"],       dsDefault:"4round", miterKey:"miter6hr", miterLabel:"Half-round miter"},
-  {id:"7K",  label:'7" K-style',     short:'7"K',  wide:true,  priceKey:"gutter7",   endKey:"endcap7",   ds:["3x4","4x5"],    dsDefault:"3x4",     miterKey:"miter7",   miterLabel:'7" K miter'},
-];
-// default per-style $/ft (also seeds that style's end caps, miters & matching outlets via ensurePrices)
-const STYLE_DEFAULTS = {
-  gutter5:10, gutter6:10.5, gutter6hr:16, gutter7:15,
-  ds2x3:10, ds3x4:10.5, ds4round:14.5, ds4x5:29,
-};
-// Company floor per style $/ft — the lowest a rep may discount to. Editable per job under
-// Pricing; 0 means no floor.
-const MIN_DEFAULTS = {
-  gutter5:9, gutter6:9.5, gutter6hr:15, gutter7:14,
-  ds2x3:9, ds3x4:9.5, ds4round:13.5, ds4x5:28.53,
-};
-const DS_STYLES = [
-  {id:"2x3",    label:'2"×3"',      short:'2×3',      priceKey:"ds2x3",    outletKey:"outlet2x3",    elbowKey:"elbow2x3",    offsetKey:"offset2x3"},
-  {id:"3x4",    label:'3"×4"',      short:'3×4',      priceKey:"ds3x4",    outletKey:"outlet3x4",    elbowKey:"elbow3x4",    offsetKey:"offset3x4"},
-  {id:"4round", label:'4" Round',   short:'4″ Round', priceKey:"ds4round", outletKey:"outlet4round", elbowKey:"elbow4round", offsetKey:"offset4round"},
-  {id:"4x5",    label:'4"×5"',      short:'4×5',      priceKey:"ds4x5",    outletKey:"outlet4x5",    elbowKey:"elbow4x5",    offsetKey:"offset4x5"},
-];
+/* ---- gutter / downspout / screen lists, rebuilt from CATALOG by applyCatalog() ----
+   The same shapes every consumer has always read (label/short/priceKey/endKey/ds/dsDefault…), so the
+   drawing, takeoff and pickers don't care that the list is data now. All are consts refilled IN PLACE
+   (other code holds references). A `hidden` product stays in them — a job that already uses one must
+   still draw and price it — and only the pickers drop it, via pickable(). One consolidated gutter tool
+   + one downspout tool; `ds` = downspout sizes allowed for a gutter style, `dsDefault` the auto pick. */
+const GUTTER_STYLES = [];
+const DS_STYLES = [];
+const SCREEN_TYPES = [];
 // The only rates a discount applies to — everything else prices the same at list and charged.
 // Their AUTO components (end caps, miters, outlets, elbows, offsets, valley) follow along
 // because syncStylePricing derives those from these rates.
-const STYLE_PRICE_KEYS = [...GUTTER_STYLES.map(g=>g.priceKey), ...DS_STYLES.map(d=>d.priceKey)];
-function gutterStyle(id){ return GUTTER_STYLES.find(g=>g.id===id) || GUTTER_STYLES[1]; } // default 6K
-function dsStyle(id){ return DS_STYLES.find(d=>d.id===id) || DS_STYLES[1]; }            // default 3x4
-
-/* default itemized prices */
-const PRICE_KEYS = [
-  ...GUTTER_STYLES.map(g=>g.priceKey),
-  ...DS_STYLES.map(d=>d.priceKey),
-  "diverters",
-  ...DS_STYLES.map(d=>d.outletKey),
-  "valley","splashPlastic","splashConcrete","leaf6","leaf5","strip","box","bay","acute",
-  ...GUTTER_STYLES.filter(g=>g.miterKey).map(g=>g.miterKey),
-  ...DS_STYLES.map(d=>d.elbowKey),
-  ...DS_STYLES.map(d=>d.offsetKey),
-  ...GUTTER_STYLES.map(g=>g.endKey),
-];
-
-// Component unit prices that are DERIVED from a style $/ft (auto-synced, not hand-edited).
-// Gutter material: end caps, miters, outlets, valley shields. Downspout material: elbows, offsets.
-const DERIVED_KEYS = new Set([
-  ...GUTTER_STYLES.map(g=>g.endKey),
-  ...GUTTER_STYLES.filter(g=>g.miterKey).map(g=>g.miterKey),
-  "strip","box","bay","valley",
-  ...DS_STYLES.map(d=>d.outletKey),
-  ...DS_STYLES.map(d=>d.elbowKey),
-  ...DS_STYLES.map(d=>d.offsetKey),
-]);
+const STYLE_PRICE_KEYS = [];
+const PRICE_KEYS = [];          // takeoff lines priced q × unit $ in itemized mode (compute's priceAt)
+// Component unit prices DERIVED from a style $/ft (auto-synced, not hand-edited). A component the book
+// sets to a "fixed" rule drops out of here and becomes an ordinary editable price.
+const DERIVED_KEYS = new Set();
+const BOOK = {};                // priceKey -> {price,list,min}: what a job copies the first time it meets the key
+// worksheet line definitions (form order). kind: ft = linear feet, ea = count.
+// src: 'auto' (from drawing), or a settings key for manual entry.
+const LINES = [];
+// What each kind's components are and how "follow" prices them — read by syncStylePricing, the
+// Products tree and its editor, so the three can't describe a component differently.
+const COMPONENTS = {
+  gutter:[
+    {id:"end",   key:"endKey",   rule:"endRule",   price:"endPrice",   name:"End caps",  follows:"its $/ft × the end-cap allowance", allow:"footagePerEndcap"},
+    {id:"strip", key:"stripKey", rule:"stripRule", price:"stripPrice", name:"Strip miters", follows:"its $/ft, 1:1"},
+    {id:"bay",   key:"bayKey",   rule:"bayRule",   price:"bayPrice",   name:"Bay miters",   follows:"its $/ft, 1:1"},
+  ],
+  downspout:[
+    {id:"outlet", key:"outletKey", rule:"outletRule", price:"outletPrice", name:"Outlet",                   follows:"the job gutter's $/ft × the outlet allowance", allow:"footagePerOutlet", jobGutter:true},
+    {id:"elbow",  key:"elbowKey",  rule:"elbowRule",  price:"elbowPrice",  name:"Elbows (A / B)",           follows:"its $/ft × the elbow allowance",  allow:"footagePerElbow"},
+    {id:"offset", key:"offsetKey", rule:"offsetRule", price:"offsetPrice", name:'Offsets (2" / 4" / 6")', follows:"its $/ft × the offset allowance", allow:"footagePerOffset"},
+  ],
+};
+function applyCatalog(){
+  const prods=CATALOG.products;
+  GUTTER_STYLES.length=0; DS_STYLES.length=0; SCREEN_TYPES.length=0;
+  for(const p of prods){
+    const base={id:p.id,label:p.name,short:p.short||p.name,hidden:!!p.hidden,priceKey:p.priceKey};
+    if(p.kind==="gutter") GUTTER_STYLES.push(Object.assign(base,{wide:!!p.wide,endKey:p.endKey,
+      ds:(p.ds||[]).slice(),dsDefault:p.dsDefault,endRule:p.endRule||"follow",
+      stripKey:p.stripKey,bayKey:p.bayKey,stripRule:p.stripRule||"follow",bayRule:p.bayRule||"follow"}));
+    else if(p.kind==="downspout") DS_STYLES.push(Object.assign(base,{outletKey:p.outletKey,elbowKey:p.elbowKey,offsetKey:p.offsetKey,
+      outletRule:p.outletRule||"follow",elbowRule:p.elbowRule||"follow",offsetRule:p.offsetRule||"follow"}));
+    else if(p.kind==="screen") SCREEN_TYPES.push({id:p.id,name:p.name,priceKey:p.priceKey,round:Math.max(1,Math.round(+p.round||4)),hidden:!!p.hidden});
+  }
+  STYLE_PRICE_KEYS.length=0;
+  STYLE_PRICE_KEYS.push(...GUTTER_STYLES.map(g=>g.priceKey), ...DS_STYLES.map(d=>d.priceKey));
+  PRICE_KEYS.length=0;
+  PRICE_KEYS.push(
+    ...GUTTER_STYLES.map(g=>g.priceKey),
+    ...DS_STYLES.map(d=>d.priceKey),
+    "diverters",
+    ...DS_STYLES.map(d=>d.outletKey),
+    "valley","splashPlastic","splashConcrete","leaf6","leaf5",
+    ...GUTTER_STYLES.map(g=>g.stripKey),
+    ...GUTTER_STYLES.map(g=>g.bayKey),
+    "acute",
+    ...DS_STYLES.map(d=>d.elbowKey),
+    ...DS_STYLES.map(d=>d.offsetKey),
+    ...GUTTER_STYLES.map(g=>g.endKey));
+  DERIVED_KEYS.clear();
+  DERIVED_KEYS.add("valley");
+  for(const p of prods) for(const c of (COMPONENTS[p.kind]||[])){
+    if(p[c.key] && (p[c.rule]||"follow")!=="fixed") DERIVED_KEYS.add(p[c.key]);
+  }
+  for(const k in BOOK) delete BOOK[k];
+  for(const p of prods){
+    if(p.priceKey && !DERIVED_KEYS.has(p.priceKey))
+      BOOK[p.priceKey]={price:+p.price||0, list:(p.list==null||p.list==="")?null:+p.list, min:+p.min||0};
+    for(const c of (COMPONENTS[p.kind]||[])){
+      if(p[c.key] && p[c.rule]==="fixed") BOOK[p[c.key]]={price:+p[c.price]||0, list:null, min:0};
+    }
+  }
+  LINES.length=0;
+  const hid=(st)=>!!st.hidden;
+  LINES.push(
+    ...GUTTER_STYLES.map(g=>({key:g.priceKey, label:'GUTTER '+g.short,        kind:"ft", src:"auto", hidden:hid(g)})),
+    ...DS_STYLES.map(d=>({key:d.priceKey,     label:'DOWNSPOUT '+d.short,     kind:"ft", src:"auto", hidden:hid(d)})),
+    {key:"diverters",label:"DIVERTERS",        kind:"ea", src:"diverters"},
+    ...DS_STYLES.map(d=>({key:d.outletKey,    label:'OUTLETS '+d.short,       kind:"ea", src:"auto", hidden:hid(d)})),
+    {key:"valley",   label:"VALLEY SHIELD",    kind:"ea", src:"auto", tag:"VS"},
+    {key:"splashPlastic",  label:"SPLASH BLOCK — PLASTIC",  kind:"ea", src:"auto"},
+    {key:"splashConcrete", label:"SPLASH BLOCK — CONCRETE", kind:"ea", src:"auto"},
+    {key:"leaf6",    label:'LEAF GUARD 6"',    kind:"ft", src:"leafGuard6"},
+    {key:"leaf5",    label:'LEAF GUARD 5"',    kind:"ft", src:"leafGuard5"},
+    ...GUTTER_STYLES.map(g=>({key:g.stripKey, label:'STRIP MITER '+g.short,   kind:"ea", src:"auto", hidden:hid(g)})),
+    ...GUTTER_STYLES.map(g=>({key:g.bayKey,   label:'BAY MITER '+g.short,     kind:"ea", src:"auto", hidden:hid(g)})),
+    {key:"acute",    label:"ACUTE MITER (ADD-ON)", kind:"ea", src:"auto"},
+    ...DS_STYLES.map(d=>({key:d.elbowKey,     label:'ELBOWS '+d.short,        kind:"ea", src:"auto", hidden:hid(d)})),
+    ...DS_STYLES.map(d=>({key:d.offsetKey,    label:'OFFSET '+d.short,        kind:"ea", src:"auto", hidden:hid(d)})),
+    ...GUTTER_STYLES.map(g=>({key:g.endKey,   label:'END CAPS '+g.short,      kind:"ea", src:"auto", hidden:hid(g)})));
+}
+applyCatalog();
+// fallbacks are the 6"K / 3×4 defaults by id, not by position — the list's order is the rep's now
+function gutterStyle(id){ return GUTTER_STYLES.find(g=>g.id===id) || GUTTER_STYLES.find(g=>g.id==="6K") || GUTTER_STYLES[0]; }
+function dsStyle(id){ return DS_STYLES.find(d=>d.id===id) || DS_STYLES.find(d=>d.id==="3x4") || DS_STYLES[0]; }
+// what a picker offers: everything not hidden, plus the current value even if it is (or a select
+// would silently show — and on change, write — some other style)
+function pickable(list,cur){ return list.filter(x=>!x.hidden || x.id===cur); }
 
 // Re-derive every style-related component price so all of a style's components match
 // that style's $/ft. End caps/outlets/valley shields are gutter material (priced from the
 // gutter style, multiplied by their LF allowance); elbows/offsets are downspout material;
-// miters match the gutter $/ft 1:1.
+// a style's strip and bay miters match its own $/ft 1:1. A component the book prices "fixed" is left alone.
 // Takes the price map to work on so the same derivation can run over a LIST price map
 // (see listPriceMap) as well as the live one. Defaults to the live map.
 function syncStylePricing(p){
@@ -1039,44 +1257,74 @@ function syncStylePricing(p){
   const jobG = +p[gutterStyle(s.gutterType).priceKey]||0;   // job gutter $/ft drives shared gutter-material parts
   GUTTER_STYLES.forEach(g=>{
     const base=+p[g.priceKey]||0;
-    p[g.endKey]   = base*(+s.footagePerEndcap||0);   // end cap = its gutter style, ×LF allowance
-    if(g.miterKey) p[g.miterKey]=base;               // 6"HR / 7"K special miter = that gutter's $/ft
+    if(g.endRule!=="fixed") p[g.endKey] = base*(+s.footagePerEndcap||0);   // end cap = its gutter style, ×LF allowance
+    if(g.stripRule!=="fixed") p[g.stripKey]=base;                          // each style's own strip + bay miters
+    if(g.bayRule!=="fixed")   p[g.bayKey]=base;                            //   are that gutter's $/ft, 1:1
   });
-  p.strip=jobG; p.box=jobG; p.bay=jobG;              // standard 5"K/6"K miters match the job gutter $/ft
   p.valley = jobG*(+s.footagePerValley||0);          // valley shield = 2 LF of gutter material
   DS_STYLES.forEach(d=>{
     const dbase=+p[d.priceKey]||0;
-    p[d.outletKey] = jobG*(+s.footagePerOutlet||0);  // outlet = gutter material (hole in the gutter)
-    p[d.elbowKey]  = dbase*(+s.footagePerElbow||0);  // elbow  = its downspout style, ×LF allowance
-    p[d.offsetKey] = dbase*(+s.footagePerOffset||0); // offset = its downspout style, ×LF allowance
+    if(d.outletRule!=="fixed") p[d.outletKey] = jobG*(+s.footagePerOutlet||0);  // outlet = gutter material (hole in the gutter)
+    if(d.elbowRule!=="fixed")  p[d.elbowKey]  = dbase*(+s.footagePerElbow||0);  // elbow  = its downspout style, ×LF allowance
+    if(d.offsetRule!=="fixed") p[d.offsetKey] = dbase*(+s.footagePerOffset||0); // offset = its downspout style, ×LF allowance
   });
 }
 
+/* Older saves: Demo / screen $ were loose settings and custom products were a per-job list whose
+   price lived on the product. Both move into prices[priceKey] here — the one migration hook, run by
+   ensurePrices() whenever an option's settings meet the app (load, option totals, undo). P.objects is
+   always that option's drawing when this runs, so its runs can be re-pointed at the catalog ids. */
+function migrateLegacyPricing(s){
+  const p=s.prices;
+  [["demoRate","demo"],["screenEzRate","scrEz"],["screenEavRate","scrEav"],["screenLeafRate","scrLeaf"]].forEach(([old,key])=>{
+    if(s[old]!=null){ if(p[key]==null) p[key]=+s[old]||0; delete s[old]; }
+  });
+  if(Array.isArray(s.customProducts)){
+    for(const cp of s.customProducts){
+      const prod=adoptLegacyProduct(cp);
+      if(p[prod.priceKey]==null) p[prod.priceKey]=+cp.pricePerFoot||0;
+      (P.objects||[]).forEach(o=>{ if((o.t==="custom"||o.t==="item") && sameProductId(o.productId,cp.id)) o.productId=prod.id; });
+    }
+    delete s.customProducts;
+  }
+}
+// Legacy ids were per-job uid()s — two jobs' "12" can be different products — so match by name+mode,
+// which also folds the same "Fascia wrap" from many old jobs into one catalog product.
+function adoptLegacyProduct(cp){
+  const mode=cp.mode||"line", sig=String(cp.name||"")+"|"+mode;
+  let prod=CATALOG.products.find(x=>x.legacySig===sig);
+  if(prod) return prod;
+  const id=newProductId();
+  prod={id, kind:mode==="item"?"item":"line", mode:mode==="item"?"item":(mode==="line"?"line":"stroke"),
+    name:cp.name||"Custom", color:cp.color||"#7a4fd6", price:+cp.pricePerFoot||0, priceKey:"k_"+id, legacySig:sig};
+  if(mode==="demo") prod.round=1;
+  if(mode==="screen") prod.round=4;
+  if(cp.tag) prod.tag=cp.tag;
+  CATALOG.products.push(prod); saveCatalog(); applyCatalog();
+  return prod;
+}
+
 function ensurePrices(){
-  const p = P.settings.prices = P.settings.prices || {};
-  // seed master per-style $/ft prices
-  for(const k in STYLE_DEFAULTS){ if(p[k]==null) p[k]=STYLE_DEFAULTS[k]; }
-  // splash blocks: plastic $10, concrete $30 (hand-editable)
-  if(p.splashPlastic==null) p.splashPlastic=10;
-  if(p.splashConcrete==null) p.splashConcrete=30;
-  // acute miter: a flat add-on per corner sharper than 90−bayDeviation, on top of that corner's
-  // regular miter. Hand-editable, not derived from any style rate, so a discount never touches it.
-  if(p.acute==null) p.acute=60;
+  const s=P.settings;
+  const p = s.prices = s.prices || {};
+  migrateLegacyPricing(s);
+  if(!s.qty || typeof s.qty!=="object") s.qty={};
+  // seed every book price the job hasn't met yet; a key it already has is the job's own and stays
+  for(const k in BOOK){ if(p[k]==null) p[k]=BOOK[k].price; }
   // anything not seeded yet defaults to 0
   PRICE_KEYS.forEach(k=>{ if(p[k]==null) p[k]=0; });
 
   // --- discount baselines ---------------------------------------------------
-  // List $/ft seeds from whatever rate the job is already using (NOT from STYLE_DEFAULTS),
-  // so every job saved before this feature existed opens showing 0% discount.
-  const s=P.settings;
+  // List $/ft seeds from whatever rate the job is already using (NOT from the book's list),
+  // so every job saved before this feature existed opens showing 0% discount. A style the job is
+  // meeting for the first time was just seeded at the book price, so it opens at 0% off too.
   const L = s.listPrices = s.listPrices || {};
   const M = s.minPrices  = s.minPrices  || {};
   for(const k of STYLE_PRICE_KEYS){
-    if(L[k]==null) L[k] = (p[k]!=null ? +p[k]||0 : (+STYLE_DEFAULTS[k]||0));
+    if(L[k]==null) L[k] = +p[k]||0;
     // Seeding a floor must never reprice a job that was quoted before floors existed:
-    // grandfather anything already below the company default down to its own rate.
-    // A new project can't hit this — every STYLE_DEFAULT sits above its MIN_DEFAULT.
-    if(M[k]==null) M[k] = Math.min(+MIN_DEFAULTS[k]||0, +p[k]||0);
+    // grandfather anything already below the book's floor down to its own rate.
+    if(M[k]==null) M[k] = Math.min(+(BOOK[k]&&BOOK[k].min)||0, +p[k]||0);
   }
   if(s.flatGutterList==null)    s.flatGutterList    = +s.flatGutterRate||0;
   if(s.flatDownspoutList==null) s.flatDownspoutList = +s.flatDownspoutRate||0;
@@ -1208,13 +1456,8 @@ function feetToWorld(ft){
 }
 
 /* ---- highlight-stroke tools (Demo / Gutter screen / stroke-mode custom products) ---- */
-// Gutter screen comes in three products, each with its own $/ft rate setting.
-const SCREEN_TYPES = [
-  {id:"ez",   name:"EZ Lock",     rate:"screenEzRate"},
-  {id:"eav",  name:"Eav N Flow",  rate:"screenEavRate"},
-  {id:"leaf", name:"Leafblaster", rate:"screenLeafRate"},
-];
-function screenTypeDef(id){ return SCREEN_TYPES.find(t=>t.id===id) || SCREEN_TYPES[0]; }
+// Gutter screen products come from the catalog (kind "screen"), each with its own $/ft and rounding.
+function screenTypeDef(id){ return SCREEN_TYPES.find(t=>t.id===id) || SCREEN_TYPES.find(t=>t.id==="ez") || SCREEN_TYPES[0]; }
 // raw (un-rounded) footage of a freehand stroke path, using the current ft/square scale
 function pathFeetRaw(pts){
   if(!pts||pts.length<2) return 0;
@@ -1222,16 +1465,23 @@ function pathFeetRaw(pts){
   const fps=drawingFps();
   return fps>0 ? (d/GRID)*fps : 0;
 }
-// rounding by stroke mode: demo -> next whole ft; screen -> next multiple of 4
+// round a stroke's footage up to its step: a number of ft, or the legacy mode names
+// ("demo" -> next whole ft, "screen" -> next multiple of 4)
 function roundStrokeFeet(raw, mode){
   raw=+raw||0; if(raw<=0) return 0;
-  return mode==="screen" ? Math.ceil(raw/4 - 1e-9)*4 : Math.ceil(raw - 1e-9);
+  const step = mode==="screen" ? 4 : mode==="demo" ? 1 : Math.max(1,+mode||1);
+  return Math.ceil(raw/step - 1e-9)*step;
 }
-// behavior mode of a custom product: "line" (polyline, default) | "demo" | "screen" | "item"
+// behavior mode of a tool product: "line" (polyline, default) | "stroke" | "item" | "flat" | "hour"
 function productMode(prod){ return (prod && prod.mode) || "line"; }
-// Which modes paint as a freehand highlight. "item" is NOT one — it taps a marker down — so every
-// stroke test asks this rather than productMode()!=="line", which would smear an item tool.
-function strokeMode(prod){ const m=productMode(prod); return (m==="demo"||m==="screen")?m:null; }
+// Which products paint as a freehand highlight; returns the rounding step in ft (always >= 1, so
+// truthy). "item" is NOT one — it taps a marker down — so every stroke test asks this rather than
+// productMode()!=="line", which would smear an item tool.
+function strokeMode(prod){
+  const m=productMode(prod);
+  if(m==="stroke") return Math.max(1,Math.round(+prod.round||1));
+  return m==="demo" ? 1 : m==="screen" ? 4 : null;   // pre-catalog product shapes
+}
 /* Symbol drawn on an item's chip: the rep's own tag, else initials ("Flex hose" -> FH); a one-word
    name keeps its first 3 letters so a single initial never stands alone on the diagram. */
 function productTag(prod){
@@ -1240,10 +1490,7 @@ function productTag(prod){
   const w=String((prod&&prod.name)||"").split(/[^A-Za-z0-9]+/).filter(Boolean);
   return (w.length>1 ? w.map(x=>x[0]).join("").slice(0,4) : (w[0]||"IT").slice(0,3)).toUpperCase();
 }
-// Product ids come from uid() (a number) but reach us as strings from data-* attributes,
-// so every lookup compares loosely — a strict === here silently broke Edit and Delete.
-function sameProductId(a,b){ return a!=null && b!=null && String(a)===String(b); }
-function productOf(id){ return (P.settings.customProducts||[]).find(p=>sameProductId(p.id,id)) || null; }
+function productOf(id){ return catalogProduct(id); }
 // is the active custom product a freehand-stroke product?
 function customStrokeMode(){ return strokeMode(productOf(activeCustom)); }
 
@@ -1416,8 +1663,14 @@ function parseDS(str){
   return {a,b,o2,o4,o6,feet,elbows:a+b,offsets:o2+o4+o6,outlets:1};
 }
 
-/* downspout sizes allowed for a gutter style (defaults to the job gutter style) */
-function allowedDsSizes(type){ return gutterStyle(type||P.settings.gutterType).ds; }
+/* downspout sizes allowed for a gutter style (defaults to the job gutter style). Hidden or deleted
+   sizes drop out; a style left with none offers every visible size rather than an empty picker. */
+function allowedDsSizes(type){
+  const live=new Set(DS_STYLES.filter(d=>!d.hidden).map(d=>d.id));
+  const ok=(gutterStyle(type||P.settings.gutterType).ds||[]).filter(id=>live.has(id));
+  return ok.length ? ok : [...live];
+}
+function defaultDsFor(type){ const a=allowedDsSizes(type), d=gutterStyle(type).dsDefault; return a.includes(d) ? d : a[0]; }
 function dsSizeFor(o){
   return o.size || P.settings.defaultDownspoutSize;
 }
@@ -1595,7 +1848,7 @@ function cornerKind(ang){
 }
 // materialList() row name: the style's miter, split inside/outside so the crew loads the right ones
 function miterPart(gms,c){
-  const part=gms.miterKey ? gms.miterLabel : (c.bay?"Bay miter":(P.settings.regularMiter==="strip"?"Strip miter":"Box miter"));
+  const part=(c.bay?"Bay miter ":"Strip miter ")+gms.short;   // the style's own miter, like 'End cap 6"HR'
   return part+(c.inside?" — inside":" — outside");
 }
 
@@ -1733,15 +1986,16 @@ function compute(){
   const q={diverters:+s.diverters||0, valley:0,
     splashPlastic:0, splashConcrete:0,
     leaf6:+s.leafGuard6||0, leaf5:+s.leafGuard5||0,
-    strip:0,box:0,bay:0,acute:0};
-  GUTTER_STYLES.forEach(g=>{ q[g.priceKey]=0; q[g.endKey]=0; if(g.miterKey) q[g.miterKey]=0; });
+    acute:0};
+  GUTTER_STYLES.forEach(g=>{ q[g.priceKey]=0; q[g.endKey]=0; q[g.stripKey]=0; q[g.bayKey]=0; });
   DS_STYLES.forEach(d=>{ q[d.priceKey]=0; q[d.outletKey]=0; q[d.elbowKey]=0; q[d.offsetKey]=0; });
   let corners=0;
   const fronts=runFronts();   // once per takeoff — runCorners/junctionCorners would each re-derive it
-  // one aggregate per custom product; `mode` decides whether it bills by the foot or each
+  // one aggregate per tool product (custom runs, items, drawn services); `mode` decides whether it
+  // bills by the foot or each. Its rate is the JOB's price for the product, not the book's.
   const customAgg={};
-  const newCustomAgg=(pid,prod,o,mode)=>({id:pid,name:prod?prod.name:"Custom",rate:prod?(+prod.pricePerFoot||0):0,
-    color:(prod?prod.color:o.color)||"#7a4fd6",mode,rawFeet:0,count:0});
+  const newCustomAgg=(pid,prod,o,mode)=>({id:pid,name:prod?prod.name:"Custom",rate:prod?(+s.prices[prod.priceKey]||0):0,
+    color:(prod?prod.color:o.color)||"#7a4fd6",mode,step:prod?strokeMode(prod):null,kind:prod?prod.kind:"line",rawFeet:0,count:0});
   const dsRaw={};   // downspout pipe footage by size|color, before 10ft rounding
   let demoRaw=0;                       // raw demo highlight footage (rounded up to whole ft after loop)
   const screenRaw={};                  // raw gutter-screen footage by type (rounded up to mult of 4)
@@ -1756,9 +2010,7 @@ function compute(){
       const cs=runCorners(o,fronts);
       for(const c of cs){
         corners++;
-        if(gs.miterKey) q[gs.miterKey]++;        // 6"HR & 7"K: their own special miter strip
-        else if(c.bay) q.bay++;
-        else if(s.regularMiter==="strip") q.strip++; else q.box++;
+        q[c.bay?gs.bayKey:gs.stripKey]++;        // every style has its own strip + bay miter
         if(c.acute) q.acute++;                   // on top of the regular miter, never instead of it
       }
       // end caps: only on free (open) ends; corners/junctions/closed loops get none
@@ -1781,7 +2033,7 @@ function compute(){
       const prod=productOf(o.productId);
       // a product switched to Item mode leaves its already-drawn runs behind: bill them by the
       // foot rather than silently dropping their footage out of the estimate
-      const mode=strokeMode(prod)||"line";
+      const mode=strokeMode(prod)?"stroke":"line";
       const pid=o.productId||"_";
       const raw = (o.stroke||mode!=="line") ? pathFeetRaw(o.pts) : (o.lengths||[]).reduce((a,b)=>a+(+b||0),0);
       customAgg[pid]=customAgg[pid]||newCustomAgg(pid,prod,o,mode);
@@ -1802,28 +2054,38 @@ function compute(){
   for(const c of junctionCorners(fronts)){
     corners++;
     const gms=gutterStyle(gutterSizeFor(c.run));
-    if(gms.miterKey) q[gms.miterKey]++;
-    else if(c.bay) q.bay++;
-    else if(s.regularMiter==="strip") q.strip++; else q.box++;
+    q[c.bay?gms.bayKey:gms.stripKey]++;
     if(c.acute) q.acute++;
   }
   // custom product rows + total cost (stroke-mode products round their aggregate footage).
   // Every row carries qty+unit so materialList() and the worksheet can print "ea" or "ft" without
   // re-deciding the mode; `feet` stays for the footage rows the flat-price totals still read.
-  const customRows=Object.values(customAgg).map(c=>{
-    if(c.mode==="item") return {id:c.id,name:c.name,rate:c.rate,color:c.color,mode:c.mode,feet:0,qty:c.count,unit:"ea",amount:c.count*c.rate};
-    const feet = c.mode==="line" ? c.rawFeet : roundStrokeFeet(c.rawFeet, c.mode);
-    return {id:c.id,name:c.name,rate:c.rate,color:c.color,mode:c.mode,feet,qty:feet,unit:"ft",amount:feet*c.rate};
+  // Services are their own group (own estimate section, own PDF line each); custom runs and items
+  // keep printing as the one "Custom products" line they always have.
+  const aggRows=Object.values(customAgg).map(c=>{
+    if(c.mode==="item") return {id:c.id,kind:c.kind,name:c.name,rate:c.rate,color:c.color,mode:c.mode,feet:0,qty:c.count,unit:"ea",amount:c.count*c.rate};
+    const feet = c.mode==="line" ? c.rawFeet : roundStrokeFeet(c.rawFeet, c.step||c.mode);
+    return {id:c.id,kind:c.kind,name:c.name,rate:c.rate,color:c.color,mode:c.mode,feet,qty:feet,unit:"ft",amount:feet*c.rate};
   });
+  const customRows=aggRows.filter(c=>c.kind!=="service");
   const customTotal=customRows.reduce((a,c)=>a+c.amount,0);
   const customFootage=customRows.reduce((a,c)=>a+(c.unit==="ft"?c.feet:0),0);
+  // flat / hourly services aren't drawn: their quantity is typed on the Estimate tab (settings.qty)
+  const serviceRows=aggRows.filter(c=>c.kind==="service");
+  for(const prod of CATALOG.products){
+    if(prod.kind!=="service" || (prod.mode!=="flat" && prod.mode!=="hour")) continue;
+    const qty=+s.qty[prod.priceKey]||0; if(!qty) continue;
+    const rate=+s.prices[prod.priceKey]||0;
+    serviceRows.push({id:prod.id,kind:"service",name:prod.name,rate,color:prod.color||"",mode:prod.mode,feet:0,qty,unit:prod.mode==="hour"?"hr":"ea",amount:qty*rate});
+  }
+  const serviceTotal=serviceRows.reduce((a,c)=>a+c.amount,0);
 
   // demo + gutter-screen rows (always priced, in both flat and itemized modes)
   const demoFeet=roundStrokeFeet(demoRaw,"demo");
-  const demoAmount=demoFeet*(+s.demoRate||0);
-  const screenRows=SCREEN_TYPES.map(t=>{ const feet=roundStrokeFeet(screenRaw[t.id]||0,"screen"); const rate=+s[t.rate]||0; return {id:t.id,name:t.name,feet,rate,amount:feet*rate}; }).filter(r=>r.feet>0);
+  const demoAmount=demoFeet*(+s.prices.demo||0);
+  const screenRows=SCREEN_TYPES.map(t=>{ const feet=roundStrokeFeet(screenRaw[t.id]||0,t.round); const rate=+s.prices[t.priceKey]||0; return {id:t.id,name:t.name,feet,rate,amount:feet*rate}; }).filter(r=>r.feet>0);
   const screenTotal=screenRows.reduce((a,r)=>a+r.amount,0);
-  const addOns=demoAmount+screenTotal;
+  const addOns=demoAmount+screenTotal+serviceTotal;
 
   // round each downspout pipe group (size+color) up to 10ft sections, then total by size
   for(const k in dsRaw){
@@ -1857,7 +2119,7 @@ function compute(){
   // Price the same takeoff twice — once at the rates we're charging, once at list rates —
   // so the estimate can show the discount as a percentage of the standard price.
   // Only the gutter/downspout $/ft differ between the two passes; leaf guard, splash blocks,
-  // diverters, screens, demo, custom products and Misc/Labor price identically in both.
+  // diverters, screens, demo, services, custom products and Misc/Labor price identically in both.
   const freeKeys = nc ? new Set([...GUTTER_STYLES.map(g=>g.endKey), ...DS_STYLES.map(d=>d.outletKey)]) : null;
   function priceAt(p,flatGut,flatDs){
     const amt={};
@@ -1896,7 +2158,7 @@ function compute(){
   const remaining = grand - deposit;
 
   return {q,amt,corners,outlets,gutterFootage,dsFootage,itemizedSub,leafAmount,splashAmount,
-          customRows,customTotal,customFootage,
+          customRows,customTotal,customFootage,serviceRows,serviceTotal,
           demoFeet,demoAmount,screenRows,screenTotal,
           turnkey,calcTurnkey,overridden,listTurnkey,discountAmt,discountPct,hasDiscount,
           cardFee,grand,deposit,remaining};
@@ -1904,6 +2166,8 @@ function compute(){
 
 function money(n){ return "$"+(Math.round((+n||0)*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function ftStr(n){ n=+n||0; return (Math.round(n*10)/10)+"'"; }
+// a service row's quantity as printed: 24' / 3 ea / 2.5 hr
+function svcQtyStr(r){ return r.unit==="ft" ? ftStr(r.qty) : r1(r.qty)+" "+r.unit; }
 // ISO yyyy-mm-dd -> "Month D, YYYY" (parsed by parts to avoid UTC off-by-one)
 function fmtDate(iso){
   const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(iso||""); if(!m) return iso||"";
@@ -2003,6 +2267,8 @@ function materialList(){
   if(+s.leafGuard6) out.push({item:'Leaf guard 6"',qty:+s.leafGuard6,unit:"ft",color:s.gutterColor,brand:gb});
   if(+s.leafGuard5) out.push({item:'Leaf guard 5"',qty:+s.leafGuard5,unit:"ft",color:s.gutterColor,brand:gb});
   (r.customRows||[]).forEach(c=>out.push({item:c.name+" (custom)",qty:r1(c.qty),unit:c.unit,color:c.color}));
+  // drawn services tell the crew where the work is; typed flat / hourly charges aren't material
+  (r.serviceRows||[]).filter(c=>c.mode!=="flat"&&c.mode!=="hour").forEach(c=>out.push({item:c.name,qty:r1(c.qty),unit:c.unit,color:""}));
   if(r.demoFeet>0) out.push({item:"Demo gutter",qty:r.demoFeet,unit:"ft",color:""});
   (r.screenRows||[]).forEach(sc=>out.push({item:"Gutter screen — "+sc.name,qty:sc.feet,unit:"ft",color:""}));
   return out;
@@ -2766,7 +3032,7 @@ function paintStroke(o, fallback, mode, tag){
 }
 function drawHL(o){ paintStroke(o, getCSS("--hl"), null); }
 function drawDemo(o){ paintStroke(o, "#ff3b30", "demo", "DEMO"); }
-function drawScreen(o){ const t=screenTypeDef(o.screenType); paintStroke(o, "#34c759", "screen", t.name); }
+function drawScreen(o){ const t=screenTypeDef(o.screenType); paintStroke(o, "#34c759", t.round, t.name); }
 
 /* ---- symbol legend ----
    Lists only what's on THIS option's drawing, so a simple job gets a two-line key. Built as HTML
@@ -2800,7 +3066,7 @@ function legendItems(){
     }
   }
   for(const c of junctionCorners()){ if(c.bay) bay=true; else reg=true; }
-  if(reg) out.push({k:"miter",label:"Corner miter"});
+  if(reg) out.push({k:"miter",label:"Strip miter"});
   if(bay) out.push({k:"bay",label:"Bay miter"});
   return out;
 }
@@ -3097,7 +3363,7 @@ function drawInProgress(){
   } else if(drawing.t==="demo"){
     ctx.restore(); paintStroke({pts:drawing.pts,color:demoColor,width:demoWidth},"#ff3b30","demo","DEMO"); ctx.save();
   } else if(drawing.t==="screen"){
-    ctx.restore(); paintStroke({pts:drawing.pts,color:screenColor,width:screenWidth},"#34c759","screen",screenTypeDef(screenDrawType).name); ctx.save();
+    ctx.restore(); paintStroke({pts:drawing.pts,color:screenColor,width:screenWidth},"#34c759",screenTypeDef(screenDrawType).round,screenTypeDef(screenDrawType).name); ctx.save();
   } else if(drawing.t==="text"&&cursorW){
     const a=worldToScreen(drawing.start),b=worldToScreen(cursorW);
     ctx.strokeStyle="#2b7fd0";ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
@@ -3219,13 +3485,21 @@ const BASE_TOOLS=[
   {id:"stamp",behavior:"stamp",icon:"stamp",name:"Stamp",key:"M"},
   {id:"hl",behavior:"hl",icon:"hl",name:"Highlighter (demo/labor)",key:"Y"}
 ];
+// every catalog product drawn with its own dock button: custom runs, tapped items, and drawn services.
+// Built-ins wired to their own tool (Demo, splash…) and typed flat/hourly services aren't tools.
+function isToolProduct(p){
+  if(!p || p.fixed || !["line","item","service"].includes(p.kind)) return false;
+  const m=productMode(p); return m==="line"||m==="stroke"||m==="item";
+}
 function customTools(){
-  return (P.settings.customProducts||[]).map(p=>({id:"custom:"+p.id,behavior:"custom",icon:"custom",custom:p.id,name:p.name,lbl:(p.name||"").slice(0,5)}));
+  // the active one stays even if hidden meanwhile, so its button doesn't vanish mid-drawing
+  return CATALOG.products.filter(p=>isToolProduct(p) && (!p.hidden || sameProductId(p.id,activeCustom)))
+    .map(p=>({id:"custom:"+p.id,behavior:"custom",icon:"custom",custom:p.id,name:p.name,lbl:(p.name||"").slice(0,5)}));
 }
 function allTools(){
   // insert custom product tools + an "add custom" button right after the gutter/ds group
   const ct=customTools();
-  const addBtn={id:"addCustom",behavior:"_action",icon:"add",name:"Add custom product"};
+  const addBtn={id:"addCustom",behavior:"_action",icon:"add",name:"Quick add a custom product"};
   const out=[];
   for(const t of BASE_TOOLS){
     out.push(t);
@@ -3248,7 +3522,7 @@ function buildDock(){
     const key = t.key? '<span class="kbd">'+t.key+'</span>' : '';
     b.innerHTML=(ICON[t.icon]||ICON.custom)+lbl+key+'<span class="tip">'+t.name+(t.key?' ('+t.key+')':'')+'</span>';
     b.title=t.name+(t.key?' ('+t.key+')':'');
-    b.onclick=()=>{ if(t.behavior==="_action"){ if(t.id==="addCustom") openCustomProduct(); } else setTool(t.id); };
+    b.onclick=()=>{ if(t.behavior==="_action"){ if(t.id==="addCustom") openQuickProduct(); } else setTool(t.id); };
     d.appendChild(b);
   }
   d.scrollTop=keepScroll;   // rebuilt on every setTool — don't jump back to the top after picking a low tool
@@ -3276,7 +3550,10 @@ function toolHint(t){
   if(t==="custom"){
     const p=productOf(activeCustom);
     if(productMode(p)==="item") return "Tap to drop a "+((p&&p.name)||"item")+" — priced each • move or delete it via Select";
+    const st=strokeMode(p);
+    if(st) return "Drag over the runs to mark "+((p&&p.name)||"it")+" — footage rounds up to "+(st===1?"the whole ft":"the next "+st+" ft");
   }
+  if(t==="screen"){ const n=screenTypeDef(screenDrawType).round; return "Pick a screen type above, then drag over the runs — footage rounds up to "+(n===1?"the whole ft":"the next "+n+" ft"); }
   return ({
     // Kept short on purpose — this one is always on screen. The box-selection nuance (whole run
     // vs. just the crossed segments) and label snap-back are explained contextually instead, by
@@ -3599,7 +3876,7 @@ function buildOptbar(){
   if(tool==="gutter"){
     const gsz=(gutterDrawSize||P.settings.gutterType);
     h+='<span class="ob-title">GUTTER</span>'+dv
-      + g('<label>Style</label><select id="opGutStyle">'+GUTTER_STYLES.map(st=>'<option value="'+st.id+'"'+(st.id===gsz?' selected':'')+'>'+st.label+'</option>').join("")+'</select>')+dv
+      + g('<label>Style</label><select id="opGutStyle">'+pickable(GUTTER_STYLES,gsz).map(st=>'<option value="'+st.id+'"'+(st.id===gsz?' selected':'')+'>'+st.label+'</option>').join("")+'</select>')+dv
       + g('<label>Brand</label><select id="opGutBrand">'+BRANDS.map(b=>'<option value="'+b+'"'+(b===gutterBrand()?' selected':'')+'>'+b+'</option>').join("")+'</select>')
       + g('<label>Color</label><span class="swatch" id="opGutSw" style="background:'+colorHex(gutterDrawColor||P.settings.gutterColor,gutterBrand())+'"></span><select id="opGutColor">'+colorOptions(gutterDrawColor||P.settings.gutterColor,gutterBrand())+'</select>')
       + dv + g('<label><input type="checkbox" id="opAuto" '+(P.settings.autoMeasure?"checked":"")+'> Auto-measure</label>')
@@ -3626,17 +3903,18 @@ function buildOptbar(){
       + g('<label>$ each</label><input id="opSplashPrice" type="number" min="0" step="1" inputmode="decimal" value="'+(+pr[mat==="concrete"?"splashConcrete":"splashPlastic"]||0)+'" style="width:64px">')
       + '<span class="mini" style="color:var(--text-soft)">Tap to drop • each block can be switched later via Select</span>';
   } else if(tool==="custom"){
-    const p=productOf(activeCustom)||{name:"Custom",pricePerFoot:0,color:"#c8202a"};
+    const p=productOf(activeCustom)||{name:"Custom",priceKey:"",color:"#c8202a"};
+    ensurePrices();
     const sm=customStrokeMode();
     const im=productMode(p)==="item";   // priced each, so no auto-measure / ft-per-square here
     h+='<span class="ob-title">'+esc((p.name||"CUSTOM").toUpperCase())+'</span>'+dv
-      + g('<label>'+money(p.pricePerFoot||0)+(im?' each':' / ft')+'</label><button class="chip" id="opCustEdit">Edit product…</button>')
+      + g('<label>'+money(+P.settings.prices[p.priceKey]||0)+(im?' each':' / ft')+'</label><button class="chip" id="opCustEdit">Edit product…</button>')
       + g('<label>Color</label><span class="swatch" id="opCustSw" style="background:'+(p.color||'#c8202a')+'"></span><button class="chip" id="opCustCol">Color…</button>');
     if(im){
       h+= dv + g('<label><input type="checkbox" id="opSnap" '+(snap?"checked":"")+'> Snap</label>')
         + '<span class="mini" style="color:var(--text-soft)">Tap to drop one — each placement counts as one on the estimate</span>';
     } else if(sm){
-      h+= dv + '<span class="mini" style="color:var(--text-soft)">'+(sm==="screen"?'Screen mode — drag over runs · rounds up to next 4 ft':'Demo mode — drag over runs · rounds up to whole ft')+'</span>';
+      h+= dv + '<span class="mini" style="color:var(--text-soft)">Highlight — drag over runs · rounds up to '+(sm===1?'whole ft':'next '+sm+' ft')+'</span>';
     } else {
       h+= dv + g('<label><input type="checkbox" id="opAuto" '+(P.settings.autoMeasure?"checked":"")+'> Auto-measure</label>')
         + optbarScale();
@@ -3670,11 +3948,11 @@ function buildOptbar(){
       + '<span class="mini" style="color:var(--text-soft)">'+(demoErase?'Drag over demo highlight to erase it (subtracts footage)':'Drag over runs to demo · rounds up to whole ft')+'</span>';
   } else if(tool==="screen"){
     h+='<span class="ob-title">GUTTER SCREEN</span>'+dv
-      + g('<label>Type</label><select id="opScreenType">'+SCREEN_TYPES.map(t=>'<option value="'+t.id+'"'+(t.id===screenDrawType?' selected':'')+'>'+t.name+'</option>').join("")+'</select>')
+      + g('<label>Type</label><select id="opScreenType">'+pickable(SCREEN_TYPES,screenDrawType).map(t=>'<option value="'+t.id+'"'+(t.id===screenDrawType?' selected':'')+'>'+t.name+'</option>').join("")+'</select>')
       + g('<label>Color</label><input type="color" id="opScreenColor" value="'+screenColor+'" style="width:40px;height:28px;border:0;background:none">')
       + g('<label>Width</label><input id="opScreenW" type="range" min="8" max="50" value="'+screenWidth+'">')
       + dv + g('<label><input type="checkbox" id="opScreenErase" '+(screenErase?"checked":"")+'> Eraser</label>')
-      + '<span class="mini" style="color:var(--text-soft)">'+(screenErase?'Drag over screen highlight to erase it (subtracts footage)':'Drag over runs · rounds up to next 4 ft')+'</span>';
+      + '<span class="mini" style="color:var(--text-soft)">'+(screenErase?'Drag over screen highlight to erase it (subtracts footage)':'Drag over runs · rounds up to next '+screenTypeDef(screenDrawType).round+' ft')+'</span>';
   } else if(tool==="select"){
     h+='<span class="ob-title">SELECT</span>'+dv;
     const one = sel.size===1 ? objById([...sel][0]) : null;
@@ -3702,14 +3980,14 @@ function buildOptbar(){
         +brandColorList(oBrand).map(c=>'<option value="'+c.n+'"'+(one.color===c.n?' selected':'')+'>'+c.n+'</option>').join("");
       h+= g('<label>Brand</label><select id="opSelGutBrand"><option value="">Match job ('+gutterBrand()+')</option>'+BRANDS.map(b=>'<option value="'+b+'"'+(one.brand===b?' selected':'')+'>'+b+'</option>').join("")+'</select>')
         + g('<label>Gutter color</label><span class="swatch" id="opSelSw" style="background:'+colorHex(one.color||P.settings.gutterColor,oBrand)+'"></span><select id="opSelGutColor">'+gutColorOpts+'</select>')
-        + g('<label>Style</label><select id="opSelGutSize"><option value="">Job default</option>'+GUTTER_STYLES.map(st=>'<option value="'+st.id+'"'+(one.size===st.id?' selected':'')+'>'+st.short+'</option>').join("")+'</select>')
+        + g('<label>Style</label><select id="opSelGutSize"><option value="">Job default</option>'+pickable(GUTTER_STYLES,one.size).map(st=>'<option value="'+st.id+'"'+(one.size===st.id?' selected':'')+'>'+st.short+'</option>').join("")+'</select>')
         + g('<label>'+capChk(0)+' '+capLbl(0,'Start cap')+'</label>')
         + g('<label>'+capChk(1)+' '+capLbl(1,'End cap')+'</label>')
         + g('<label title="Homeowner\'s existing gutter — drawn grey dashed, not priced"><input type="checkbox" id="opSelExisting" '+(one.existing?"checked":"")+'> Existing</label>') + dv;
     } else if(one && one.t==="stamp"){
       h+= g('<label>Stamp color</label><span class="swatch" id="opSelSw" style="background:'+(one.color||'#c8202a')+'"></span><button class="chip" id="opSelStampCol">Color…</button>') + dv;
     } else if(one && one.t==="screen"){
-      h+= g('<label>Type</label><select id="opSelScreenType">'+SCREEN_TYPES.map(t=>'<option value="'+t.id+'"'+((one.screenType||"ez")===t.id?' selected':'')+'>'+t.name+'</option>').join("")+'</select>')
+      h+= g('<label>Type</label><select id="opSelScreenType">'+pickable(SCREEN_TYPES,one.screenType||"ez").map(t=>'<option value="'+t.id+'"'+((one.screenType||"ez")===t.id?' selected':'')+'>'+t.name+'</option>').join("")+'</select>')
         + g('<label>Color</label><input type="color" id="opSelStrokeColor" value="'+(one.color||"#34c759")+'" style="width:40px;height:28px;border:0;background:none">') + dv;
     } else if(one && one.t==="demo"){
       h+= g('<label>Color</label><input type="color" id="opSelStrokeColor" value="'+(one.color||"#ff3b30")+'" style="width:40px;height:28px;border:0;background:none">') + dv;
@@ -3748,8 +4026,8 @@ function wireOptbar(){
   if(byId("opGutStyle")) byId("opGutStyle").onchange=e=>{
     gutterDrawSize=e.target.value;
     const st=gutterStyle(gutterDrawSize);
-    P.settings.defaultDownspoutSize=st.dsDefault;          // downspout default follows the gutter style
-    if(!st.ds.includes(dsDrawSize)) dsDrawSize=null;        // drop a now-disallowed draw size
+    P.settings.defaultDownspoutSize=defaultDsFor(st.id);   // downspout default follows the gutter style
+    if(!allowedDsSizes(st.id).includes(dsDrawSize)) dsDrawSize=null;   // drop a now-disallowed draw size
     buildOptbar(); refreshAll();
   };
   if(byId("opGutBrand")) byId("opGutBrand").onchange=e=>{
@@ -3766,8 +4044,9 @@ function wireOptbar(){
   if(byId("opCalib")) byId("opCalib").onclick=startCalibration;
   if(byId("opQuiz")) byId("opQuiz").onclick=openJobQuiz;
   if(byId("opPlanScale")) byId("opPlanScale").onclick=enterPlanMode;
-  if(byId("opCustEdit")) byId("opCustEdit").onclick=()=>openCustomProduct(activeCustom);
-  if(byId("opCustCol")) byId("opCustCol").onclick=()=>{ const p=productOf(activeCustom); if(p) pickColor("Color for "+p.name,p.color,c=>{ recordHistory(); p.color=c; if(byId("opCustSw"))byId("opCustSw").style.background=c; refreshAll(); }); };
+  if(byId("opCustEdit")) byId("opCustEdit").onclick=()=>openProductsPage(activeCustom);
+  // a product's colour is catalog data (every job draws it the same), so it's saved, not undone
+  if(byId("opCustCol")) byId("opCustCol").onclick=()=>{ const p=productOf(activeCustom); if(p) pickColor("Color for "+p.name,p.color,c=>{ p.color=c; saveCatalog(); if(byId("opCustSw"))byId("opCustSw").style.background=c; refreshAll(); }); };
   if(byId("opDsSize")) byId("opDsSize").onchange=e=>{ dsDrawSize=e.target.value; };
   if(byId("opDsBrand")) byId("opDsBrand").onchange=e=>{
     P.settings.downspoutBrand=e.target.value;
@@ -3791,7 +4070,7 @@ function wireOptbar(){
   if(byId("opDemoColor")) byId("opDemoColor").oninput=e=>demoColor=e.target.value;
   if(byId("opDemoW")) byId("opDemoW").oninput=e=>demoWidth=+e.target.value;
   if(byId("opDemoErase")) byId("opDemoErase").onchange=e=>{ demoErase=e.target.checked; buildOptbar(); setHint(toolHint("demo")); draw(); };
-  if(byId("opScreenType")) byId("opScreenType").onchange=e=>{ screenDrawType=e.target.value; };
+  if(byId("opScreenType")) byId("opScreenType").onchange=e=>{ screenDrawType=e.target.value; buildOptbar(); setHint(toolHint("screen")); };   // rebuild: the rounding note follows the type
   if(byId("opScreenColor")) byId("opScreenColor").oninput=e=>screenColor=e.target.value;
   if(byId("opScreenW")) byId("opScreenW").oninput=e=>screenWidth=+e.target.value;
   if(byId("opScreenErase")) byId("opScreenErase").onchange=e=>{ screenErase=e.target.checked; buildOptbar(); setHint(toolHint("screen")); draw(); };
@@ -5434,27 +5713,6 @@ function onKeyboardChange(){
 /* ============================================================ */
 /* LEFT RAIL — ESTIMATE / JOB / PRICING                       */
 /* ============================================================ */
-// worksheet line definitions (form order). kind: ft = linear feet, ea = count.
-// src: 'auto' (from drawing), or a settings key for manual entry.
-const LINES = [
-  ...GUTTER_STYLES.map(g=>({key:g.priceKey, label:'GUTTER '+g.short,        kind:"ft", src:"auto"})),
-  ...DS_STYLES.map(d=>({key:d.priceKey,     label:'DOWNSPOUT '+d.short,     kind:"ft", src:"auto"})),
-  {key:"diverters",label:"DIVERTERS",        kind:"ea", src:"diverters"},
-  ...DS_STYLES.map(d=>({key:d.outletKey,    label:'OUTLETS '+d.short,       kind:"ea", src:"auto"})),
-  {key:"valley",   label:"VALLEY SHIELD",    kind:"ea", src:"auto", tag:"VS"},
-  {key:"splashPlastic",  label:"SPLASH BLOCK — PLASTIC",  kind:"ea", src:"auto"},
-  {key:"splashConcrete", label:"SPLASH BLOCK — CONCRETE", kind:"ea", src:"auto"},
-  {key:"leaf6",    label:'LEAF GUARD 6"',    kind:"ft", src:"leafGuard6"},
-  {key:"leaf5",    label:'LEAF GUARD 5"',    kind:"ft", src:"leafGuard5"},
-  {key:"strip",    label:"STRIP MITER",      kind:"ea", src:"auto"},
-  {key:"box",      label:"BOX MITER",        kind:"ea", src:"auto"},
-  {key:"bay",      label:"BAY MITER",        kind:"ea", src:"auto"},
-  {key:"acute",    label:"ACUTE MITER (ADD-ON)", kind:"ea", src:"auto"},
-  ...GUTTER_STYLES.filter(g=>g.miterKey).map(g=>({key:g.miterKey, label:g.miterLabel.toUpperCase(), kind:"ea", src:"auto"})),
-  ...DS_STYLES.map(d=>({key:d.elbowKey,     label:'ELBOWS '+d.short,        kind:"ea", src:"auto"})),
-  ...DS_STYLES.map(d=>({key:d.offsetKey,    label:'OFFSET '+d.short,        kind:"ea", src:"auto"})),
-  ...GUTTER_STYLES.map(g=>({key:g.endKey,   label:'END CAPS '+g.short,      kind:"ea", src:"auto"})),
-];
 
 function esc(s){ return (s==null?"":(""+s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -5475,6 +5733,7 @@ function buildEstimatePane(){
   let unused="", nUnused=0;
   for(const L of LINES){
     const qty=r.q[L.key]||0;
+    if(L.hidden && !qty) continue;   // a hidden product isn't even an "unused" line
     const isUnused = !qty && !(L.src!=="auto" && +P.settings[L.src]);
     const zero = qty===0 ? " zero":"";
     const h0=h; h="";
@@ -5519,9 +5778,25 @@ function buildEstimatePane(){
   }
   if(r.demoFeet>0 || (r.screenRows && r.screenRows.length)){
     h+=`<div class="sec-h" style="margin-top:10px">Demo &amp; gutter screen</div>`;
-    if(r.demoFeet>0) h+=`<div class="totline foot"><span>Demo <span style="color:var(--text-soft);font-size:11px">${ftStr(r.demoFeet)} @ ${money(P.settings.demoRate)}/ft</span></span><span class="v">${money(r.demoAmount)}</span></div>`;
+    if(r.demoFeet>0) h+=`<div class="totline foot"><span>Demo <span style="color:var(--text-soft);font-size:11px">${ftStr(r.demoFeet)} @ ${money(P.settings.prices.demo)}/ft</span></span><span class="v">${money(r.demoAmount)}</span></div>`;
     for(const sc of (r.screenRows||[])){
       h+=`<div class="totline foot"><span>${esc(sc.name)} <span style="color:var(--text-soft);font-size:11px">${ftStr(sc.feet)} @ ${money(sc.rate)}/ft</span></span><span class="v">${money(sc.amount)}</span></div>`;
+    }
+  }
+
+  // Services: drawn ones (highlight / tapped) count themselves; flat and hourly ones are typed here,
+  // so every visible one gets a qty box even at 0 — otherwise there'd be no way to enter it.
+  { const typed=CATALOG.products.filter(p=>p.kind==="service" && (p.mode==="flat"||p.mode==="hour") && (!p.hidden || +P.settings.qty[p.priceKey]));
+    const drawn=(r.serviceRows||[]).filter(c=>c.mode!=="flat"&&c.mode!=="hour");
+    if(typed.length || drawn.length){
+      h+=`<div class="sec-h" style="margin-top:10px">Services</div><div class="worksheet">`;
+      h+=`<div class="ws-head"><div>Service</div><div>Qty</div><div>Unit</div><div>Amount</div></div>`;
+      for(const c of drawn) h+=`<div class="ws-row"><div class="ws-lbl"><span class="swatch" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(c.color||"#888")}"></span>${esc(c.name)}</div><div class="ws-qty">${svcQtyStr(c)}</div><div class="ws-qty">${money(c.rate)}</div><div class="ws-amt">${money(c.amount)}</div></div>`;
+      for(const p of typed){
+        const qv=+P.settings.qty[p.priceKey]||0, rate=+P.settings.prices[p.priceKey]||0;
+        h+=`<div class="ws-row${qv?"":" zero"}"><div class="ws-lbl">${esc(p.name)} <span class="ws-unit">${p.mode==="hour"?"hrs":"qty"}</span></div><input class="ws-qty-in" data-svc="${esc(p.priceKey)}" value="${qv}" inputmode="decimal"><div class="ws-qty">${money(rate)}</div><div class="ws-amt">${money(qv*rate)}</div></div>`;
+      }
+      h+=`</div>`;
     }
   }
 
@@ -5556,7 +5831,11 @@ function buildEstimatePane(){
 
   if(byId("wsMore")) byId("wsMore").onclick=()=>{ showUnusedLines=!showUnusedLines; buildEstimatePane(); };
   pane.querySelectorAll("input.ws-qty-in").forEach(inp=>{
-    inp.onchange=()=>{ P.settings[inp.dataset.setting]=+inp.value||0; refreshAll(); };
+    inp.onchange=()=>{
+      if(inp.dataset.svc!=null){ recordHistory(); P.settings.qty[inp.dataset.svc]=Math.max(0,+inp.value||0); }
+      else P.settings[inp.dataset.setting]=+inp.value||0;
+      refreshAll();
+    };
   });
   pane.querySelectorAll("input.ws-price").forEach(inp=>{
     if(inp.hasAttribute("readonly")) return;   // AUTO components are derived from the style $/ft
@@ -5590,7 +5869,8 @@ function fmtPhone(v){
    that box's text but keeps where the rep put it and how they styled it. The last answers live on
    P.meta.jobQuiz (shared: they describe the house), so the modal reopens prefilled. */
 const QUIZ_QS=[
-  {k:"gutter", label:"Gutter type", opts:[...GUTTER_STYLES.map(g=>g.label),"Other"]},
+  // a getter: the gutter list is the rep's catalog, which can change after this table is built
+  {k:"gutter", label:"Gutter type", get opts(){ return [...GUTTER_STYLES.filter(g=>!g.hidden).map(g=>g.label),"Other"]; }},
   {k:"stories",label:"Stories",     opts:["1","2","3+"]},
   {k:"drip",   label:"Drip edge",   opts:["Yes","No"]},
   {k:"oneby",  label:"1x2",         opts:["Yes","No"]},
@@ -5712,6 +5992,10 @@ function buildPricingPane(){
   const s=P.settings; ensurePrices();
   const flat=s.pricingMode==="flat";
   let h="";
+  // The Products page is the price book; this tab is THIS job's copy of it. Say so, with the push.
+  const drift=bookDrift();
+  h+=`<div class="note" style="margin-bottom:6px">Prices here belong to this job. Your price book lives on the <b>Products</b> tab — new jobs start from it.${drift?` <b>${drift} price${drift===1?"":"s"}</b> here differ${drift===1?"s":""} from the book.`:""}</div>`;
+  h+=`<div class="fld" style="display:flex;gap:8px"><button class="btn-sm" id="pcApplyBook"${drift?"":" disabled"}>⇣ Apply price book to this job</button><button class="btn-sm" id="pcOpenBook">Products ›</button></div>`;
   h+=`<div class="sec-h">Pricing mode</div>`;
   h+=`<div class="seg-toggle"><button data-mode="flat" class="${flat?"on":""}">Flat $/ft</button><button data-mode="itemized" class="${flat?"":"on"}">Itemized</button></div>`;
 
@@ -5731,11 +6015,12 @@ function buildPricingPane(){
   const rateHead=(first)=>`<div class="ws-head" style="${RATECOLS}"><div>${first}</div><div>List</div><div>Min</div><div>Your</div></div>`;
   h+=`<div class="sec-h">Gutter style pricing <span style="font-weight:600;color:var(--text-soft);font-size:11px">$ / ft</span></div>`;
   h+=`<div class="worksheet">${rateHead("Style")}`;
-  for(const gst of GUTTER_STYLES) h+=rateRow(gst.label, gst.priceKey);
+  const used=usedStyleIds();
+  for(const gst of GUTTER_STYLES) if(!gst.hidden||used.has(gst.id)) h+=rateRow(gst.label, gst.priceKey);
   h+=`</div>`;
   h+=`<div class="sec-h">Downspout style pricing <span style="font-weight:600;color:var(--text-soft);font-size:11px">$ / ft</span></div>`;
   h+=`<div class="worksheet">${rateHead("Size")}`;
-  for(const dst of DS_STYLES) h+=rateRow(dst.label, dst.priceKey);
+  for(const dst of DS_STYLES) if(!dst.hidden||used.has(dst.id)) h+=rateRow(dst.label, dst.priceKey);
   h+=`</div>`;
   const rDisc=compute();
   h+=fld("Discount name","pcDiscName",s.discountName,"text",'placeholder="e.g. Military, Fire &amp; EMS, Senior"');
@@ -5759,7 +6044,9 @@ function buildPricingPane(){
   } else {
     h+=`<div class="sec-h">Per-component unit prices</div>`;
     h+=`<div class="worksheet" style="margin-top:6px"><div class="ws-head" style="grid-template-columns:1fr 90px"><div>Component</div><div>Unit $</div></div>`;
+    const rq=compute().q;
     for(const L of LINES){
+      if(L.hidden && !rq[L.key]) continue;   // a hidden product's lines only while this job still uses it
       const derived=DERIVED_KEYS.has(L.key);
       const attrs=derived?` readonly tabindex="-1" title="Auto-priced from the gutter / downspout style above" style="color:var(--text-soft);background:#f4f6f8"`:"";
       h+=`<div class="ws-row" style="grid-template-columns:1fr 90px"><div class="ws-lbl">${L.label}${derived?' <span style="color:var(--steel-2);font-weight:700;font-size:9px">AUTO</span>':''}</div><input class="ws-price" data-price="${L.key}"${derived?"":' data-edit="1"'} value="${s.prices[L.key]||0}"${attrs} inputmode="decimal"></div>`;
@@ -5768,10 +6055,21 @@ function buildPricingPane(){
     h+=`<div class="note">Components marked <b>AUTO</b> follow the gutter / downspout style price above: end caps, outlets &amp; valley shields are gutter material (valley = ${s.footagePerValley||0} LF), miters match the gutter $/ft, and elbows &amp; offsets follow the downspout $/ft. Edit a style rate to change them all at once.</div>`;
   }
 
-  h+=`<div class="sec-h">Demo &amp; gutter screen</div>`;
-  h+=fld("Demo $/ft","pcDemo",s.demoRate,"number",'step="0.25" inputmode="decimal"');
-  h+=`<div class="row3">${fld("EZ Lock $/ft","pcScrEz",s.screenEzRate,"number",'step="0.25" inputmode="decimal"')}${fld("Eav N Flow $/ft","pcScrEav",s.screenEavRate,"number",'step="0.25" inputmode="decimal"')}${fld("Leafblaster $/ft","pcScrLeaf",s.screenLeafRate,"number",'step="0.25" inputmode="decimal"')}</div>`;
-  h+=`<div class="note">Drag the Demo or Screen tool over the runs. Demo footage rounds up to the whole foot; each screen type rounds up to the next 4 ft. These are priced in both flat and itemized modes.</div>`;
+  // every screen / service / custom product's job price, grouped like the Products page
+  const rpr=compute();
+  const usedP=new Set([...rpr.customRows,...rpr.serviceRows].map(c=>String(c.id)));
+  rpr.screenRows.forEach(c=>usedP.add(String(c.id))); if(rpr.demoFeet) usedP.add("demo");
+  for(const [kind,title] of [["screen","Gutter screen"],["service","Services"],["item","Accessories"],["line","Custom runs"]]){
+    const list=CATALOG.products.filter(p=>p.kind===kind && p.fixed!=="splash" && p.fixed!=="entry" && (!p.hidden||usedP.has(String(p.id))));
+    if(!list.length) continue;
+    h+=`<div class="sec-h">${title} <span style="font-weight:600;color:var(--text-soft);font-size:11px">this job</span></div>`;
+    h+=`<div class="worksheet"><div class="ws-head" style="grid-template-columns:1fr 90px"><div>Product</div><div>Unit $</div></div>`;
+    for(const p of list){
+      h+=`<div class="ws-row" style="grid-template-columns:1fr 90px"><div class="ws-lbl">${p.color?`<span class="swatch" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(p.color)}"></span>`:""}${esc(p.name)} <span class="ws-unit">${productUnitLbl(p)}</span></div><input class="ws-price" data-pk="${esc(p.priceKey)}" value="${+s.prices[p.priceKey]||0}" inputmode="decimal"></div>`;
+    }
+    h+=`</div>`;
+  }
+  h+=`<div class="note">Priced in both flat and itemized modes. Highlighted footage rounds up to each product's step (Demo: whole ft; screens: their own, 4 ft by default). Add or change products on the <b>Products</b> tab.</div>`;
 
   h+=`<div class="sec-h">Misc / Demo / Labor</div>`;
   h+=fld("Lump $ (highlighted areas)","pcMisc",s.miscDemoLabor,"number",'step="1" inputmode="decimal"');
@@ -5818,7 +6116,8 @@ function wirePricing(){
   numP("pcGutMin","flatGutterMin");numP("pcDsMin","flatDownspoutMin");
   // free text — rebuild so the pane's discount readout picks up the new label
   { const dn=byId("pcDiscName"); if(dn) dn.onchange=()=>{ s.discountName=dn.value.trim(); buildPricingPane(); refreshAll(); }; }
-  num("pcDemo","demoRate");num("pcScrEz","screenEzRate");num("pcScrEav","screenEavRate");num("pcScrLeaf","screenLeafRate");
+  { const ab=byId("pcApplyBook"); if(ab) ab.onclick=()=>applyPriceBook(); }
+  { const ob=byId("pcOpenBook"); if(ob) ob.onclick=()=>openProductsPage(); }
   for(const [id,key] of [["pcSplashP","splashPlastic"],["pcSplashC","splashConcrete"],["pcAcute","acute"]]){ const e=byId(id); if(e) e.onchange=()=>{ s.prices[key]=+e.value||0; refreshAll(); }; }
   num("pcMisc","miscDemoLabor");num("pcDep","depositPct");num("pcCard","cardFee");num("pcAmex","amexFee");
   byId("panePricing").querySelectorAll("input.ws-price").forEach(inp=>{
@@ -5826,7 +6125,10 @@ function wirePricing(){
     inp.onchange=()=>{
       ensurePrices();
       const d=inp.dataset;
-      if(d.list!=null){
+      if(d.pk!=null){
+        recordHistory(); s.prices[d.pk]=Math.max(0,+inp.value||0);
+        buildPricingPane();          // the book-drift count repaints
+      }else if(d.list!=null){
         s.listPrices[d.list]=+inp.value||0;
         buildPricingPane();          // discount readout + any floor clamp repaint
       }else if(d.min!=null){
@@ -5886,58 +6188,503 @@ function refreshAll(){
 }
 
 /* ============================================================ */
+/* PRODUCTS PAGE — price book + product builder                 */
+/* ============================================================ */
+/* Edits CATALOG (device-wide, saved on every change) — never P. A price typed here is the BOOK price:
+   the open job keeps its own copy until the rep presses Apply (applyPriceBook). The tree is products
+   grouped by kind with their components nested under them; the editor builds/edits one product. */
+const KIND_INFO = {
+  gutter:   {title:"Gutters",             one:"Gutter",        blurb:"Drawn with the Gutter tool. Gets end caps and miters automatically, and you choose which downspouts fit it."},
+  downspout:{title:"Downspouts",          one:"Downspout",     blurb:"Drawn with the Downspout tool. Gets its own outlet, elbows and offsets automatically."},
+  screen:   {title:"Gutter screens",      one:"Gutter screen", blurb:"Highlighted over the runs with the Screen tool; footage rounds up to the step you choose."},
+  service:  {title:"Services",            one:"Service",       blurb:"Work and labor — highlight it over the runs, tap it onto the diagram, or type a flat or hourly quantity on the Estimate tab."},
+  item:     {title:"Accessories & items", one:"Accessory",     blurb:"Tapped onto the diagram one at a time with its own tool, priced each."},
+  line:     {title:"Custom runs",         one:"Custom run",    blurb:"Its own tool: draw a measured run like a gutter, or highlight over the runs — priced per foot."},
+  part:     {title:"Shared gutter parts", one:"Shared part"},
+};
+const KIND_ORDER=["gutter","downspout","screen","service","item","line","part"];
+const SERVICE_MODES={stroke:"Highlight over the runs — per ft", item:"Tap onto the diagram — each", flat:"Flat charge — typed qty, each", hour:"Hourly — typed hours"};
+const NEW_DEFAULTS={
+  gutter:   {price:0,list:null,min:0,wide:true,endRule:"follow",endPrice:0,stripRule:"follow",stripPrice:0,bayRule:"follow",bayPrice:0},
+  downspout:{price:0,list:null,min:0,outletRule:"follow",outletPrice:0,elbowRule:"follow",elbowPrice:0,offsetRule:"follow",offsetPrice:0},
+  screen:   {price:0,round:4},
+  service:  {price:0,mode:"stroke",round:1,color:"#e0662a"},
+  item:     {price:0,mode:"item",color:"#2b7fd0"},
+  line:     {price:0,mode:"line",round:1,color:"#7a4fd6"},
+};
+let prodSel=null;        // selected product id, or "__flat" for the flat-rate book
+let prodNew=null;        // "pick" while choosing a kind for a new product
+let prodDraft=null;      // the new product being built, not in CATALOG until Create
+const prodCollapsed=new Set();
+
+function productUnitLbl(p){
+  if(p.kind==="gutter"||p.kind==="downspout"||p.kind==="screen") return "/ft";
+  if(p.fixed==="entry") return p.unit==="ft"?"/ft":"ea";
+  if(p.kind==="part"||p.fixed==="splash") return "ea";
+  const m=productMode(p);
+  return m==="item"||m==="flat" ? "ea" : m==="hour" ? "/hr" : "/ft";
+}
+// gutter + downspout style ids the open option uses, so a hidden one still gets its rate row
+function usedStyleIds(){
+  const s=P.settings, ids=new Set([s.gutterType, s.defaultDownspoutSize]);
+  for(const o of P.objects){ if(o.t==="gutter") ids.add(gutterSizeFor(o)); else if(o.t==="ds") ids.add(dsSizeFor(o)); }
+  return ids;
+}
+// how many places in the open job (every option) use a product — what makes it un-deletable
+function productUsage(p){
+  captureActive();
+  const opts=OPTIONS.length?OPTIONS:[{settings:P.settings,objects:P.objects}];
+  let n=0;
+  for(const o of opts){
+    const st=o.settings||{};
+    if(p.kind==="gutter" && st.gutterType===p.id) n++;
+    if(p.kind==="downspout" && st.defaultDownspoutSize===p.id) n++;
+    if(p.kind==="service" && +((st.qty||{})[p.priceKey])) n++;
+    for(const x of (o.objects||[])){
+      if(p.kind==="gutter" && x.t==="gutter" && x.size===p.id) n++;
+      else if(p.kind==="downspout" && x.t==="ds" && x.size===p.id) n++;
+      else if(p.kind==="screen" && x.t==="screen" && (x.screenType||"ez")===p.id) n++;
+      else if((x.t==="custom"||x.t==="item") && sameProductId(x.productId,p.id)) n++;
+    }
+  }
+  return n;
+}
+// non-built-in products the job uses, embedded in its save so it opens anywhere (adoptProducts)
+function jobProducts(){
+  return CATALOG.products.filter(p=>!p.builtin && productUsage(p)>0).map(p=>JSON.parse(JSON.stringify(p)));
+}
+// A loaded job's products the device lacks join the catalog HIDDEN: the job draws and prices as
+// saved, without an old job quietly re-adding a product the rep deleted to every picker.
+// The device's own definition wins when both exist — it's the rep's book.
+function adoptProducts(list){
+  if(!Array.isArray(list)) return;
+  let added=0;
+  for(const p of list){
+    if(!p || p.id==null || !NEW_DEFAULTS[p.kind] || catalogProduct(p.id)) continue;
+    const c=normalizeProduct(JSON.parse(JSON.stringify(p))); delete c.builtin; delete c.fixed;
+    c.hidden=true; c.fromJob=true;
+    CATALOG.products.push(c); added++;
+  }
+  if(added){ saveCatalog(); applyCatalog(); }
+}
+const cents=n=>Math.round((+n||0)*100);
+// how many of the open option's prices differ from the book — drives the Apply prompt
+function bookDrift(){
+  const s=P.settings, p=s.prices||{}, f=CATALOG.flat; let n=0;
+  for(const k in BOOK){
+    if(cents(p[k])!==cents(BOOK[k].price)) n++;
+    else if(STYLE_PRICE_KEYS.includes(k) && cents((s.listPrices||{})[k])!==cents(BOOK[k].list!=null?BOOK[k].list:BOOK[k].price)) n++;
+  }
+  if(cents(s.flatGutterRate)!==cents(f.gutter)) n++;
+  if(cents(s.flatDownspoutRate)!==cents(f.ds)) n++;
+  return n;
+}
+function bookInto(s){
+  const p=s.prices=s.prices||{}, L=s.listPrices=s.listPrices||{}, M=s.minPrices=s.minPrices||{}, f=CATALOG.flat;
+  for(const k in BOOK){
+    p[k]=BOOK[k].price;
+    if(STYLE_PRICE_KEYS.includes(k)){ L[k]=BOOK[k].list!=null?BOOK[k].list:BOOK[k].price; M[k]=BOOK[k].min; }
+  }
+  s.flatGutterRate=+f.gutter||0;  s.flatGutterList=f.gutterList!=null?+f.gutterList:s.flatGutterRate;  s.flatGutterMin=+f.gutterMin||0;
+  s.flatDownspoutRate=+f.ds||0;   s.flatDownspoutList=f.dsList!=null?+f.dsList:s.flatDownspoutRate;     s.flatDownspoutMin=+f.dsMin||0;
+}
+// The deliberate push: every option of the open job takes the book's prices (and its list / min,
+// so any discount typed on the job is cleared). Undo covers the option on screen.
+function applyPriceBook(){
+  captureActive();
+  const n=Math.max(1,OPTIONS.length);
+  if(!confirm("Replace this job's prices"+(n>1?" in all "+n+" options":"")+" with your price book?\n\nAny discount typed on this job is cleared. The price override, deposit and card fees are kept.")) return;
+  recordHistory();
+  (OPTIONS.length?OPTIONS:[{settings:P.settings}]).forEach(o=>bookInto(o.settings));
+  ensurePrices(); buildOptbar(); refreshAll();
+  if(curPage==="products") renderProductsPage();
+}
+
+function openProductsPage(id,mode){
+  prodNew = mode==="new" ? "pick" : null; prodDraft=null;
+  if(id!=null) prodSel=id;
+  setPage("products");
+}
+// After any catalog edit: persist, rebuild the derived lists, let the open job meet new keys,
+// and repaint everything that lists products.
+function catalogChanged(){
+  saveCatalog(); applyCatalog(); ensurePrices();
+  // a product switched to a flat / hourly service is no longer something you draw with
+  if(activeCustom!=null && !isToolProduct(productOf(activeCustom))){ activeCustom=null; setTool("gutter"); }
+  buildDock(); buildOptbar(); refreshAll();
+  if(curPage==="products") renderProductsPage();
+}
+
+function bookPrice(key){ return BOOK[key] ? BOOK[key].price : 0; }
+// what a "follow" component costs at book prices with this job's allowances — the tree shows it
+function followPrice(p,c){
+  const s=P.settings;
+  if(c.jobGutter) return bookPrice(gutterStyle(s.gutterType).priceKey)*(+s[c.allow]||0);
+  return (+p.price||0)*(c.allow ? (+s[c.allow]||0) : 1);
+}
+function priceCell(book,unit,jobVal){
+  const diff = jobVal!=null && cents(jobVal)!==cents(book);
+  return `<div class="pk-price">${money(book)}<small>${unit}</small>${diff?`<div class="pk-job">this job ${money(jobVal)}</div>`:""}</div>`;
+}
+function productSubline(p){
+  if(p.kind==="gutter") return "End caps, strip + bay miters · "+((p.ds||[]).length)+" downspout size"+((p.ds||[]).length===1?"":"s");
+  if(p.kind==="downspout"){ const g=GUTTER_STYLES.filter(x=>x.ds.includes(p.id)).map(x=>x.short); return g.length?"Fits "+g.join(", "):"Fits no gutter yet"; }
+  if(p.kind==="screen") return "Screen tool · rounds up to "+Math.max(1,+p.round||4)+" ft";
+  if(p.fixed==="demo") return "Demo tool · rounds up to the whole ft";
+  if(p.fixed==="splash") return "Splash tool";
+  if(p.fixed==="entry") return "Typed on the Estimate tab";
+  if(p.fixed==="valley") return "Valley tool · job gutter $/ft × valley allowance";
+  if(p.fixed==="acute") return "Added on corners sharper than 90°, on top of the miter";
+  if(p.kind==="service") return SERVICE_MODES[productMode(p)]||"";
+  if(p.kind==="item") return "Own tool · tapped, priced each";
+  if(p.kind==="line") return productMode(p)==="stroke" ? "Own tool · highlight, rounds up to "+strokeMode(p)+" ft" : "Own tool · measured run";
+  return "";
+}
+function productRowHTML(p){
+  const s=P.settings, kids=productKids(p), col=prodCollapsed.has(String(p.id));
+  const badges=(p.builtin?'<span class="pk-badge">Built-in</span>':"")+(p.hidden?'<span class="pk-badge warn">Hidden</span>':"")+(p.fromJob?'<span class="pk-badge warn">From a saved job</span>':"");
+  const sw=p.color?`<span class="pk-sw" style="background:${esc(p.color)}"></span>`:"";
+  const derived=DERIVED_KEYS.has(p.priceKey);
+  const price=derived ? `<div class="pk-price" style="color:var(--steel-2)">AUTO</div>` : priceCell(bookPrice(p.priceKey), productUnitLbl(p), s.prices[p.priceKey]);
+  let h=`<div class="pk-row${sameProductId(prodSel,p.id)&&!prodDraft?" sel":""}${p.hidden?" hid":""}" data-pid="${esc(p.id)}">`
+    + `<button class="pk-tw" data-tw="${esc(p.id)}" ${kids.length?"":"disabled"} aria-label="Show components">${kids.length?(col?"▸":"▾"):""}</button>`
+    + sw + `<div class="pk-main"><div class="pk-name">${esc(p.name)}${badges}</div><div class="pk-sub">${esc(productSubline(p))}</div></div>`
+    + price + `</div>`;
+  if(!col) kids.forEach((k,i)=>{
+    h+=`<div class="pk-kid${i===kids.length-1?" last":""}" data-pid="${esc(k.pid||p.id)}"><div class="pk-main"><div class="pk-name">${esc(k.name)}</div>${k.rule?`<div class="pk-sub">${esc(k.rule)}</div>`:""}</div>${k.price||""}</div>`;
+  });
+  return h;
+}
+// the components a product owns, as tree rows
+function productKids(p){
+  const s=P.settings, out=[];
+  for(const c of (COMPONENTS[p.kind]||[])){
+    const key=p[c.key], fixed=p[c.rule]==="fixed";
+    const name = c.name+" "+(p.short||"");
+    const book = fixed ? (+p[c.price]||0) : followPrice(p,c);
+    const rule = fixed ? "Fixed price" : "Follows "+c.follows+(c.allow?" ("+(+s[c.allow]||0)+" ft)":"");
+    out.push({name, rule, price:priceCell(book,"ea", key!=null?s.prices[key]:null)});
+  }
+  if(p.kind==="gutter"){
+    (p.ds||[]).forEach(id=>{ const d=catalogProduct(id); if(d) out.push({pid:d.id, name:"Downspout "+(d.short||d.name)+(id===p.dsDefault?" — default":""), rule:d.hidden?"Hidden":"", price:priceCell(bookPrice(d.priceKey),"/ft",s.prices[d.priceKey])}); });
+  }
+  return out;
+}
+function productTreeHTML(){
+  let h="";
+  for(const kind of KIND_ORDER){
+    const K=KIND_INFO[kind], list=CATALOG.products.filter(p=>p.kind===kind);
+    if(!list.length && kind==="part") continue;
+    h+=`<div class="pk-sec"><div class="pk-h"><span>${K.title}</span><span class="pk-n">${list.length}</span>${NEW_DEFAULTS[kind]?`<button class="btn-sm" data-newkind="${kind}">＋ ${K.one}</button>`:""}</div>`;
+    h+= list.length ? `<div class="pk-list">${list.map(productRowHTML).join("")}</div>` : `<div class="note">None yet.</div>`;
+    h+=`</div>`;
+  }
+  const f=CATALOG.flat, s=P.settings;
+  h+=`<div class="pk-sec"><div class="pk-h"><span>Flat-rate pricing</span></div><div class="pk-list">`
+    + `<div class="pk-row${prodSel==="__flat"?" sel":""}" data-pid="__flat"><button class="pk-tw" disabled></button><div class="pk-main"><div class="pk-name">Gutter flat $/ft</div><div class="pk-sub">Flat pricing mode — total gutter footage × this</div></div>${priceCell(+f.gutter||0,"/ft",s.flatGutterRate)}</div>`
+    + `<div class="pk-row${prodSel==="__flat"?" sel":""}" data-pid="__flat"><button class="pk-tw" disabled></button><div class="pk-main"><div class="pk-name">Downspout flat $/ft</div><div class="pk-sub">Flat pricing mode — total downspout footage × this</div></div>${priceCell(+f.ds||0,"/ft",s.flatDownspoutRate)}</div>`
+    + `</div></div>`;
+  return h;
+}
+
+/* ---- editor ---- */
+const peNum=(v)=>(v==null||v==="")?"":v;
+function peField(label,f,val,type,attrs){
+  return `<div class="fld"><label>${label}</label><input data-f="${f}" type="${type||"text"}" value="${esc(peNum(val))}" ${attrs||""}></div>`;
+}
+const PE_MONEY='step="0.25" min="0" inputmode="decimal"';
+function peSeg(attr,cur,opts){
+  return `<div class="seg-toggle">${opts.map(([v,l])=>`<button data-${attr}="${v}" class="${cur===v?"on":""}">${l}</button>`).join("")}</div>`;
+}
+function peComponentHTML(p,c){
+  const fixed=p[c.rule]==="fixed", title=c.name;
+  return `<div class="pe-comp"><div class="pe-comp-h"><span>${title}</span><span style="font-family:var(--mono)">${money(fixed?(+p[c.price]||0):followPrice(p,c))} ea</span></div>`
+    + `<div class="fld">${peSeg("rule-"+c.id, fixed?"fixed":"follow", [["follow","Follow "+(c.jobGutter?"job gutter":"its")+" $/ft"],["fixed","Fixed price"]])}</div>`
+    + (fixed ? peField("Price each ($)",c.price,p[c.price],"number",PE_MONEY)
+             : `<div class="note" style="margin-bottom:9px">${c.follows.charAt(0).toUpperCase()+c.follows.slice(1)}${c.allow?` — ${+P.settings[c.allow]||0} ft in this job (⚙ Settings → footage allowances)`:""}.</div>`)
+    + `</div>`;
+}
+function productEditorHTML(){
+  if(prodNew==="pick"){
+    let h=`<div class="pe-head"><button class="btn-sm pe-back" data-pe="back">‹ Products</button><div class="pe-kind">New product</div></div><div class="pe-title">What kind of product?</div>`;
+    h+=`<div class="note" style="margin-bottom:10px">The kind sets how it's drawn and priced, and which parts it comes with — you won't need a new version of the app to add one.</div><div class="pe-kinds">`;
+    for(const k of Object.keys(NEW_DEFAULTS)) h+=`<button class="pe-kindcard" data-newkind="${k}"><b>${KIND_INFO[k].one}</b><span>${KIND_INFO[k].blurb}</span></button>`;
+    return h+`</div>`;
+  }
+  if(prodSel==="__flat" && !prodDraft){
+    const f=CATALOG.flat;
+    let h=`<div class="pe-head"><button class="btn-sm pe-back" data-pe="back">‹ Products</button><div class="pe-kind">Price book</div></div><div class="pe-title">Flat-rate pricing</div>`;
+    h+=`<div class="note" style="margin-bottom:10px">Used when a job's Pricing tab is set to <b>Flat $/ft</b>: total footage (with corner, outlet, valley and end-cap allowances) × the rate. Blank list = same as the rate.</div>`;
+    h+=`<div class="sec-h">Gutter</div><div class="row3">${peFlat("Rate $/ft","gutter",f.gutter)}${peFlat("List $/ft","gutterList",f.gutterList)}${peFlat("Min $/ft","gutterMin",f.gutterMin)}</div>`;
+    h+=`<div class="sec-h">Downspout</div><div class="row3">${peFlat("Rate $/ft","ds",f.ds)}${peFlat("List $/ft","dsList",f.dsList)}${peFlat("Min $/ft","dsMin",f.dsMin)}</div>`;
+    return h;
+  }
+  const p=prodDraft||catalogProduct(prodSel);
+  if(!p) return `<div class="pe-empty">Pick a product to edit its prices and parts,<br>or press <b>＋ New product</b> to build one.</div>`;
+  const draft=!!prodDraft, K=KIND_INFO[p.kind]||{one:"Product"}, s=P.settings, lockedBehaviour=!!p.fixed;
+  let h=`<div class="pe-head"><button class="btn-sm pe-back" data-pe="back">‹ Products</button><div class="pe-kind">${draft?"New ":""}${esc(K.one)}${p.builtin?" · built-in":""}</div></div>`;
+  h+=`<div class="pe-title">${esc(p.name||"Untitled")}</div>`;
+  if(draft) h+=`<div class="note" style="margin-bottom:10px">${esc(K.blurb||"")}</div>`;
+  if(lockedBehaviour){
+    h+=`<div class="note" style="margin-bottom:10px">Built-in: wired to its own tool, so only its price is set here.</div>`;
+  }else{
+    h+=`<div class="${p.kind==="gutter"||p.kind==="downspout"?"row2":""}">${peField("Name","name",p.name,"text",'placeholder="e.g. '+({gutter:'6&quot; Box gutter',downspout:'3&quot;×5&quot;',screen:'Micro-mesh',service:'Gutter cleaning',item:'Rain barrel',line:'Fascia wrap'}[p.kind]||"")+'"')}`
+      + (p.kind==="gutter"||p.kind==="downspout" ? peField("Short label","short",p.short,"text",'maxlength="10" placeholder="'+(p.kind==="gutter"?'6&quot;B':'3×5')+'"') : "") + `</div>`;
+  }
+  // ---- price
+  const derived=DERIVED_KEYS.has(p.priceKey);
+  if(p.fixed==="valley"){
+    h+=`<div class="note">Priced automatically at the job gutter's $/ft × the valley allowance (⚙ Settings).</div>`;
+  } else if(p.kind==="gutter"||p.kind==="downspout"){
+    h+=`<div class="sec-h">Price per foot</div><div class="row3">${peField("Rate $/ft","price",p.price,"number",PE_MONEY)}${peField("List $/ft","list",p.list,"number",PE_MONEY+' placeholder="= rate"')}${peField("Min $/ft","min",p.min,"number",PE_MONEY)}</div>`;
+    h+=`<div class="note" style="margin-bottom:6px"><b>List</b> is what a discount is measured from (blank = the rate). <b>Min</b> is the floor a rep can't price below.${(+p.min||0)>(+p.price||0)?` <b style="color:var(--prime)">Min is above the rate — jobs will charge the min.</b>`:""}</div>`;
+  } else if(!derived){
+    const u=productUnitLbl(p), lbl=u==="/ft"?"Price per foot ($)":u==="/hr"?"Price per hour ($)":"Price each ($)";
+    h+=`<div class="sec-h">Price</div>`+peField(lbl,"price",p.price,"number",PE_MONEY);
+  }
+  if(!draft && !derived && s.prices[p.priceKey]!=null && cents(s.prices[p.priceKey])!==cents(bookPrice(p.priceKey)))
+    h+=`<div class="note" style="margin:4px 0 6px">The open job charges <b>${money(s.prices[p.priceKey])}</b>. Use <b>⇣ Apply to this job</b> to bring it in line with the book.</div>`;
+
+  // ---- behaviour + components, by kind
+  if(p.kind==="gutter"){
+    h+=`<div class="sec-h">Drawing</div><div class="pe-checks"><label><input type="checkbox" data-f="wide" ${p.wide?"checked":""}> Draw as a wide line (6" and up)</label></div>`;
+    h+=`<div class="sec-h">Downspouts that fit</div><div class="pe-checks">`;
+    for(const d of DS_STYLES) if(!d.hidden || (p.ds||[]).includes(d.id)) h+=`<label><input type="checkbox" data-dsfit="${esc(d.id)}" ${(p.ds||[]).includes(d.id)?"checked":""}> ${esc(d.label)}</label>`;
+    h+=`</div>`;
+    if((p.ds||[]).length>1) h+=`<div class="fld"><label>Default downspout</label><select data-f="dsDefault">${(p.ds||[]).map(id=>`<option value="${esc(id)}" ${p.dsDefault===id?"selected":""}>${esc(dsStyle(id).label)}</option>`).join("")}</select></div>`;
+    h+=`<div class="sec-h">Corners</div><div class="note" style="margin-bottom:9px">A corner ±${+s.bayDeviation||0}° or more from 90° is a bay miter, otherwise a strip miter (⚙ Settings).</div>`;
+    h+=peComponentHTML(p,COMPONENTS.gutter[1])+peComponentHTML(p,COMPONENTS.gutter[2]);
+    h+=`<div class="sec-h">End caps</div>`+peComponentHTML(p,COMPONENTS.gutter[0]);
+  } else if(p.kind==="downspout"){
+    const fits=draft ? (p._fits||[]) : GUTTER_STYLES.filter(g=>g.ds.includes(p.id)).map(g=>g.id);
+    h+=`<div class="sec-h">Fits these gutters</div><div class="pe-checks">`;
+    for(const g of GUTTER_STYLES) if(!g.hidden || fits.includes(g.id)) h+=`<label><input type="checkbox" data-gfit="${esc(g.id)}" ${fits.includes(g.id)?"checked":""}> ${esc(g.label)}</label>`;
+    h+=`</div><div class="sec-h">Parts</div>`;
+    COMPONENTS.downspout.forEach(c=>{ h+=peComponentHTML(p,c); });
+  } else if(p.kind==="screen"){
+    h+=`<div class="sec-h">Footage</div>`+peField("Round up to the next … ft","round",p.round||4,"number",'step="1" min="1" inputmode="numeric"');
+  } else if(!lockedBehaviour && (p.kind==="service"||p.kind==="line")){
+    const m=productMode(p);
+    h+=`<div class="sec-h">How it's added</div>`;
+    if(p.kind==="service") h+=`<div class="fld"><select data-f="mode">${Object.entries(SERVICE_MODES).map(([v,l])=>`<option value="${v}" ${m===v?"selected":""}>${l}</option>`).join("")}</select></div>`;
+    else h+=`<div class="fld">${peSeg("mode",m==="stroke"?"stroke":"line",[["line","Measured run"],["stroke","Highlight"]])}</div>`;
+    if(m==="stroke") h+=peField("Round up to the next … ft","round",p.round||1,"number",'step="1" min="1" inputmode="numeric"');
+    if(m==="flat"||m==="hour") h+=`<div class="note" style="margin-bottom:9px">Enter the ${m==="hour"?"hours":"quantity"} per job on the Estimate tab, under Services.</div>`;
+  }
+  if(!lockedBehaviour && ["service","item","line"].includes(p.kind)){
+    const m=productMode(p);
+    if(m!=="flat" && m!=="hour"){
+      h+=`<div class="row2"><div class="fld"><label>Color on the diagram</label><input type="color" data-f="color" value="${esc(/^#[0-9a-f]{6}$/i.test(p.color||"")?p.color:"#7a4fd6")}" style="height:36px;padding:2px"></div>`;
+      h+= m==="item" ? peField("Symbol (2–4 letters)","tag",p.tag,"text",'maxlength="4" style="text-transform:uppercase" placeholder="'+esc(productTag(p))+'"') : "<div></div>";
+      h+=`</div>`;
+    }
+  }
+
+  // ---- actions
+  h+=`<div class="pe-actions">`;
+  if(draft){
+    h+=`<button class="btn-sm" data-pe="create" style="background:var(--prime);color:#fff;border-color:var(--prime)">Create product</button><button class="btn-sm" data-pe="cancel">Cancel</button>`;
+  } else {
+    if(isToolProduct(p) && !p.hidden) h+=`<button class="btn-sm" data-pe="draw" style="background:var(--prime);color:#fff;border-color:var(--prime)">Draw with it ›</button>`;
+    if(!p.fixed) h+=`<button class="btn-sm" data-pe="hide">${p.hidden?"Show in pickers":"Hide"}</button>`;
+    if(!p.builtin){
+      const n=productUsage(p);
+      h+= n ? `<button class="btn-sm danger" disabled title="Used ${n}× in the open job">Delete</button>` : `<button class="btn-sm danger" data-pe="delete">Delete</button>`;
+    }
+  }
+  h+=`</div>`;
+  if(!draft && !p.builtin){ const n=productUsage(p); if(n) h+=`<div class="note" style="margin-top:8px">Used in the open job, so it can't be deleted — hide it to take it out of the pickers. Jobs that use it keep pricing it.</div>`; }
+  if(!draft && p.hidden) h+=`<div class="note" style="margin-top:8px">Hidden: not offered for new drawing, but jobs that already use it still draw and price it.</div>`;
+  return h;
+}
+function peFlat(label,key,val){ return `<div class="fld"><label>${label}</label><input data-flat="${key}" type="number" value="${esc(peNum(val))}" ${PE_MONEY}${/List/.test(label)?' placeholder="= rate"':""}></div>`; }
+
+function renderProductsPage(){
+  const tree=byId("prodTree"), ed=byId("prodEdit");
+  const keepT=tree.scrollTop, keepE=ed.scrollTop, sig=String(prodDraft?"draft":prodNew||prodSel);
+  ensurePrices();
+  tree.innerHTML=productTreeHTML();
+  ed.innerHTML=productEditorHTML();
+  byId("prodBody").classList.toggle("editing", !!(prodDraft||prodNew||(prodSel!=null&&(prodSel==="__flat"||catalogProduct(prodSel)))));
+  tree.scrollTop=keepT;
+  ed.scrollTop = (ed.dataset.sig===sig) ? keepE : 0;   // same product: stay put while editing it
+  ed.dataset.sig=sig;
+  byId("prodApply").disabled=!bookDrift();
+  wireProductsPage();
+}
+/* Quick add from the dock's ＋ — the fast path reps had before the Products page: name, how it's
+   drawn, price, colour, and you're drawing with it. It's an ordinary catalog product (a custom run, or
+   an accessory for Item), so it lands in the price book and the full editor can refine it later. */
+function openQuickProduct(){
+  let h=`<div class="note" style="margin-bottom:10px">Becomes its own tool right away and is saved to your products. <b>Line</b> draws a measured run priced per foot; <b>Highlight</b> is dragged over the runs and rounds up; <b>Item</b> is tapped down and priced each.</div>`;
+  h+=`<div class="fld"><label>Product name</label><input id="qpName" type="text" placeholder="e.g. Fascia wrap, Drip edge, Gutter guard"></div>`;
+  h+=`<div class="fld"><label>Behavior</label><select id="qpMode"><option value="line">Line — measured run</option><option value="stroke">Highlight — drag over the runs</option><option value="item">Item — tap to place, priced each</option></select></div>`;
+  h+=`<div class="row2"><div class="fld"><label id="qpPriceLbl">Price per foot ($)</label><input id="qpPrice" type="number" step="0.25" min="0" inputmode="decimal"></div>`;
+  h+=`<div class="fld"><label>Color</label><div class="colorsel"><span class="swatch" id="qpSw" style="background:#7a4fd6"></span><input id="qpColor" type="color" value="#7a4fd6" style="width:46px;height:32px;border:0;background:none;cursor:pointer"></div></div></div>`;
+  h+=`<div class="fld" id="qpRoundRow" style="display:none"><label>Round footage up to the next … ft</label><input id="qpRound" type="number" step="1" min="1" value="1" inputmode="numeric" style="width:110px"></div>`;
+  h+=`<div class="fld" id="qpTagRow" style="display:none"><label>Symbol on the diagram (2–4 characters)</label><input id="qpTag" type="text" maxlength="4" placeholder="IT" style="width:110px;text-transform:uppercase"></div>`;
+  h+=`<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-sm" id="qpSave" style="background:var(--prime);color:#fff;border-color:var(--prime)">Add &amp; draw</button><button class="btn-sm" id="qpMore">More kinds &amp; options ›</button></div>`;
+  openModal("Quick add product",h);
+  byId("qpColor").oninput=e=>byId("qpSw").style.background=e.target.value;
+  byId("qpMode").onchange=e=>{
+    const m=e.target.value;
+    byId("qpPriceLbl").textContent="Price "+(m==="item"?"each":"per foot")+" ($)";
+    byId("qpRoundRow").style.display=m==="stroke"?"block":"none";
+    byId("qpTagRow").style.display=m==="item"?"block":"none";
+  };
+  // the placeholder is the symbol the diagram will actually use if the field is left blank
+  byId("qpName").oninput=()=>{ byId("qpTag").placeholder=productTag({name:byId("qpName").value}); };
+  byId("qpMore").onclick=()=>{ closeModal(); openProductsPage(null,"new"); };
+  byId("qpSave").onclick=()=>{
+    const name=(byId("qpName").value||"").trim(); if(!name){ byId("qpName").focus(); return; }
+    const m=byId("qpMode").value, id=newProductId();
+    const p={id, kind:m==="item"?"item":"line", mode:m, name, price:Math.max(0,+byId("qpPrice").value||0),
+      color:byId("qpColor").value, priceKey:"k_"+id};
+    if(m==="stroke") p.round=Math.max(1,Math.round(+byId("qpRound").value||1));
+    if(m==="item"){ const t=(byId("qpTag").value||"").trim().toUpperCase().slice(0,4); if(t) p.tag=t; }
+    CATALOG.products.push(p);
+    closeModal(); catalogChanged(); setTool("custom:"+id);
+  };
+  setTimeout(()=>byId("qpName").focus(),50);
+}
+function startNewProduct(kind){
+  prodNew=null; prodSel=null;
+  prodDraft=Object.assign({kind, name:"", short:""}, JSON.parse(JSON.stringify(NEW_DEFAULTS[kind])));
+  if(kind==="gutter"){ const d=allowedDsSizes(); prodDraft.ds=d.slice(0,1); prodDraft.dsDefault=d[0]; }
+  if(kind==="downspout") prodDraft._fits=[P.settings.gutterType];
+  renderProductsPage();
+}
+// give a draft its id + price keys and put it in the book
+function createProduct(d){
+  const name=(d.name||"").trim();
+  if(!name){ const i=byId("prodEdit").querySelector('[data-f="name"]'); if(i) i.focus(); return; }
+  const id=newProductId(), k="k_"+id, p=Object.assign({}, d, {id, name, priceKey:k});
+  if(p.kind==="gutter"){ p.endKey=k+"_end"; p.stripKey=k+"_strip"; p.bayKey=k+"_bay"; if(!p.short) p.short=name.slice(0,6); }
+  if(p.kind==="downspout"){
+    p.outletKey=k+"_outlet"; p.elbowKey=k+"_elbow"; p.offsetKey=k+"_offset"; if(!p.short) p.short=name.slice(0,6);
+    (p._fits||[]).forEach(gid=>{ const g=catalogProduct(gid); if(g){ g.ds=g.ds||[]; if(!g.ds.includes(id)) g.ds.push(id); if(!g.dsDefault) g.dsDefault=id; } });
+  }
+  delete p._fits;
+  if(p.tag) p.tag=String(p.tag).trim().toUpperCase().slice(0,4);
+  CATALOG.products.push(p);
+  prodDraft=null; prodSel=id;
+  catalogChanged();
+}
+function deleteProduct(p){
+  if(!p || p.builtin || productUsage(p)) return;
+  if(!confirm('Delete "'+p.name+'" from your products? Saved jobs that use it keep their own copy.')) return;
+  CATALOG.products=CATALOG.products.filter(x=>x!==p);
+  if(p.kind==="downspout") CATALOG.products.forEach(g=>{ if(g.kind==="gutter" && g.ds){ g.ds=g.ds.filter(id=>id!==p.id); if(g.dsDefault===p.id) g.dsDefault=g.ds[0]; } });
+  if(sameProductId(activeCustom,p.id)){ activeCustom=null; setTool("gutter"); }
+  prodSel=null;
+  catalogChanged();
+}
+function toggleHidden(p){
+  // the pickers can never be left empty — a gutter, downspout and screen must stay drawable
+  if(!p.hidden && ["gutter","downspout","screen"].includes(p.kind) && CATALOG.products.filter(x=>x.kind===p.kind && !x.hidden).length<=1){
+    alert("This is the only "+KIND_INFO[p.kind].one.toLowerCase()+" left showing — add or show another first."); return;
+  }
+  p.hidden=!p.hidden; delete p.fromJob;
+  if(p.hidden && sameProductId(activeCustom,p.id)){ activeCustom=null; setTool("gutter"); }
+  catalogChanged();
+}
+function readPeValue(inp){
+  if(inp.type==="checkbox") return inp.checked;
+  if(inp.type==="number"){ if(inp.value==="") return null; const v=+inp.value; return isFinite(v)?Math.max(0,v):0; }
+  return inp.value;
+}
+function wireProductsPage(){
+  const tree=byId("prodTree"), ed=byId("prodEdit");
+  tree.querySelectorAll("[data-tw]").forEach(b=>b.onclick=e=>{
+    e.stopPropagation(); const k=String(b.dataset.tw);
+    prodCollapsed.has(k)?prodCollapsed.delete(k):prodCollapsed.add(k); renderProductsPage();
+  });
+  tree.querySelectorAll("[data-pid]").forEach(r=>r.onclick=()=>{ prodSel=r.dataset.pid; prodNew=null; prodDraft=null; renderProductsPage(); });
+  document.querySelectorAll("#prodStage [data-newkind]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); startNewProduct(b.dataset.newkind); });
+  const p=prodDraft||catalogProduct(prodSel);
+  // edits apply live to a saved product (the book is saved at once); a draft just re-renders
+  const commit=()=>{ if(prodDraft) renderProductsPage(); else catalogChanged(); };
+  ed.querySelectorAll("[data-f]").forEach(inp=>{
+    inp.onchange=()=>{
+      if(!p) return;
+      const f=inp.dataset.f; let v=readPeValue(inp);
+      if(f==="round") v=Math.max(1,Math.round(+v||1));
+      if(f==="name" && !String(v).trim() && !prodDraft){ inp.value=p.name; return; }   // a saved product keeps a name
+      if(f==="tag") v=String(v||"").trim().toUpperCase().slice(0,4);
+      if(f==="price"||f==="min"||f.endsWith("Price")) v=+v||0;
+      p[f]=v;
+      commit();
+    };
+  });
+  ed.querySelectorAll("[data-flat]").forEach(inp=>inp.onchange=()=>{
+    const k=inp.dataset.flat, v=readPeValue(inp);
+    CATALOG.flat[k] = (/List$/.test(k)) ? v : (+v||0);
+    catalogChanged();
+  });
+  ed.querySelectorAll("[data-dsfit]").forEach(inp=>inp.onchange=()=>{
+    const id=inp.dataset.dsfit; p.ds=(p.ds||[]).filter(x=>x!==id); if(inp.checked) p.ds.push(id);
+    if(!p.ds.includes(p.dsDefault)) p.dsDefault=p.ds[0];
+    commit();
+  });
+  ed.querySelectorAll("[data-gfit]").forEach(inp=>inp.onchange=()=>{
+    const gid=inp.dataset.gfit;
+    if(prodDraft){ p._fits=(p._fits||[]).filter(x=>x!==gid); if(inp.checked) p._fits.push(gid); return commit(); }
+    const g=catalogProduct(gid); if(!g) return;
+    g.ds=(g.ds||[]).filter(x=>x!==p.id); if(inp.checked) g.ds.push(p.id);
+    if(!g.ds.includes(g.dsDefault)) g.dsDefault=g.ds[0];
+    commit();
+  });
+  ed.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ p.mode=b.dataset.mode; commit(); });
+  for(const c of [...COMPONENTS.gutter,...COMPONENTS.downspout]){
+    ed.querySelectorAll(`[data-rule-${c.id}]`).forEach(b=>b.onclick=()=>{
+      const v=b.getAttribute("data-rule-"+c.id);
+      // switching to fixed starts from what it cost under "follow", so the price doesn't jump to $0
+      if(v==="fixed" && p[c.rule]!=="fixed" && !(+p[c.price])) p[c.price]=Math.round(followPrice(p,c)*100)/100;
+      p[c.rule]=v; commit();
+    });
+  }
+  ed.querySelectorAll("[data-pe]").forEach(b=>b.onclick=()=>{
+    const a=b.dataset.pe;
+    if(a==="back"||a==="cancel"){ prodDraft=null; prodNew=null; if(a==="back") prodSel=null; renderProductsPage(); }
+    else if(a==="create") createProduct(prodDraft);
+    else if(a==="delete") deleteProduct(p);
+    else if(a==="hide") toggleHidden(p);
+    else if(a==="draw"){ setPage("diagram"); setTool("custom:"+p.id); }
+  });
+}
+byId("prodNew").onclick=()=>{ prodNew="pick"; prodDraft=null; prodSel=null; renderProductsPage(); };
+byId("prodApply").onclick=()=>applyPriceBook();
+byId("prodExport").onclick=()=>download("prime-gutter-price-book.json", JSON.stringify({type:"primeGutterCatalog",v:1,products:CATALOG.products,flat:CATALOG.flat},null,2));
+byId("prodImport").onclick=()=>byId("prodFile").click();
+// Import MERGES: a product with the same id is replaced, new ones are added, nothing is deleted —
+// so loading the office's book can't strand a job that uses one of this iPad's own products.
+byId("prodFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    let d; try{ d=JSON.parse(rd.result); }catch(err){ alert("That file isn't a price book."); return; }
+    if(!d || !Array.isArray(d.products)){ alert("That file isn't a price book (no products in it)."); return; }
+    let n=0;
+    for(const src of d.products){
+      if(!src || src.id==null || !KIND_INFO[src.kind]) continue;
+      const cur=catalogProduct(src.id), c=normalizeProduct(JSON.parse(JSON.stringify(src)));
+      if(c.kind==="part" && !cur) continue;   // e.g. the retired shared strip/box/bay parts
+      if(cur && cur.builtin){ const keys={}; PRODUCT_KEY_FIELDS.forEach(k=>{ if(cur[k]) keys[k]=cur[k]; }); Object.assign(cur, c, {builtin:true, kind:cur.kind, fixed:cur.fixed}, keys); }
+      else if(cur){ if(cur.kind!==c.kind) continue; Object.assign(cur, c); delete cur.fromJob; }
+      else { if(c.kind==="part") continue; delete c.builtin; delete c.fixed; CATALOG.products.push(c); }
+      n++;
+    }
+    if(d.flat && typeof d.flat==="object") Object.assign(CATALOG.flat, d.flat);
+    catalogChanged();
+    alert("Loaded "+n+" product"+(n===1?"":"s")+" into your price book. The open job keeps its prices until you press Apply.");
+  };
+  rd.readAsText(f); e.target.value="";
+};
+
+/* ============================================================ */
 /* MODALS                                                      */
 /* ============================================================ */
 const modalWrap=byId("modalWrap");
-function openCustomProduct(editId){
-  const list=P.settings.customProducts||(P.settings.customProducts=[]);
-  const ex = editId!=null ? productOf(editId) : null;
-  let h="";
-  const exMode=(ex&&ex.mode)||"line";
-  h+=`<div class="note" style="margin-bottom:10px">Define a product and it becomes its own tool. <b>Line</b> draws a measured run priced per foot; <b>Demo</b> and <b>Screen</b> behave like the highlight tools (drag over the runs); <b>Item</b> is tapped down one at a time and priced each.</div>`;
-  h+=`<div class="fld"><label>Product name</label><input id="cpName" type="text" value="${ex?esc(ex.name):''}" placeholder="e.g. Fascia wrap, Drip edge, Gutter guard"></div>`;
-  h+=`<div class="fld"><label>Behavior</label><select id="cpMode"><option value="line"${exMode==="line"?' selected':''}>Line — measured run</option><option value="demo"${exMode==="demo"?' selected':''}>Demo highlight — round up to whole ft</option><option value="screen"${exMode==="screen"?' selected':''}>Screen highlight — round up to 4 ft</option><option value="item"${exMode==="item"?' selected':''}>Item — tap to place, priced each</option></select></div>`;
-  h+=`<div class="row2">`;
-  // one price field for every mode: old saves and this modal keep the same shape, and for an
-  // item `pricePerFoot` simply means $/each
-  h+=`<div class="fld"><label id="cpPriceLbl">Price ${exMode==="item"?"each":"per foot"} ($)</label><input id="cpPrice" type="number" step="0.25" inputmode="decimal" value="${ex?ex.pricePerFoot:''}"></div>`;
-  h+=`<div class="fld"><label>Color</label><div class="colorsel"><span class="swatch" id="cpSw" style="background:${ex?ex.color:'#7a4fd6'}"></span><input id="cpColor" type="color" value="${ex&&/^#[0-9a-f]{6}$/i.test(ex.color)?ex.color:'#7a4fd6'}" style="width:46px;height:32px;border:0;background:none;cursor:pointer"></div></div>`;
-  h+=`</div>`;
-  h+=`<div class="fld" id="cpTagRow" style="display:${exMode==="item"?"block":"none"}"><label>Symbol on the diagram (2–4 characters)</label><input id="cpTag" type="text" maxlength="4" value="${ex&&ex.tag?esc(ex.tag):''}" placeholder="${esc(productTag(ex||{}))}" style="width:110px;text-transform:uppercase"></div>`;
-  h+=`<div style="margin-top:6px"><button class="btn-sm" id="cpSave" style="background:var(--prime);color:#fff;border-color:var(--prime)">${ex?'Save changes':'Add product'}</button></div>`;
-  if(list.length){
-    h+=`<div class="sec-h">Your custom products</div>`;
-    list.forEach(p=>{ const md=(p.mode&&p.mode!=="line")?` · ${p.mode}`:""; const un=productMode(p)==="item"?" ea":"/ft"; h+=`<div class="stamp-preset"><span class="swatch" style="background:${p.color};width:18px;height:18px"></span><span style="flex:1;font-weight:700">${esc(p.name)} — ${money(p.pricePerFoot)}${un}${md}</span><button class="btn-sm" data-edit="${p.id}">Edit</button><button class="btn-sm danger" data-del="${p.id}">✕</button></div>`; });
-  }
-  openModal(ex?"Edit custom product":"Custom product",h);
-  byId("cpColor").oninput=e=>byId("cpSw").style.background=e.target.value;
-  byId("cpMode").onchange=e=>{
-    const item=e.target.value==="item";
-    byId("cpPriceLbl").textContent="Price "+(item?"each":"per foot")+" ($)";
-    byId("cpTagRow").style.display=item?"block":"none";
-  };
-  // the placeholder is the symbol the diagram will actually use if the field is left blank
-  byId("cpName").oninput=()=>{ byId("cpTag").placeholder=productTag({name:byId("cpName").value}); };
-  byId("cpSave").onclick=()=>{
-    const name=(byId("cpName").value||"").trim(); if(!name){ byId("cpName").focus(); return; }
-    const price=+byId("cpPrice").value||0, color=byId("cpColor").value, mode=byId("cpMode").value;
-    const tag=(mode==="item") ? (byId("cpTag").value||"").trim().toUpperCase().slice(0,4) : "";
-    if(ex){ ex.name=name; ex.pricePerFoot=price; ex.color=color; ex.mode=mode; ex.tag=tag; closeModal(); buildDock(); buildOptbar(); setHint(toolHint(tool)); refreshAll(); }
-    else { const np={id:uid(),name,pricePerFoot:price,color,mode}; if(tag) np.tag=tag; list.push(np); closeModal(); buildDock(); refreshAll(); setTool("custom:"+np.id); }
-  };
-  byId("modalBody").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openCustomProduct(b.dataset.edit));
-  byId("modalBody").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
-    const id=b.dataset.del;
-    const doomed=productOf(id); if(!doomed) return;
-    if(confirm('Delete "'+doomed.name+'" and remove its drawn runs?')){
-      recordHistory();
-      P.settings.customProducts=list.filter(p=>!sameProductId(p.id,id));
-      P.objects=P.objects.filter(o=>!((o.t==="custom"||o.t==="item")&&sameProductId(o.productId,id)));
-      if(sameProductId(activeCustom,id)){ activeCustom=null; setTool("gutter"); }
-      buildDock(); refreshAll(); openCustomProduct();
-    }
-  });
-}
 /* Bulk convert to/from the existing system — the screen-only option is the replacement option
    duplicated (⧉) and converted here, instead of every run redrawn by hand. Applies to the
    selection when there is one, else to the whole option. Gutters + downspouts by default. */
@@ -6046,10 +6793,9 @@ function openSettings(){
   h+=`<div class="note">Saved on this device and filled in as the salesperson on every new estimate (“Prepared by” on the PDF). A job can still override it under Job Info.</div>`;
 
   h+=`<div class="sec-h">Takeoff rules</div>`;
-  h+=`<div class="fld"><label>Gutter system${multi?" — "+esc(OPTIONS[activeOpt].name)+" only":""}</label><select id="stGutSys">${GUTTER_STYLES.map(g=>`<option value="${g.id}" ${s.gutterType===g.id?"selected":""}>${g.label}</option>`).join("")}</select></div>`;
+  h+=`<div class="fld"><label>Gutter system${multi?" — "+esc(OPTIONS[activeOpt].name)+" only":""}</label><select id="stGutSys">${pickable(GUTTER_STYLES,s.gutterType).map(g=>`<option value="${g.id}" ${s.gutterType===g.id?"selected":""}>${g.label}</option>`).join("")}</select></div>`;
   const dsAllowed=allowedDsSizes(s.gutterType);
   h+=`<div class="fld"><label>Default downspout size</label><select id="stDsDef">${dsAllowed.map(id=>`<option value="${id}" ${s.defaultDownspoutSize===id?"selected":""}>${dsStyle(id).label}</option>`).join("")}</select></div>`;
-  h+=`<div class="fld"><label>Regular (≈90°) miter</label><div class="seg-toggle"><button data-mit="box" class="${s.regularMiter==="box"?"on":""}">Box</button><button data-mit="strip" class="${s.regularMiter==="strip"?"on":""}">Strip</button></div></div>`;
   h+=fld("Bay miter if ±° from 90","stBay",s.bayDeviation,"number",'step="1" inputmode="decimal"');
   h+=`<div class="note">A corner whose angle differs from 90° by at least this much becomes a <b>bay miter</b>. End caps auto-count: one per open end; corners and closed loops get none.</div>`;
   h+=`<div class="row3">${fld("Ft / corner","stCorner",s.footagePerCorner,"number",'step="0.5" inputmode="decimal"')}${fld("Ft / outlet","stOutlet",s.footagePerOutlet,"number",'step="0.5" inputmode="decimal"')}${fld("Ft / valley","stValley",s.footagePerValley,"number",'step="0.5" inputmode="decimal"')}</div>`;
@@ -6073,9 +6819,8 @@ function openSettings(){
   const prof2=()=>{ saveProfile({name:byId("stPName").value.trim(),phone:fmtPhone(byId("stPPhone").value),email:byId("stPEmail").value.trim()}); applyProfile(P.meta); if(railPane==="job") buildJobPane(); };
   ["stPName","stPEmail"].forEach(id=>{ byId(id).onchange=prof2; });
   { const ph=byId("stPPhone"); ph.oninput=()=>{ ph.value=fmtPhone(ph.value); }; ph.onchange=prof2; }
-  byId("stGutSys").onchange=e=>{ s.gutterType=e.target.value; s.defaultDownspoutSize=gutterStyle(s.gutterType).dsDefault; openSettings(); buildOptbar(); refreshAll(); };
+  byId("stGutSys").onchange=e=>{ s.gutterType=e.target.value; s.defaultDownspoutSize=defaultDsFor(s.gutterType); openSettings(); buildOptbar(); refreshAll(); };
   byId("stDsDef").onchange=e=>{ s.defaultDownspoutSize=e.target.value; refreshAll(); };
-  b.querySelectorAll("[data-mit]").forEach(x=>x.onclick=()=>{ setAll("regularMiter",x.dataset.mit); openSettings(); refreshAll(); });
   b.querySelectorAll("[data-r10]").forEach(x=>x.onclick=()=>{ setAll("roundDownspoutTo10",x.dataset.r10==="1"); openSettings(); refreshAll(); });
   b.querySelectorAll("[data-roe]").forEach(x=>x.onclick=()=>{ setAll("resizeOnEdit",x.dataset.roe==="1"); openSettings(); });
   const num=(id,key)=>{ const e=byId(id); if(e) e.onchange=()=>{ setAll(key,+e.value||0); refreshAll(); }; };
@@ -6106,7 +6851,8 @@ function setPage(pg){
   byId("tabDiagram").classList.toggle("active",pg==="diagram");
   byId("tabPhotos").classList.toggle("active",pg==="photos");
   byId("tabPdf").classList.toggle("active",pg==="pdf");
-  const ps=byId("photoStage"), fs=byId("pdfStage");
+  byId("tabProducts").classList.toggle("active",pg==="products");
+  const ps=byId("photoStage"), fs=byId("pdfStage"), ks=byId("prodStage");
   // The rail moves FIRST: #photoStage lives inside #stage, so parking the rail widens the
   // photo pane, and renderPhotos() below then measures the width the cards will really get.
   // Leaving Diagram parks it; coming back restores it. Only those two edges touch it, so
@@ -6121,11 +6867,14 @@ function setPage(pg){
     fs.style.display="flex"; fs.style.zIndex="30";
     refreshPdfView();
   } else fs.style.display="none";
+  if(pg==="products"){ ks.style.display="flex"; ks.style.zIndex="30"; renderProductsPage(); }
+  else ks.style.display="none";
   if(typeof updatePhotoSelBar==="function") updatePhotoSelBar();
 }
 byId("tabDiagram").onclick=()=>setPage("diagram");
 byId("tabPhotos").onclick=()=>setPage("photos");
 byId("tabPdf").onclick=()=>setPage("pdf");
+byId("tabProducts").onclick=()=>setPage("products");
 
 /* ============================================================ */
 /* PHOTO BLOB STORE                                            */
@@ -8622,7 +9371,8 @@ function serialize(withPhotos){
     ? (P.photos||[]).map(p=>Object.assign({}, p, {dataUrl:photoSrc(p.id)}))
     : (P.photos||[]);
   const payload = {v:3, meta:P.meta, photos, nextId, stampPresets, active:activeOpt,
-    options:OPTIONS.map(o=>({id:o.id,name:o.name,settings:o.settings,objects:o.objects,pres:o.pres}))};
+    options:OPTIONS.map(o=>({id:o.id,name:o.name,settings:o.settings,objects:o.objects,pres:o.pres})),
+    products:jobProducts()};   // the job's non-built-in product definitions — see adoptProducts()
   if(withPhotos && P.meta.titleImage) payload.titleImageData = photoSrc(P.meta.titleImage);
   // plan underlays (any option) and extra PDF pages keep their images in the blob store too
   if(withPhotos){ const blobs={}; extraBlobIds().forEach(id=>{ const u=photoSrc(id); if(u) blobs[id]=u; }); payload.blobs=blobs; }
@@ -8673,6 +9423,7 @@ function applyLoaded(d){
       objects:proj.objects||[], pres:ensurePres(proj.pres), history:[], hidx:-1 }];
     optSeq=2; activeOpt=0;
   }
+  adoptProducts(d && d.products);   // before anything prices the job: its products must exist first
   // gutterLoupe is newer than some saves: a job that never stored it takes it from whether it has a plan
   // (on for plans, off for a plain drawing) — the same rule a plan import applies
   { const raw=d&&Array.isArray(d.options) ? d.options.map(o=>o.settings||{}) : [((d&&d.project)||d||{}).settings||{}];
@@ -8815,6 +9566,7 @@ function pdfPriceRows(s,r){
     (+s.miscDemoLabor)?["Misc / Demo / Labor",money(s.miscDemoLabor)]:null,
     r.customTotal?["Custom products",money(r.customTotal)]:null,
     r.demoAmount?[`Demo (${ftStr(r.demoFeet)})`,money(r.demoAmount)]:null,
+    ...(r.serviceRows||[]).filter(sv=>sv.amount).map(sv=>[`${esc(sv.name)} (${svcQtyStr(sv)})`,money(sv.amount)]),
     ...(r.screenRows||[]).map(sc=>[`Gutter screen — ${esc(sc.name)} (${ftStr(sc.feet)})`,money(sc.amount)]),
     ...(r.hasDiscount?[["Standard price",money(r.listTurnkey)],[`${esc(discountLabel(s))} (${r1(r.discountPct)}%)`,"−"+money(r.discountAmt),"disc"]]:[]),
     s.payMethod==="card"&&r.cardFee?[`Card fee (${s.cardFee}%)`,money(r.cardFee)]:null,
