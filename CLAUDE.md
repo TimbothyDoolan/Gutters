@@ -73,7 +73,9 @@ snapshots for undo.
 **Everything drawn is one flat `P.objects` array** discriminated by `o.t`: `gutter`, `ds`
 (downspout), `valley`, `splash`, `custom`, `demo`, `screen`, `text`, `arrow`, `stamp`, `hl`, `underlay` (a plan image to trace over —
 see **Plan underlay**). A `ds` may carry `memo` (free-text note like "next to brick", its own chip and
-`memoOff`), kept apart from `notation` so `parseDS` never sees words.
+`memoOff`), kept apart from `notation` so `parseDS` never sees words. Every label chip is draggable through
+`segChip()` + a label-box kind, its offset stored on the object (`noteOff`, `memoOff`, `sizeOff`, `tagOff`,
+`existOff` for an existing run's EXISTING tag, `segLabelOff[i]`); double-tap snaps one back.
 Line-ish objects carry `pts` (world coords) plus a parallel `lengths` array — one entry per
 *segment*, so `lengths.length === pts.length - 1`. Keep them in sync on any geometry edit.
 A `text` box (`{t:"text",id,x,y,w,h,text,fill,color,font,size,stroke,bold,italic,border}`) has
@@ -107,9 +109,18 @@ its own strip + bay miters (`stripKey`/`bayKey`, e.g. `strip6hr`/`bay6hr`), a do
 the Settings allowance, as always — or "fixed"). `applyCatalog()` refills `GUTTER_STYLES`, `DS_STYLES`,
 `SCREEN_TYPES`, `PRICE_KEYS`, `DERIVED_KEYS`, `LINES` and `BOOK` **in place** — they're consts other code
 holds; never reassign them, and call `catalogChanged()` after any catalog edit. Pickers go through
-`pickable()` so hidden products drop out while jobs using them still draw and price. The catalog is a
+`pickable()` so hidden products drop out while jobs using them still draw and price. A drawn product
+(`isToolProduct()`) gets a dock button unless `dock:false` (`onDock()`/`setOnDock()`): it stays in the catalog
+and the dock's ＋ (`openQuickProduct()`) lists it to put back; unlike `hidden`, it's still drawable
+(`toolDefById()` resolves `custom:<id>` for it, and `customTools()` keeps the active one's button).
+Every highlight-style tool (Demo, Screen, Highlighter, a Highlight-behaviour product: `isHighlightTool()`) has an
+Eraser toggle in its option bar, kept per dock button in `eraseFor`; `eraseMatch()` limits it to that tool's own
+strokes (a product's eraser only touches that product), and `eraseStrokesAt()` splits them so footage drops. The catalog is a
 **price book**: a job copies a key's book price into `settings.prices` the first time `ensurePrices()` meets
-it and keeps it; `applyPriceBook()` is the explicit push. Every product's job price — demo, screens, custom
+it and keeps it; `applyPriceBook()` is the explicit push, `applyBookKeys(keys)` the per-item one (a product
+plus its fixed-price parts via `productBookKeys()`; the Products editor and each Pricing row that differs show a ⇣).
+Compare a job to the book through `keyDrifts()` — a style's book list is `bookList()`, lifted to its min as
+`ensurePrices()` does, or the job never "matches". Every product's job price — demo, screens, custom
 products too — is `settings.prices[priceKey]`; flat/hourly service quantities are `settings.qty[priceKey]`.
 `migrateLegacyPricing()` (inside `ensurePrices`) converts old saves' `demoRate`/`screen*Rate` and per-job
 `customProducts`; `normalizeProduct()` upgrades older product shapes (the retired one-"own miter" gutter). Saves embed the non-built-in products they use (`jobProducts()` → `adoptProducts()` on
@@ -262,17 +273,23 @@ keyboard.
 
 **Plan underlay + extra pages** (DOCUMENT IMPORT banner). Both store their images in the
 photo blob store by id, like photos. `{t:"underlay",img,x,y,w,h,opacity,print,hidden,pageIn,scale,check,lastFps}`
-is one per option; it's skipped by the takeoff, by marquee, and by hit testing — it's only edited in
+is one per **sheet** — several plan pages can share one canvas (`plansOf()`; `planOf()` is the sheet Plan
+mode is editing, `planCur`) — per option; it's skipped by the takeoff, by marquee, and by hit testing — it's only edited in
 **Plan mode** (top bar's Plan button → `enterPlanMode()`/`exitPlanMode()`, `#planPanel`, which routes
 canvas pointers to `planDown`/`planMoveEvt`/`planUp` and hides the dock/optbar via `body.plan-mode`).
 The scale is an object on the plan: `scale` = `{mode:"line",a,b,ft}` (a dimension line, ends as
 plan-local `{u,v}` fractions of the plan's width, so they ride with the sheet) or
 `{mode:"ratio",ftPerIn,label}` (needs `pageIn`, the PDF page size, sent by `gutterPdfImport`).
-**`drawingFps()` is the only scale reader**: it derives ft/square from the plan (`planFps()`) or falls
-back to `settings.feetPerSquare` — never copy the plan's scale into settings. Plan points never snap to
-the grid. Stored run lengths don't follow a scale change, so `commitPlanScale()` re-measures segments
-still equal to their auto length at `o.lastFps` and keeps hand-typed ones. `normalizePlanWorld()` resizes
-a lone plan to 2 ft/square on Done (camera-compensated) so symbols aren't out of proportion. `print:false`
+**`fpsAt(w)` is the scale reader**: the scaled sheet under the point (hidden sheets included), else
+`drawingFps()` — the first scaled sheet (`planFps()`) or `settings.feetPerSquare`. Never copy a plan's scale
+into settings. **Each sheet keeps its own scale**: a segment measures at the sheet under its midpoint
+(`segFps()`), so the same drawn length reads differently on a 1/8" and a 1/4" sheet. `autoLen`, `pathFeetRaw`
+and `feetToWorld(ft,at)` all go through it — don't measure with a bare `drawingFps()`. Moving a sheet carries
+what's traced on it (`overSheet()`: bounds center on the sheet) and the PDF frames over it; PDF pages' "Page per
+sheet" frames each one. Plan points never snap to
+the grid. Stored run lengths don't follow a scale change, so `commitPlanScale()` re-measures segments whose
+scale moved (`segFps(a,b,[sheet,o.lastFps])` vs now) that still equal their old auto length, and keeps hand-typed ones. `normalizePlanWorld()` resizes
+the sheets (while nothing else is drawn) to 2 ft/square on Done (camera-compensated) so symbols aren't out of proportion. `print:false`
 draws from `draw()` and `objBounds()` returns null for it, so it neither prints nor stretches the PDF
 fit. `print:true` draws inside `drawScene()`, which is why the recorder has `drawImage`. Scale/check
 lines and the loupe are `draw()` chrome only. The same loupe (`drawPlanLoupe`) magnifies under the finger while the

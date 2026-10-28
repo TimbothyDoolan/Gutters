@@ -154,6 +154,9 @@ input,select,textarea{font-family:inherit;font-size:13px}
 .ws-row input.ws-price:focus{outline:0;background:#eef6ff}
 .ws-row input.ws-qty-in{width:100%;border:0;text-align:right;padding:4px 6px;font-family:var(--mono);font-size:12px;background:#fffdf4}
 .ws-row .ws-amt{padding:4px 7px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:700;border-left:1px solid var(--line-2)}
+/* ⇣ use the price-book price, on a Pricing row that differs from the book (bookBtnHTML) */
+.ws-row .ws-bk{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--line-2)}
+.ws-book{border:0;background:transparent;color:#2b7fd0;font-weight:800;font-size:13px;padding:4px 6px;cursor:pointer;line-height:1}
 .ws-unit{font-size:9px;color:var(--steel-2);font-weight:700;margin-left:auto;padding-right:2px}
 
 .totline{display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:8px;margin-top:9px;font-weight:700}
@@ -370,6 +373,20 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 .pl-check b{font:800 19px var(--mono);color:#0f8a7e}
 .pl-flash{background:#eef5fd;border:1px solid #c8dcf3;color:#1d4f86;border-radius:8px;padding:8px 10px;font-size:12px;margin-top:12px;line-height:1.4}
 .pl-sheet{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+/* the Sheets strip: one thumbnail per plan sheet, ✓ / ! for its scale */
+.pl-n{font-weight:700;color:var(--text-soft);letter-spacing:0}
+.pl-sheets{display:flex;gap:7px;flex-wrap:wrap}
+.pl-sh{position:relative;width:62px;height:50px;padding:0;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;overflow:hidden}
+.pl-sh img{width:100%;height:100%;object-fit:contain;display:block}
+.pl-sh.on{border:2px solid var(--prime);box-shadow:0 0 0 2px rgba(200,32,42,.15)}
+.pl-sh.add{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--text-soft);border-style:dashed}
+.pl-sh.add small{font-size:10px;font-weight:700}
+.pl-shn{position:absolute;left:3px;top:3px;background:#1b2530;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:0 4px;line-height:15px}
+.pl-shs{position:absolute;right:3px;top:3px;font-size:10px;font-weight:800;border-radius:8px;width:15px;height:15px;line-height:15px;text-align:center}
+.pl-shs.ok{background:#e1f5e9;color:#1d7444}
+.pl-shs.warn{background:#fff0d4;color:#955800}
+.pl-pick{border:1px solid var(--line);border-radius:6px;background:#fff;padding:4px;cursor:pointer}
+.pl-pick.on{border:2px solid var(--prime);padding:3px;background:#fdecee}
 .pl-sheet img{width:68px;height:50px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff;flex:0 0 auto}
 .pl-sheet b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl-empty{text-align:center;padding:26px 6px 14px}
@@ -530,6 +547,13 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 .pk-sub{font-size:11px;color:var(--text-soft);margin-top:2px}
 .pk-badge{font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;border-radius:3px;padding:1px 5px;background:#e9edf1;color:var(--steel)}
 .pk-badge.warn{background:#fff4e5;color:#a35a00}
+.qp-h{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--text-soft);margin:2px 0 6px}
+.qp-saved{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;margin-bottom:14px;max-height:220px;overflow:auto}
+.qp-prod{display:grid;grid-template-columns:auto 1fr;column-gap:7px;align-items:center;text-align:left;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;font:inherit}
+.qp-prod .pk-sw{grid-row:span 2}
+.qp-n{font-weight:700;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qp-s{font-size:11px;color:var(--text-soft)}
+@media (hover:hover){.qp-prod:hover{border-color:var(--prime)}}
 .pk-price{font-family:var(--mono);font-size:12.5px;font-weight:700;text-align:right;white-space:nowrap}
 .pk-price small{font-weight:600;color:var(--steel-2);font-size:10px;margin-left:1px}
 .pk-job{font-size:10px;color:var(--prime);font-weight:700;font-family:var(--ui)}
@@ -1438,19 +1462,30 @@ function evtPos(e){
 const GRID = 20;
 
 /* feet per grid square. A plan with its scale set owns it (planFps(), re-derived on every read);
-   otherwise it's the drawing's own setting (ft/square on the Gutter bar, or Calibrate) */
+   otherwise it's the drawing's own setting (ft/square on the Gutter bar, or Calibrate).
+   Off any scaled sheet only: on one, a length measures at that sheet's own scale (fpsAt) */
 function drawingFps(){ return planFps() || (+P.settings.feetPerSquare||0); }
+/* ft/square at world point w: the topmost scaled sheet under it (hidden ones too — hiding a sheet must
+   not change what's traced on it), else drawingFps(). was=[sheet,fps] asks what it read before that
+   sheet's scale changed (fps 0 = it had none), for commitPlanScale's re-measure */
+function fpsAt(w,was){
+  const f=x=>was&&x===was[0] ? was[1] : planFtPerWorld(x)*GRID, ps=plansOf();
+  for(let i=ps.length-1;i>=0;i--){ const o=ps[i]; if(f(o)>0&&w.x>=o.x&&w.x<=o.x+o.w&&w.y>=o.y&&w.y<=o.y+o.h) return f(o); }
+  const a=ps.find(x=>f(x)>0); return a ? f(a) : (+P.settings.feetPerSquare||0);
+}
+// a segment measures at the sheet its middle lies on
+const segFps=(a,b,was)=>fpsAt({x:(a.x+b.x)/2,y:(a.y+b.y)/2},was);
 /* convert a drawn world-distance to feet using the current scale */
 function autoFeetAt(worldDist,fps){
   if(!(fps>0)) return 0;
   return Math.round((worldDist/GRID)*fps*2)/2;   // nearest half-foot
 }
 function autoFeet(worldDist){ return autoFeetAt(worldDist, drawingFps()); }
-function autoLen(a,b){ return autoFeet(dist(a,b)); }
+function autoLen(a,b){ return autoFeetAt(dist(a,b),segFps(a,b)); }
 
-/* inverse of autoFeet: feet -> drawn world length at current scale */
-function feetToWorld(ft){
-  const fps=drawingFps();
+/* inverse of autoFeet: feet -> drawn world length at current scale (at world point `at`, if given) */
+function feetToWorld(ft,at){
+  const fps=at?fpsAt(at):drawingFps();
   if(fps<=0) return 0;
   return (ft/fps)*GRID;
 }
@@ -1461,9 +1496,8 @@ function screenTypeDef(id){ return SCREEN_TYPES.find(t=>t.id===id) || SCREEN_TYP
 // raw (un-rounded) footage of a freehand stroke path, using the current ft/square scale
 function pathFeetRaw(pts){
   if(!pts||pts.length<2) return 0;
-  let d=0; for(let i=1;i<pts.length;i++) d+=dist(pts[i-1],pts[i]);
-  const fps=drawingFps();
-  return fps>0 ? (d/GRID)*fps : 0;
+  let f=0; for(let i=1;i<pts.length;i++) f+=dist(pts[i-1],pts[i])/GRID*segFps(pts[i-1],pts[i]);
+  return f;
 }
 // round a stroke's footage up to its step: a number of ft, or the legacy mode names
 // ("demo" -> next whole ft, "screen" -> next multiple of 4)
@@ -1494,15 +1528,23 @@ function productOf(id){ return catalogProduct(id); }
 // is the active custom product a freehand-stroke product?
 function customStrokeMode(){ return strokeMode(productOf(activeCustom)); }
 
-// ---- eraser for the Demo / Screen highlight tools ----
-function eraseModeActive(){ return (tool==="demo"&&demoErase)||(tool==="screen"&&screenErase); }
-function eraserRadiusWorld(){ return (tool==="screen"?screenWidth:demoWidth)/2 + 5; }
-// remove the part of every `kind` stroke within `radius` of `worldPt`, splitting
+// ---- eraser for every highlight-style tool: Demo, Screen, Highlighter and Highlight-behaviour products ----
+// a toggle per dock button (activeToolId), so one product's eraser never leaves another tool erasing
+function isHighlightTool(){ return tool==="demo"||tool==="screen"||tool==="hl"||(tool==="custom"&&!!customStrokeMode()); }
+function eraseModeActive(){ return isHighlightTool() && eraseFor.has(activeToolId); }
+function eraserRadiusWorld(){ return ({screen:screenWidth,demo:demoWidth,hl:hlWidth}[tool]||20)/2+5; }   // product strokes are drawn 20 wide
+// what the active eraser may touch: only its own tool's strokes — a product's eraser only that product's
+function eraseMatch(){
+  if(tool!=="custom") return o=>o.t===tool;
+  const id=activeCustom; return o=>o.t==="custom"&&o.stroke&&sameProductId(o.productId,id);
+}
+const eraseToggleHTML=()=>'<div class="ob-grp"><label><input type="checkbox" id="opErase" '+(eraseModeActive()?"checked":"")+'> Eraser</label></div>';
+// remove the part of every matching stroke within `radius` of `worldPt`, splitting
 // each stroke into the surviving runs (so footage of the erased gap drops out).
-function eraseStrokesAt(worldPt, radius, kind){
+function eraseStrokesAt(worldPt, radius, match){
   let changed=false; const out=[];
   for(const o of P.objects){
-    if(o.t!==kind || !o.pts){ out.push(o); continue; }
+    if(!match(o) || !o.pts){ out.push(o); continue; }
     const keep=o.pts.map(p=>dist(p,worldPt)>radius);
     if(keep.every(Boolean)){ out.push(o); continue; }
     changed=true;
@@ -1520,9 +1562,9 @@ function resizeRunSegment(run, segIdx){
   if(!run||!run.pts||segIdx<0||segIdx>=run.pts.length-1) return;
   const ft=run.lengths[segIdx];
   if(ft===""||ft==null||!(+ft>0)) return;
-  const newLen=feetToWorld(+ft);
-  if(newLen<=0) return;
   const a=run.pts[segIdx], b=run.pts[segIdx+1];
+  const newLen=feetToWorld(+ft,{x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  if(newLen<=0) return;
   let dx=b.x-a.x, dy=b.y-a.y, len=Math.hypot(dx,dy);
   if(len<1e-6){ // zero-length segment: take previous direction or horizontal
     if(segIdx>0){ const p=run.pts[segIdx-1]; dx=a.x-p.x; dy=a.y-p.y; len=Math.hypot(dx,dy); }
@@ -2545,6 +2587,7 @@ function labelOffsetOf(o,key){
   if(key==="memo") return o.memoOff||null;
   if(key==="size") return o.sizeOff||null;
   if(key==="tag") return o.tagOff||null;
+  if(key==="exist") return o.existOff||null;
   return (o.segLabelOff && o.segLabelOff[key]) || null;
 }
 // auto: where the chip sits when the rep hasn't moved it (world offset from the anchor; default none)
@@ -2654,7 +2697,9 @@ function drawExistingGutter(o,pts,isSel){
   if(longest>=0){
     const a=pts[longest], b=pts[longest+1];
     const _tz=chipPx(9);
-    chip("EXISTING",a.x+(b.x-a.x)*0.25,a.y+(b.y-a.y)*0.25,{size:_tz,pad:Math.max(2,_tz*0.4),bold:true,bg:EXISTING_COL,fg:"#fff",bc:EXISTING_COL,r:4});
+    // draggable like the footage chips (o.existOff): on a crowded run it can still sit on a gutter line
+    const tb=segChip(o,"exist",a.x+(b.x-a.x)*0.25,a.y+(b.y-a.y)*0.25,"EXISTING",{size:_tz,pad:Math.max(2,_tz*0.4),bold:true,bg:EXISTING_COL,fg:"#fff",bc:EXISTING_COL,r:4});
+    addLabelBox("existtag",o.id,tb.x,tb.y,tb.w,tb.h);
   }
   drawVertexHandles(o,pts);
 }
@@ -3438,8 +3483,8 @@ let hlColor="#ffe24d", hlWidth=18;
 let demoColor="#ff3b30", demoWidth=20;                 // Demo highlight defaults
 let screenColor="#34c759", screenWidth=20;             // Gutter-screen highlight defaults
 let screenDrawType="ez";                               // active screen product for new strokes
-let demoErase=false, screenErase=false;                // eraser toggle per highlight tool
-let erasing=null;                                      // active eraser gesture kind ("demo"|"screen")
+const eraseFor=new Set();                              // dock button ids (activeToolId) whose Eraser is on
+let erasing=null;                                      // active eraser gesture: eraseMatch() of its tool
 let stampPresets=[
   {text:"2-STORY",color:"#c8202a"},
   {text:"STEEP",color:"#a01820"},
@@ -3491,15 +3536,25 @@ function isToolProduct(p){
   if(!p || p.fixed || !["line","item","service"].includes(p.kind)) return false;
   const m=productMode(p); return m==="line"||m==="stroke"||m==="item";
 }
+/* p.dock===false keeps a product in the catalog (and the dock's ＋ list) but off the dock, so a rep can save
+   any number of products without each one taking a button. Unlike hidden, it's still offered for drawing. */
+const onDock=p=>p.dock!==false;
+function setOnDock(p,on){
+  if(on) delete p.dock; else p.dock=false;
+  if(!on && sameProductId(activeCustom,p.id)){ activeCustom=null; setTool("gutter"); }
+  catalogChanged();
+}
+// tool products saved in the catalog but off the dock — the ＋ offers them
+const offDockTools=()=>CATALOG.products.filter(p=>isToolProduct(p) && !p.hidden && !onDock(p));
 function customTools(){
-  // the active one stays even if hidden meanwhile, so its button doesn't vanish mid-drawing
-  return CATALOG.products.filter(p=>isToolProduct(p) && (!p.hidden || sameProductId(p.id,activeCustom)))
+  // the active one stays even if hidden or off the dock meanwhile, so its button doesn't vanish mid-drawing
+  return CATALOG.products.filter(p=>isToolProduct(p) && ((!p.hidden && onDock(p)) || sameProductId(p.id,activeCustom)))
     .map(p=>({id:"custom:"+p.id,behavior:"custom",icon:"custom",custom:p.id,name:p.name,lbl:(p.name||"").slice(0,5)}));
 }
 function allTools(){
   // insert custom product tools + an "add custom" button right after the gutter/ds group
   const ct=customTools();
-  const addBtn={id:"addCustom",behavior:"_action",icon:"add",name:"Quick add a custom product"};
+  const addBtn={id:"addCustom",behavior:"_action",icon:"add",name:"Add a product to the toolbar — new, or one saved in your products"};
   const out=[];
   for(const t of BASE_TOOLS){
     out.push(t);
@@ -3507,7 +3562,12 @@ function allTools(){
   }
   return out;
 }
-function toolDefById(id){ return allTools().find(t=>t.id===id); }
+function toolDefById(id){
+  const t=allTools().find(t=>t.id===id); if(t) return t;
+  // a product off the dock (Products' "Draw with it") is still a tool — customTools() then keeps its button while active
+  const m=/^custom:(.+)$/.exec(id||""), p=m&&catalogProduct(m[1]);
+  return p&&isToolProduct(p) ? {id,behavior:"custom",icon:"custom",custom:p.id,name:p.name} : undefined;
+}
 
 let activeToolId="gutter";   // which dock button is highlighted
 let activeCustom=null;        // active custom product id (when behavior==="custom")
@@ -3546,6 +3606,7 @@ function setTool(id){
   draw();
 }
 function toolHint(t){
+  if(t===tool && eraseModeActive()) return "Eraser — drag over the highlight to erase it (its footage drops with it) · untick Eraser to draw again";
   // the custom tool is one dock button per product, so its hint depends on that product's mode
   if(t==="custom"){
     const p=productOf(activeCustom);
@@ -3673,6 +3734,19 @@ function addPdfPage(){
   P.pres.pages=[...cur,{x:c.x-w/2,y:c.y-h/2,w,h}];
   recordHistory(); scheduleSave(); buildOptbar(); draw();
 }
+/* One frame per plan sheet: each sheet's area gets its own page, framed around what's traced on it (the sheet itself while nothing is) — page 1
+   in page 1's shape, the rest in the later-page box's. The rep fine-tunes them like any frame. */
+function pdfPagesPerSheet(){
+  const ps=plansOf().filter(o=>!o.hidden).slice(0,MAX_PDF_PAGES); if(ps.length<2) return;
+  const n=ps.length;
+  P.pres.pages=ps.map((o,i)=>{
+    const bs=P.objects.filter(x=>overSheet(o,x)).map(objBounds).filter(Boolean);
+    let r={x:o.x,y:o.y,w:o.w,h:o.h};
+    if(bs.length){ const x0=Math.min(...bs.map(b=>b.x)), y0=Math.min(...bs.map(b=>b.y)); r={x:x0,y:y0,w:Math.max(...bs.map(b=>b.x+b.w))-x0,h:Math.max(...bs.map(b=>b.y+b.h))-y0}; }
+    return frameAround(r,pdfDiagramBox(i?1:0,n));
+  });
+  recordHistory(); scheduleSave(); buildOptbar(); draw();
+}
 function removePdfPage(i){
   const cur=P.pres.pages||[]; if(!cur[i]) return;
   P.pres.pages=cur.filter((_,j)=>j!==i);   // later pages move up a number
@@ -3766,6 +3840,7 @@ function pagesOptbarHTML(){
     + g(seg(0,"Auto fit")+seg(1,"1 page")+seg(2,"2 pages")+(n>2?'<span class="chip on">'+n+' pages</span>':'')
       + '<button class="chip" id="opPgAdd"'+(full?' disabled title="'+MAX_PDF_PAGES+' pages is the limit"':' title="Add a diagram page framed on what you see now"')+'>+ Page</button>')
     + (n?dv+g('<button class="chip" id="opPgRefit">Re-fit to drawing</button>'):'')
+    + (plansOf().filter(o=>!o.hidden).length>1?dv+g('<button class="chip" id="opPgSheets" title="One PDF page framed on each plan sheet">Page per sheet</button>'):'')
     + dv+g('<button class="chip" id="opPgPreview">Preview PDF</button>')
     + '<span class="mini" style="color:var(--text-soft)">'+tip+'</span>';
 }
@@ -3775,6 +3850,8 @@ function wirePagesOptbar(){
   if(ad) ad.onclick=addPdfPage;
   const rf=document.getElementById("opPgRefit");
   if(rf) rf.onclick=()=>{ P.pres.pages=autoPageFrames(P.pres.pages.length); recordHistory(); scheduleSave(); draw(); };
+  const ps=document.getElementById("opPgSheets");
+  if(ps) ps.onclick=pdfPagesPerSheet;
   const pv=document.getElementById("opPgPreview");
   if(pv) pv.onclick=()=>setPage("pdf");
 }
@@ -3909,12 +3986,14 @@ function buildOptbar(){
     const im=productMode(p)==="item";   // priced each, so no auto-measure / ft-per-square here
     h+='<span class="ob-title">'+esc((p.name||"CUSTOM").toUpperCase())+'</span>'+dv
       + g('<label>'+money(+P.settings.prices[p.priceKey]||0)+(im?' each':' / ft')+'</label><button class="chip" id="opCustEdit">Edit product…</button>')
-      + g('<label>Color</label><span class="swatch" id="opCustSw" style="background:'+(p.color||'#c8202a')+'"></span><button class="chip" id="opCustCol">Color…</button>');
+      + g('<label>Color</label><span class="swatch" id="opCustSw" style="background:'+(p.color||'#c8202a')+'"></span><button class="chip" id="opCustCol">Color…</button>')
+      + (p.id!=null ? g('<label>Toolbar</label><button class="chip" id="opCustUndock" title="It stays in your products — add it back from the toolbar\'s ＋">'+(onDock(p)?'Remove from toolbar':'Keep on toolbar')+'</button>') : '');
     if(im){
       h+= dv + g('<label><input type="checkbox" id="opSnap" '+(snap?"checked":"")+'> Snap</label>')
         + '<span class="mini" style="color:var(--text-soft)">Tap to drop one — each placement counts as one on the estimate</span>';
     } else if(sm){
-      h+= dv + '<span class="mini" style="color:var(--text-soft)">Highlight — drag over runs · rounds up to '+(sm===1?'whole ft':'next '+sm+' ft')+'</span>';
+      h+= dv + eraseToggleHTML()
+        + '<span class="mini" style="color:var(--text-soft)">'+(eraseModeActive()?'Drag over '+esc(p.name||'its')+' highlight to erase it (subtracts footage)':'Highlight — drag over runs · rounds up to '+(sm===1?'whole ft':'next '+sm+' ft'))+'</span>';
     } else {
       h+= dv + g('<label><input type="checkbox" id="opAuto" '+(P.settings.autoMeasure?"checked":"")+'> Auto-measure</label>')
         + optbarScale();
@@ -3939,20 +4018,21 @@ function buildOptbar(){
     h+='<span class="ob-title">HIGHLIGHTER</span>'+dv
       + g('<label>Color</label><input type="color" id="opHlColor" value="'+hlColor+'" style="width:40px;height:28px;border:0;background:none">')
       + g('<label>Width</label><input id="opHlW" type="range" min="8" max="40" value="'+hlWidth+'">')
-      + '<span class="mini" style="color:var(--text-soft)">Marks areas for the Misc / Demo / Labor line</span>';
+      + dv + eraseToggleHTML()
+      + '<span class="mini" style="color:var(--text-soft)">'+(eraseModeActive()?'Drag over highlighter marks to erase them':'Marks areas for the Misc / Demo / Labor line')+'</span>';
   } else if(tool==="demo"){
     h+='<span class="ob-title">DEMO GUTTER</span>'+dv
       + g('<label>Color</label><input type="color" id="opDemoColor" value="'+demoColor+'" style="width:40px;height:28px;border:0;background:none">')
       + g('<label>Width</label><input id="opDemoW" type="range" min="8" max="50" value="'+demoWidth+'">')
-      + dv + g('<label><input type="checkbox" id="opDemoErase" '+(demoErase?"checked":"")+'> Eraser</label>')
-      + '<span class="mini" style="color:var(--text-soft)">'+(demoErase?'Drag over demo highlight to erase it (subtracts footage)':'Drag over runs to demo · rounds up to whole ft')+'</span>';
+      + dv + eraseToggleHTML()
+      + '<span class="mini" style="color:var(--text-soft)">'+(eraseModeActive()?'Drag over demo highlight to erase it (subtracts footage)':'Drag over runs to demo · rounds up to whole ft')+'</span>';
   } else if(tool==="screen"){
     h+='<span class="ob-title">GUTTER SCREEN</span>'+dv
       + g('<label>Type</label><select id="opScreenType">'+pickable(SCREEN_TYPES,screenDrawType).map(t=>'<option value="'+t.id+'"'+(t.id===screenDrawType?' selected':'')+'>'+t.name+'</option>').join("")+'</select>')
       + g('<label>Color</label><input type="color" id="opScreenColor" value="'+screenColor+'" style="width:40px;height:28px;border:0;background:none">')
       + g('<label>Width</label><input id="opScreenW" type="range" min="8" max="50" value="'+screenWidth+'">')
-      + dv + g('<label><input type="checkbox" id="opScreenErase" '+(screenErase?"checked":"")+'> Eraser</label>')
-      + '<span class="mini" style="color:var(--text-soft)">'+(screenErase?'Drag over screen highlight to erase it (subtracts footage)':'Drag over runs · rounds up to next '+screenTypeDef(screenDrawType).round+' ft')+'</span>';
+      + dv + eraseToggleHTML()
+      + '<span class="mini" style="color:var(--text-soft)">'+(eraseModeActive()?'Drag over screen highlight to erase it (subtracts footage)':'Drag over runs · rounds up to next '+screenTypeDef(screenDrawType).round+' ft')+'</span>';
   } else if(tool==="select"){
     h+='<span class="ob-title">SELECT</span>'+dv;
     const one = sel.size===1 ? objById([...sel][0]) : null;
@@ -4045,6 +4125,11 @@ function wireOptbar(){
   if(byId("opQuiz")) byId("opQuiz").onclick=openJobQuiz;
   if(byId("opPlanScale")) byId("opPlanScale").onclick=enterPlanMode;
   if(byId("opCustEdit")) byId("opCustEdit").onclick=()=>openProductsPage(activeCustom);
+  if(byId("opCustUndock")) byId("opCustUndock").onclick=()=>{
+    const p=productOf(activeCustom); if(!p) return;
+    const on=!onDock(p); setOnDock(p,on);
+    setHint(on ? p.name+" is on the toolbar." : p.name+" is off the toolbar and still saved in your products — the toolbar's ＋ adds it back.");
+  };
   // a product's colour is catalog data (every job draws it the same), so it's saved, not undone
   if(byId("opCustCol")) byId("opCustCol").onclick=()=>{ const p=productOf(activeCustom); if(p) pickColor("Color for "+p.name,p.color,c=>{ p.color=c; saveCatalog(); if(byId("opCustSw"))byId("opCustSw").style.background=c; refreshAll(); }); };
   if(byId("opDsSize")) byId("opDsSize").onchange=e=>{ dsDrawSize=e.target.value; };
@@ -4069,11 +4154,10 @@ function wireOptbar(){
   if(byId("opHlW")) byId("opHlW").oninput=e=>hlWidth=+e.target.value;
   if(byId("opDemoColor")) byId("opDemoColor").oninput=e=>demoColor=e.target.value;
   if(byId("opDemoW")) byId("opDemoW").oninput=e=>demoWidth=+e.target.value;
-  if(byId("opDemoErase")) byId("opDemoErase").onchange=e=>{ demoErase=e.target.checked; buildOptbar(); setHint(toolHint("demo")); draw(); };
+  if(byId("opErase")) byId("opErase").onchange=e=>{ eraseFor[e.target.checked?"add":"delete"](activeToolId); buildOptbar(); setHint(toolHint(tool)); draw(); };
   if(byId("opScreenType")) byId("opScreenType").onchange=e=>{ screenDrawType=e.target.value; buildOptbar(); setHint(toolHint("screen")); };   // rebuild: the rounding note follows the type
   if(byId("opScreenColor")) byId("opScreenColor").oninput=e=>screenColor=e.target.value;
   if(byId("opScreenW")) byId("opScreenW").oninput=e=>screenWidth=+e.target.value;
-  if(byId("opScreenErase")) byId("opScreenErase").onchange=e=>{ screenErase=e.target.checked; buildOptbar(); setHint(toolHint("screen")); draw(); };
   if(byId("opDelete")) byId("opDelete").onclick=deleteSelected;
   if(byId("opDupe")) byId("opDupe").onclick=duplicateSelected;
   if(byId("opExisting")) byId("opExisting").onclick=openExistingSystem;
@@ -4175,7 +4259,7 @@ byId("snapAngle").onclick=()=>{ angleSnap=!angleSnap; updateSnapBar(); flashHint
    sliding aims it, with the magnifier over a plan (tracePress); lifting places that corner. A drag still
    lays a whole segment in one go, so dragging and tapping mix freely. ✓ Finish run (drawBar) ends it, or
    landing back on the run's own start closes the loop and ends it. Like the Photos line tool. A new
-   plan turns it on (setPlanImage); also in Settings, the Plan panel and the corner group (Gutter tool). */
+   plan turns it on (addPlanSheet); also in Settings, the Plan panel and the corner group (Gutter tool). */
 let tapPress=null;   // {started}: this finger began the run (a tap then just leaves the start point)
 function setTapDraw(on){
   OPTIONS.forEach(op=>{ if(op.settings) op.settings.tapDraw=!!on; }); P.settings.tapDraw=!!on;
@@ -4520,7 +4604,8 @@ function abortSingleTouch(){
   panning=null;
   // a pinch mid-placement drops the half-placed line (the tool stays armed); an end drag keeps where it got to
   if(planEdit){ if(planEdit.kind==="place"&&planEdit.first&&planPlace) planPlace.a=planPlace.b=null;
-    if(planEdit.kind==="move"){ const o=planOf(); if(o){ o.x=planEdit.ox; o.y=planEdit.oy; } } planEdit=null; }
+    if(planEdit.kind==="move") planMoveRestore(planEdit); planEdit=null; }
+  planPick=null;
   // a pinch mid frame-drag puts the frame back rather than leaving an unrecorded half-move
   if(frameDrag){ const f=(P.pres.pages||[])[frameDrag.i]; if(f) Object.assign(f,frameDrag.orig); frameDrag=null; }
   if(planMode) planHint(); else setHint(toolHint(tool));
@@ -4623,7 +4708,7 @@ function onDown(e){
     const gv=gutterVertexHit(pt); if(gv){ vertexDrag={o:gv.o,idx:gv.idx,oldPos:{x:gv.o.pts[gv.idx].x,y:gv.o.pts[gv.idx].y}}; return; }
     const hit=hitTest(pt);
     if(hit){
-      if(hit.kind==="seglen"||hit.kind==="dsnote"||hit.kind==="dsmemo"||hit.kind==="strokelabel"||hit.kind==="dssize"||hit.kind==="customtag"){
+      if(hit.kind==="seglen"||hit.kind==="dsnote"||hit.kind==="dsmemo"||hit.kind==="strokelabel"||hit.kind==="dssize"||hit.kind==="customtag"||hit.kind==="existtag"){
         // grab a measurement number / note / demo+screen footage label / custom product tag:
         // dragging moves just that label (offset stored on its parent object); a tap on a
         // seglen/note opens its editor.
@@ -4633,6 +4718,7 @@ function onDown(e){
                   : hit.kind==="dssize" ? (o&&o.sizeOff)
                   : hit.kind==="strokelabel" ? (o&&o.labelOff)
                   : hit.kind==="customtag" ? (o&&o.tagOff)
+                  : hit.kind==="existtag" ? (o&&o.existOff)
                   : ((o&&o.segLabelOff&&o.segLabelOff[hit.seg]) || segAutoOff.get(hit.objId+":"+hit.seg));
         const startOff = cur ? {x:cur.x||0,y:cur.y||0} : {x:0,y:0};
         press={pt,mode:"moveLabel",hit,startOff,moved:false};
@@ -4692,6 +4778,10 @@ function onDown(e){
     }
     draw(); return;
   }
+  if(eraseModeActive()){
+    recordHistory(); erasing=eraseMatch(); cursorW=w;
+    eraseStrokesAt(w, eraserRadiusWorld(), erasing); draw(); return;
+  }
   if(tool==="custom"){
     // item products are tap-to-place, so this has to come before any drawing path
     if(productMode(productOf(activeCustom))==="item"){
@@ -4723,10 +4813,6 @@ function onDown(e){
     return;
   }
   if(tool==="hl"){ drawing={t:"hl",pts:[w]}; return; }
-  if((tool==="demo"||tool==="screen") && eraseModeActive()){
-    recordHistory(); erasing=tool; cursorW=w;
-    eraseStrokesAt(w, eraserRadiusWorld(), tool); draw(); return;
-  }
   if(tool==="demo"){ drawing={t:"demo",pts:[w]}; return; }
   if(tool==="screen"){ drawing={t:"screen",pts:[w]}; return; }
 }
@@ -4766,7 +4852,8 @@ function onMove(e){
   if(frameDrag){ dragPageFrame(w); draw(); return; }
   if(erasing){ cursorW=w; eraseStrokesAt(w, eraserRadiusWorld(), erasing); draw(); return; }
   // hover cursor for drawing tools
-  if(["gutter","custom","ds","valley","splash","stamp","arrow","text","hl"].includes(tool)){
+  if(eraseModeActive()) cursorW=w;   // the eraser ring sits on the raw cursor, never a snapped one
+  else if(["gutter","custom","ds","valley","splash","stamp","arrow","text","hl"].includes(tool)){
     let cw=snapW(w);
     if(drawing && (drawing.t==="gutter"||drawing.t==="custom") && drawing.pts.length>0){
       cw=snapAngleW(cw, drawing.pts[drawing.pts.length-1]);
@@ -4848,6 +4935,7 @@ function onMove(e){
         else if(press.hit.kind==="dssize"){ o.sizeOff={x:nx,y:ny}; }
         else if(press.hit.kind==="strokelabel"){ o.labelOff={x:nx,y:ny}; }
         else if(press.hit.kind==="customtag"){ o.tagOff={x:nx,y:ny}; }
+        else if(press.hit.kind==="existtag"){ o.existOff={x:nx,y:ny}; }
         else { o.segLabelOff=o.segLabelOff||{}; o.segLabelOff[press.hit.seg]={x:nx,y:ny}; }
       }
       draw();
@@ -4880,7 +4968,7 @@ function onUp(e){
       pendingTap=null; return;
     }
   }
-  if(panning){ panning=null; canvas.style.cursor=(planMode?"default":tool==="hand"?"grab":(tool==="select"?"default":"crosshair")); return; }
+  if(panning){ panning=null; canvas.style.cursor=(planMode?"default":tool==="hand"?"grab":(tool==="select"?"default":"crosshair")); if(planMode) planPickUp(evtPos(e)); return; }
   if(planMode){ planUp(e); return; }
   if(frameDrag){ frameDrag=null; recordHistory(); scheduleSave(); return; }
   if(erasing){ erasing=null; refreshAll(); return; }
@@ -4924,6 +5012,11 @@ function onUp(e){
           if(!e.shiftKey){ sel.clear(); segSel.clear(); }
           sel.add(press.hit.objId);
           setHint("Custom line selected — drag the product tag to move it clear of the drawing • double-tap the tag to snap it back.");
+        }
+        else if(press.hit && press.hit.kind==="existtag"){
+          if(!e.shiftKey){ sel.clear(); segSel.clear(); }
+          sel.add(press.hit.objId);
+          setHint("Existing gutter selected — drag the EXISTING tag to move it • double-tap the tag to snap it back.");
         }
       }
       else { recordHistory(); }
@@ -5082,6 +5175,7 @@ function onDbl(e){
     else if(hit.kind==="dssize" && o.sizeOff){ o.sizeOff=null; cleared=true; }
     else if(hit.kind==="strokelabel" && o.labelOff){ o.labelOff=null; cleared=true; }
     else if(hit.kind==="customtag" && o.tagOff){ o.tagOff=null; cleared=true; }
+    else if(hit.kind==="existtag" && o.existOff){ o.existOff=null; cleared=true; }
     else if(hit.kind==="seglen" && o.segLabelOff && o.segLabelOff[hit.seg]){ delete o.segLabelOff[hit.seg]; cleared=true; }
     if(cleared){ recordHistory(); setHint(hit.kind==="seglen"?"Length moved back to the back of the run.":"Label snapped back to its anchor."); refreshAll(); }
   }
@@ -5343,7 +5437,7 @@ function deleteSegments(keys){
       return {...o, id: gi===0?o.id:uid(),
         pts:o.pts.slice(a,b+2), lengths:o.lengths.slice(a,b+1),
         caps:[ a===0?caps[0]:true, b===n-1?caps[1]:true ],
-        segLabelOff:undefined, noteOff:undefined };
+        segLabelOff:undefined, noteOff:undefined, existOff:undefined };
     });
     const idx=P.objects.findIndex(x=>x.id===o.id);
     P.objects.splice(idx,1,...newRuns);
@@ -5863,7 +5957,7 @@ function fmtPhone(v){
   return "("+d.slice(0,3)+") "+d.slice(3,6)+"-"+d.slice(6);
 }
 
-/* Job details quiz: five quick questions whose answers land on the DIAGRAM as an ordinary text box
+/* Job details quiz: six quick questions whose answers land on the DIAGRAM as an ordinary text box
    (flagged quiz:true) — so it prints inside the PDF diagram, and the rep can move, corner-scale,
    recolor (default white plate) and hand-edit it like any other box. Re-running the quiz rewrites
    that box's text but keeps where the rep put it and how they styled it. The last answers live on
@@ -5875,9 +5969,13 @@ const QUIZ_QS=[
   {k:"drip",   label:"Drip edge",   opts:["Yes","No"]},
   {k:"oneby",  label:"1x2",         opts:["Yes","No"]},
   {k:"roof",   label:"Roof type",   opts:["Shingle","Metal","Tile","Flat","Other"]},
+  // multi: any mix of these can apply to one house, so the answer is an array, not one pick
+  {k:"maint",  label:"Gutter maintenance", multi:true, opts:["Reslope","Reseal","Gutter cleaning"]},
 ];
+const quizPicked=(a,q,v)=>q.multi ? (Array.isArray(a[q.k])&&a[q.k].includes(v)) : a[q.k]===v;
 function quizText(a){
   return QUIZ_QS.map(q=>{
+    if(q.multi) return Array.isArray(a[q.k])&&a[q.k].length ? "• "+q.label+": "+q.opts.filter(o=>a[q.k].includes(o)).join(", ") : "";
     let v=a[q.k]||""; if(v==="Other") v=String(a[q.k+"Other"]||"").trim()||"Other";
     return v ? "• "+q.label+": "+v : "";
   }).filter(Boolean).join("\n");
@@ -5886,7 +5984,7 @@ function openJobQuiz(){
   const a=Object.assign({gutter:gutterStyle(P.settings.gutterType).label}, P.meta.jobQuiz||{});
   let h=`<div class="note" style="margin-bottom:10px">The answers go on the diagram as a text box — drag it where you want it, pull a corner to resize, and set its background from the text style bar. Tap it twice to edit the wording.</div>`;
   for(const q of QUIZ_QS){
-    h+=`<div class="fld"><label>${q.label}</label><div class="seg-toggle" style="flex-wrap:wrap">${q.opts.map(o=>`<button data-q="${q.k}" data-v="${esc(o)}" class="${a[q.k]===o?"on":""}">${esc(o)}</button>`).join("")}</div>`
+    h+=`<div class="fld"><label>${q.label}</label><div class="seg-toggle" style="flex-wrap:wrap">${q.opts.map(o=>`<button data-q="${q.k}" data-v="${esc(o)}" class="${quizPicked(a,q,o)?"on":""}">${esc(o)}</button>`).join("")}</div>`
       + (q.opts.includes("Other")?`<input id="quizOther_${q.k}" type="text" placeholder="Describe…" value="${esc(a[q.k+"Other"]||"")}" style="margin-top:6px;display:${a[q.k]==="Other"?"block":"none"}">`:"")
       + `</div>`;
   }
@@ -5894,8 +5992,10 @@ function openJobQuiz(){
   openModal("Job details",h);
   const b=byId("modalBody");
   b.querySelectorAll("[data-q]").forEach(btn=>btn.onclick=()=>{
-    const k=btn.dataset.q; a[k]=(a[k]===btn.dataset.v)?"":btn.dataset.v;     // tap again to clear
-    b.querySelectorAll(`[data-q="${k}"]`).forEach(x=>x.classList.toggle("on",x.dataset.v===a[k]));
+    const k=btn.dataset.q, q=QUIZ_QS.find(x=>x.k===k), v=btn.dataset.v;
+    if(q.multi){ const cur=Array.isArray(a[k])?a[k]:[]; a[k]=cur.includes(v)?cur.filter(x=>x!==v):[...cur,v]; }
+    else a[k]=(a[k]===v)?"":v;     // tap again to clear
+    b.querySelectorAll(`[data-q="${k}"]`).forEach(x=>x.classList.toggle("on",quizPicked(a,q,x.dataset.v)));
     const oth=byId("quizOther_"+k); if(oth){ oth.style.display=a[k]==="Other"?"block":"none"; if(a[k]==="Other") oth.focus(); }
   });
   byId("quizDone").onclick=()=>{
@@ -6002,7 +6102,7 @@ function buildPricingPane(){
   // Per-style $/ft — always editable, independent of pricing mode.
   // Three columns: List (standard rate the discount % is measured against), Min (hard floor),
   // and Your (what we're actually charging).
-  const RATECOLS="grid-template-columns:1fr 58px 58px 58px";
+  const RATECOLS="grid-template-columns:1fr 58px 58px 58px 26px";
   const rateRow=(label,key)=>{
     const atMin=rateAtMin(key);
     return `<div class="ws-row" style="${RATECOLS}">`
@@ -6010,9 +6110,9 @@ function buildPricingPane(){
       + `<input class="ws-price" data-list="${key}" value="${s.listPrices[key]||0}" inputmode="decimal" title="Standard (list) $/ft">`
       + `<input class="ws-price" data-min="${key}" value="${s.minPrices[key]||0}" inputmode="decimal" title="Minimum $/ft — the charged rate can't go below this">`
       + `<input class="ws-price${atMin?" at-min":""}" data-price="${key}" data-cascade="1" value="${s.prices[key]||0}" inputmode="decimal" title="What we're charging">`
-      + `</div>`;
+      + `<div class="ws-bk">${bookBtnHTML(key)}</div></div>`;
   };
-  const rateHead=(first)=>`<div class="ws-head" style="${RATECOLS}"><div>${first}</div><div>List</div><div>Min</div><div>Your</div></div>`;
+  const rateHead=(first)=>`<div class="ws-head" style="${RATECOLS}"><div>${first}</div><div>List</div><div>Min</div><div>Your</div><div></div></div>`;
   h+=`<div class="sec-h">Gutter style pricing <span style="font-weight:600;color:var(--text-soft);font-size:11px">$ / ft</span></div>`;
   h+=`<div class="worksheet">${rateHead("Style")}`;
   const used=usedStyleIds();
@@ -6043,13 +6143,14 @@ function buildPricingPane(){
     h+=fld("Acute miter add-on $ each","pcAcute",s.prices.acute,"number",'step="1" inputmode="decimal"');
   } else {
     h+=`<div class="sec-h">Per-component unit prices</div>`;
-    h+=`<div class="worksheet" style="margin-top:6px"><div class="ws-head" style="grid-template-columns:1fr 90px"><div>Component</div><div>Unit $</div></div>`;
+    h+=`<div class="worksheet" style="margin-top:6px"><div class="ws-head" style="grid-template-columns:1fr 90px 26px"><div>Component</div><div>Unit $</div><div></div></div>`;
     const rq=compute().q;
     for(const L of LINES){
       if(L.hidden && !rq[L.key]) continue;   // a hidden product's lines only while this job still uses it
       const derived=DERIVED_KEYS.has(L.key);
       const attrs=derived?` readonly tabindex="-1" title="Auto-priced from the gutter / downspout style above" style="color:var(--text-soft);background:#f4f6f8"`:"";
-      h+=`<div class="ws-row" style="grid-template-columns:1fr 90px"><div class="ws-lbl">${L.label}${derived?' <span style="color:var(--steel-2);font-weight:700;font-size:9px">AUTO</span>':''}</div><input class="ws-price" data-price="${L.key}"${derived?"":' data-edit="1"'} value="${s.prices[L.key]||0}"${attrs} inputmode="decimal"></div>`;
+      // ⇣ on a component row applies just that key — bookKeysFor only widens a product's own price key
+      h+=`<div class="ws-row" style="grid-template-columns:1fr 90px 26px"><div class="ws-lbl">${L.label}${derived?' <span style="color:var(--steel-2);font-weight:700;font-size:9px">AUTO</span>':''}</div><input class="ws-price" data-price="${L.key}"${derived?"":' data-edit="1"'} value="${s.prices[L.key]||0}"${attrs} inputmode="decimal"><div class="ws-bk">${bookBtnHTML(L.key)}</div></div>`;
     }
     h+=`</div>`;
     h+=`<div class="note">Components marked <b>AUTO</b> follow the gutter / downspout style price above: end caps, outlets &amp; valley shields are gutter material (valley = ${s.footagePerValley||0} LF), miters match the gutter $/ft, and elbows &amp; offsets follow the downspout $/ft. Edit a style rate to change them all at once.</div>`;
@@ -6063,9 +6164,9 @@ function buildPricingPane(){
     const list=CATALOG.products.filter(p=>p.kind===kind && p.fixed!=="splash" && p.fixed!=="entry" && (!p.hidden||usedP.has(String(p.id))));
     if(!list.length) continue;
     h+=`<div class="sec-h">${title} <span style="font-weight:600;color:var(--text-soft);font-size:11px">this job</span></div>`;
-    h+=`<div class="worksheet"><div class="ws-head" style="grid-template-columns:1fr 90px"><div>Product</div><div>Unit $</div></div>`;
+    h+=`<div class="worksheet"><div class="ws-head" style="grid-template-columns:1fr 90px 26px"><div>Product</div><div>Unit $</div><div></div></div>`;
     for(const p of list){
-      h+=`<div class="ws-row" style="grid-template-columns:1fr 90px"><div class="ws-lbl">${p.color?`<span class="swatch" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(p.color)}"></span>`:""}${esc(p.name)} <span class="ws-unit">${productUnitLbl(p)}</span></div><input class="ws-price" data-pk="${esc(p.priceKey)}" value="${+s.prices[p.priceKey]||0}" inputmode="decimal"></div>`;
+      h+=`<div class="ws-row" style="grid-template-columns:1fr 90px 26px"><div class="ws-lbl">${p.color?`<span class="swatch" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(p.color)}"></span>`:""}${esc(p.name)} <span class="ws-unit">${productUnitLbl(p)}</span></div><input class="ws-price" data-pk="${esc(p.priceKey)}" value="${+s.prices[p.priceKey]||0}" inputmode="decimal"><div class="ws-bk">${bookBtnHTML(p.priceKey)}</div></div>`;
     }
     h+=`</div>`;
   }
@@ -6117,6 +6218,7 @@ function wirePricing(){
   // free text — rebuild so the pane's discount readout picks up the new label
   { const dn=byId("pcDiscName"); if(dn) dn.onchange=()=>{ s.discountName=dn.value.trim(); buildPricingPane(); refreshAll(); }; }
   { const ab=byId("pcApplyBook"); if(ab) ab.onclick=()=>applyPriceBook(); }
+  byId("panePricing").querySelectorAll("[data-book]").forEach(b=>b.onclick=()=>applyBookKeys(bookKeysFor(b.dataset.book)));
   { const ob=byId("pcOpenBook"); if(ob) ob.onclick=()=>openProductsPage(); }
   for(const [id,key] of [["pcSplashP","splashPlastic"],["pcSplashC","splashConcrete"],["pcAcute","acute"]]){ const e=byId(id); if(e) e.onchange=()=>{ s.prices[key]=+e.value||0; refreshAll(); }; }
   num("pcMisc","miscDemoLabor");num("pcDep","depositPct");num("pcCard","cardFee");num("pcAmex","amexFee");
@@ -6270,21 +6372,30 @@ function adoptProducts(list){
 const cents=n=>Math.round((+n||0)*100);
 // how many of the open option's prices differ from the book — drives the Apply prompt
 function bookDrift(){
-  const s=P.settings, p=s.prices||{}, f=CATALOG.flat; let n=0;
-  for(const k in BOOK){
-    if(cents(p[k])!==cents(BOOK[k].price)) n++;
-    else if(STYLE_PRICE_KEYS.includes(k) && cents((s.listPrices||{})[k])!==cents(BOOK[k].list!=null?BOOK[k].list:BOOK[k].price)) n++;
-  }
+  const s=P.settings, f=CATALOG.flat; let n=0;
+  for(const k in BOOK) if(keyDrifts(s,k)) n++;
   if(cents(s.flatGutterRate)!==cents(f.gutter)) n++;
   if(cents(s.flatDownspoutRate)!==cents(f.ds)) n++;
   return n;
 }
+// the list $/ft a job ends up with from the book: ensurePrices lifts a list below the floor up to it, so
+// comparing against the raw book list left a book with list 0 / min 15 "different" forever
+function bookList(k){ const b=BOOK[k]; return Math.max(b.list!=null?+b.list:+b.price, +b.min||0); }
+// one key's book price (and a style's list / min with it) into one option's settings
+function bookKeyInto(s,k){
+  if(!BOOK[k]) return;
+  const p=s.prices=s.prices||{}, L=s.listPrices=s.listPrices||{}, M=s.minPrices=s.minPrices||{};
+  p[k]=BOOK[k].price;
+  if(STYLE_PRICE_KEYS.includes(k)){ L[k]=bookList(k); M[k]=BOOK[k].min; }
+}
+function keyDrifts(s,k){
+  if(!BOOK[k]) return false;
+  if(cents((s.prices||{})[k])!==cents(BOOK[k].price)) return true;
+  return STYLE_PRICE_KEYS.includes(k) && cents((s.listPrices||{})[k])!==cents(bookList(k));
+}
 function bookInto(s){
-  const p=s.prices=s.prices||{}, L=s.listPrices=s.listPrices||{}, M=s.minPrices=s.minPrices||{}, f=CATALOG.flat;
-  for(const k in BOOK){
-    p[k]=BOOK[k].price;
-    if(STYLE_PRICE_KEYS.includes(k)){ L[k]=BOOK[k].list!=null?BOOK[k].list:BOOK[k].price; M[k]=BOOK[k].min; }
-  }
+  const f=CATALOG.flat;
+  for(const k in BOOK) bookKeyInto(s,k);
   s.flatGutterRate=+f.gutter||0;  s.flatGutterList=f.gutterList!=null?+f.gutterList:s.flatGutterRate;  s.flatGutterMin=+f.gutterMin||0;
   s.flatDownspoutRate=+f.ds||0;   s.flatDownspoutList=f.dsList!=null?+f.dsList:s.flatDownspoutRate;     s.flatDownspoutMin=+f.dsMin||0;
 }
@@ -6298,6 +6409,35 @@ function applyPriceBook(){
   (OPTIONS.length?OPTIONS:[{settings:P.settings}]).forEach(o=>bookInto(o.settings));
   ensurePrices(); buildOptbar(); refreshAll();
   if(curPage==="products") renderProductsPage();
+}
+
+/* Apply one item instead of the whole book: a product's own price plus its fixed-price parts (a
+   gutter's end caps / miters, a downspout's outlet / elbows / offsets — "follow" parts are derived
+   from the style rate, so they come along by themselves). Every option, like applyPriceBook; no
+   confirm, since it's one item and undo covers it. */
+function productBookKeys(p){
+  if(!p) return [];
+  const ks=[p.priceKey];
+  for(const c of (COMPONENTS[p.kind]||[])) if(p[c.key] && !DERIVED_KEYS.has(p[c.key])) ks.push(p[c.key]);
+  return ks.filter(k=>k!=null && BOOK[k]);
+}
+function productOfKey(k){ return CATALOG.products.find(p=>p.priceKey===k)||null; }
+// a worksheet row's key: a style / product row brings its parts along, a component row is just itself
+function bookKeysFor(k){ const p=productOfKey(k); return p ? productBookKeys(p) : (BOOK[k]?[k]:[]); }
+function applyBookKeys(keys){
+  keys=(keys||[]).filter(k=>BOOK[k]); if(!keys.length) return;
+  captureActive(); recordHistory();
+  (OPTIONS.length?OPTIONS:[{settings:P.settings}]).forEach(o=>keys.forEach(k=>bookKeyInto(o.settings,k)));
+  ensurePrices(); buildOptbar(); refreshAll();
+  if(curPage==="products") renderProductsPage();
+  const p=productOfKey(keys[0]);
+  setHint((p?p.name:"Price")+" set to the price-book price"+(OPTIONS.length>1?" in every option.":"."));
+}
+// a small "use the book price" button for a worksheet row, only when the row differs from the book
+function bookBtnHTML(k){
+  const ks=bookKeysFor(k);
+  if(DERIVED_KEYS.has(k) || !ks.some(x=>keyDrifts(P.settings,x))) return "";
+  return `<button class="ws-book" data-book="${esc(k)}" title="Use the price-book price (${esc(money(bookPrice(k)))})" aria-label="Use the price-book price">⇣</button>`;
 }
 
 function openProductsPage(id,mode){
@@ -6342,7 +6482,7 @@ function productSubline(p){
 }
 function productRowHTML(p){
   const s=P.settings, kids=productKids(p), col=prodCollapsed.has(String(p.id));
-  const badges=(p.builtin?'<span class="pk-badge">Built-in</span>':"")+(p.hidden?'<span class="pk-badge warn">Hidden</span>':"")+(p.fromJob?'<span class="pk-badge warn">From a saved job</span>':"");
+  const badges=(p.builtin?'<span class="pk-badge">Built-in</span>':"")+(p.hidden?'<span class="pk-badge warn">Hidden</span>':"")+(isToolProduct(p)&&!p.hidden&&!onDock(p)?'<span class="pk-badge">Off toolbar</span>':"")+(p.fromJob?'<span class="pk-badge warn">From a saved job</span>':"");
   const sw=p.color?`<span class="pk-sw" style="background:${esc(p.color)}"></span>`:"";
   const derived=DERIVED_KEYS.has(p.priceKey);
   const price=derived ? `<div class="pk-price" style="color:var(--steel-2)">AUTO</div>` : priceCell(bookPrice(p.priceKey), productUnitLbl(p), s.prices[p.priceKey]);
@@ -6442,8 +6582,11 @@ function productEditorHTML(){
     const u=productUnitLbl(p), lbl=u==="/ft"?"Price per foot ($)":u==="/hr"?"Price per hour ($)":"Price each ($)";
     h+=`<div class="sec-h">Price</div>`+peField(lbl,"price",p.price,"number",PE_MONEY);
   }
-  if(!draft && !derived && s.prices[p.priceKey]!=null && cents(s.prices[p.priceKey])!==cents(bookPrice(p.priceKey)))
-    h+=`<div class="note" style="margin:4px 0 6px">The open job charges <b>${money(s.prices[p.priceKey])}</b>. Use <b>⇣ Apply to this job</b> to bring it in line with the book.</div>`;
+  if(!draft && productBookKeys(p).some(k=>keyDrifts(s,k))){
+    const own=!derived && s.prices[p.priceKey]!=null && cents(s.prices[p.priceKey])!==cents(bookPrice(p.priceKey));
+    h+=`<div class="note" style="margin:4px 0 6px">${own?`The open job charges <b>${money(s.prices[p.priceKey])}</b>.`:`The open job prices ${p.kind==="gutter"||p.kind==="downspout"?"this product or its parts":"it"} differently from the book.`}`
+      + ` <button class="btn-sm" data-pe="applyone" style="margin-left:4px">⇣ Apply this product to the job</button></div>`;
+  }
 
   // ---- behaviour + components, by kind
   if(p.kind==="gutter"){
@@ -6486,6 +6629,7 @@ function productEditorHTML(){
     h+=`<button class="btn-sm" data-pe="create" style="background:var(--prime);color:#fff;border-color:var(--prime)">Create product</button><button class="btn-sm" data-pe="cancel">Cancel</button>`;
   } else {
     if(isToolProduct(p) && !p.hidden) h+=`<button class="btn-sm" data-pe="draw" style="background:var(--prime);color:#fff;border-color:var(--prime)">Draw with it ›</button>`;
+    if(isToolProduct(p) && !p.hidden) h+=`<button class="btn-sm" data-pe="dock">${onDock(p)?"Remove from toolbar":"Add to toolbar"}</button>`;
     if(!p.fixed) h+=`<button class="btn-sm" data-pe="hide">${p.hidden?"Show in pickers":"Hide"}</button>`;
     if(!p.builtin){
       const n=productUsage(p);
@@ -6516,15 +6660,30 @@ function renderProductsPage(){
    drawn, price, colour, and you're drawing with it. It's an ordinary catalog product (a custom run, or
    an accessory for Item), so it lands in the price book and the full editor can refine it later. */
 function openQuickProduct(){
-  let h=`<div class="note" style="margin-bottom:10px">Becomes its own tool right away and is saved to your products. <b>Line</b> draws a measured run priced per foot; <b>Highlight</b> is dragged over the runs and rounds up; <b>Item</b> is tapped down and priced each.</div>`;
+  const saved=offDockTools();
+  let h="";
+  if(saved.length){
+    ensurePrices();
+    h+=`<div class="qp-h">From your products</div><div class="qp-saved">${saved.map(p=>{
+      const im=productMode(p)==="item", how=im?"Item":strokeMode(p)?"Highlight":"Line";
+      return `<button class="qp-prod" data-qp="${esc(p.id)}"><span class="pk-sw" style="background:${esc(p.color||"#7a4fd6")}"></span><span class="qp-n">${esc(p.name)}</span><span class="qp-s">${how} · ${money(bookPrice(p.priceKey))}${im?" each":"/ft"}</span></button>`;
+    }).join("")}</div><div class="qp-h">New product</div>`;
+  }
+  h+=`<div class="note" style="margin-bottom:10px">Saved to your products, and on the toolbar unless you untick it below. <b>Line</b> draws a measured run priced per foot; <b>Highlight</b> is dragged over the runs and rounds up; <b>Item</b> is tapped down and priced each.</div>`;
   h+=`<div class="fld"><label>Product name</label><input id="qpName" type="text" placeholder="e.g. Fascia wrap, Drip edge, Gutter guard"></div>`;
   h+=`<div class="fld"><label>Behavior</label><select id="qpMode"><option value="line">Line — measured run</option><option value="stroke">Highlight — drag over the runs</option><option value="item">Item — tap to place, priced each</option></select></div>`;
   h+=`<div class="row2"><div class="fld"><label id="qpPriceLbl">Price per foot ($)</label><input id="qpPrice" type="number" step="0.25" min="0" inputmode="decimal"></div>`;
   h+=`<div class="fld"><label>Color</label><div class="colorsel"><span class="swatch" id="qpSw" style="background:#7a4fd6"></span><input id="qpColor" type="color" value="#7a4fd6" style="width:46px;height:32px;border:0;background:none;cursor:pointer"></div></div></div>`;
   h+=`<div class="fld" id="qpRoundRow" style="display:none"><label>Round footage up to the next … ft</label><input id="qpRound" type="number" step="1" min="1" value="1" inputmode="numeric" style="width:110px"></div>`;
   h+=`<div class="fld" id="qpTagRow" style="display:none"><label>Symbol on the diagram (2–4 characters)</label><input id="qpTag" type="text" maxlength="4" placeholder="IT" style="width:110px;text-transform:uppercase"></div>`;
+  h+=`<label class="pl-chk" style="margin:2px 0 8px"><input type="checkbox" id="qpDock" checked>Put it on the toolbar</label>`;
   h+=`<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn-sm" id="qpSave" style="background:var(--prime);color:#fff;border-color:var(--prime)">Add &amp; draw</button><button class="btn-sm" id="qpMore">More kinds &amp; options ›</button></div>`;
-  openModal("Quick add product",h);
+  openModal("Add a product",h);
+  byId("modalBody").querySelectorAll("[data-qp]").forEach(b=>b.onclick=()=>{
+    const p=catalogProduct(b.dataset.qp); if(!p) return;
+    closeModal(); setOnDock(p,true); setTool("custom:"+p.id);
+  });
+  byId("qpDock").onchange=e=>{ byId("qpSave").textContent=e.target.checked?"Add & draw":"Save to products"; };
   byId("qpColor").oninput=e=>byId("qpSw").style.background=e.target.value;
   byId("qpMode").onchange=e=>{
     const m=e.target.value;
@@ -6542,10 +6701,12 @@ function openQuickProduct(){
       color:byId("qpColor").value, priceKey:"k_"+id};
     if(m==="stroke") p.round=Math.max(1,Math.round(+byId("qpRound").value||1));
     if(m==="item"){ const t=(byId("qpTag").value||"").trim().toUpperCase().slice(0,4); if(t) p.tag=t; }
+    const dock=byId("qpDock").checked; if(!dock) p.dock=false;
     CATALOG.products.push(p);
-    closeModal(); catalogChanged(); setTool("custom:"+id);
+    closeModal(); catalogChanged();
+    if(dock) setTool("custom:"+id); else setHint(name+" saved to your products — add it to the toolbar any time from the ＋.");
   };
-  setTimeout(()=>byId("qpName").focus(),50);
+  if(!saved.length) setTimeout(()=>byId("qpName").focus(),50);   // with a list, the rep is as likely to pick one
 }
 function startNewProduct(kind){
   prodNew=null; prodSel=null;
@@ -6649,7 +6810,9 @@ function wireProductsPage(){
     else if(a==="create") createProduct(prodDraft);
     else if(a==="delete") deleteProduct(p);
     else if(a==="hide") toggleHidden(p);
+    else if(a==="dock") setOnDock(p,!onDock(p));
     else if(a==="draw"){ setPage("diagram"); setTool("custom:"+p.id); }
+    else if(a==="applyone") applyBookKeys(productBookKeys(p));
   });
 }
 byId("prodNew").onclick=()=>{ prodNew="pick"; prodDraft=null; prodSel=null; renderProductsPage(); };
@@ -7497,9 +7660,10 @@ byId("docInput").onchange=async e=>{
   setHint("Importing…");
   try{
     let pages=[];
-    for(const f of files) pages=pages.concat(await readDocFile(f, purpose==="plan"?PLAN_MAX_EDGE:PAGE_MAX_EDGE));
+    const plan=purpose==="plan"||purpose==="plan-replace";
+    for(const f of files) pages=pages.concat(await readDocFile(f, plan?PLAN_MAX_EDGE:PAGE_MAX_EDGE));
     if(!pages.length) throw new Error("Nothing could be read from that file.");
-    if(purpose==="plan") choosePlanPage(pages);
+    if(plan) choosePlanPage(pages, purpose==="plan-replace"&&planOf()?"replace":"add");
     else addExtraPages(pages);
     setHint(toolHint(tool));
   }catch(err){
@@ -7510,7 +7674,8 @@ byId("docInput").onchange=async e=>{
 
 /* ---- plan underlay ----
    {t:"underlay", id, img, x, y, w, h, opacity, print, hidden, name, pageIn, scale, check, lastFps} in
-   P.objects — one per option, so a Duplicate carries it. It draws under everything, takes no part in
+   P.objects — one per SHEET (a roof plan and a site plan can share one canvas), per option, so a
+   Duplicate carries them. It draws under everything, takes no part in
    the takeoff, and is never hit-tested or marquee-selected: it's only edited in Plan mode (the top
    bar's Plan button), so tracing over it can never grab it.
    The scale is an object ON the plan, not a setting: scale = {mode:"line", a, b, ft} (a dimension line
@@ -7522,8 +7687,14 @@ byId("docInput").onchange=async e=>{
    and the drawing disagreeing. Plan points never snap to the grid — a blueprint has nothing to do with
    it; "Keep level" squares a line to the SHEET's axes instead.
    print:false keeps it off the PDF — it's drawn from draw(), not drawScene(); print:true moves it into
-   drawScene(). hidden takes it off the canvas and the PDF everywhere but Plan mode. */
-function planOf(){ return P.objects.find(o=>o.t==="underlay")||null; }
+   drawScene(). hidden takes it off the canvas and the PDF everywhere but Plan mode.
+   Several sheets, each its own scale: a segment measures at the sheet its middle lies on (fpsAt), so the
+   same drawn length reads differently on a 1/8" site plan and a 1/4" roof plan; off every scaled sheet
+   it falls back to drawingFps() (the first scaled sheet). Stored lengths never follow a sheet, so moving
+   one only carries what's traced on it (overSheet). planOf() is the sheet Plan mode is editing (planCur). */
+let planCur=null;   // id of the sheet Plan mode edits; stale or null = the first sheet
+function plansOf(){ return P.objects.filter(o=>o.t==="underlay"); }
+function planOf(){ const ps=plansOf(); return ps.find(o=>o.id===planCur)||ps[0]||null; }
 // any option in the job has a plan (the live option's objects are P.objects, which may not be captured yet)
 function anyPlan(){
   const opts=OPTIONS.length?OPTIONS:[{objects:P.objects}];
@@ -7539,10 +7710,20 @@ function planFtPerWorld(o){
   if(s.mode==="ratio") return (o.pageIn&&o.pageIn.w>0&&s.ftPerIn>0) ? o.pageIn.w*s.ftPerIn/o.w : 0;
   return 0;
 }
-function planFps(){ return planFtPerWorld(planOf())*GRID; }
+function planFps(){ return planFtPerWorld(plansOf().find(o=>planFtPerWorld(o)>0))*GRID; }
+// the topmost visible sheet under a world point
+function sheetAt(w){ const ps=plansOf(); for(let i=ps.length-1;i>=0;i--){ const o=ps[i]; if(!o.hidden&&w.x>=o.x&&w.x<=o.x+o.w&&w.y>=o.y&&w.y<=o.y+o.h) return o; } return null; }
+// what's traced on a sheet: everything whose bounds' center lies on it (never another sheet)
+function overSheet(o,x){
+  if(x===o||x.t==="underlay") return false;
+  const b=objBounds(x); if(!b) return false;
+  const cx=b.x+b.w/2, cy=b.y+b.h/2;
+  return cx>=o.x&&cx<=o.x+o.w&&cy>=o.y&&cy<=o.y+o.h;
+}
+function frameOverSheet(o,f){ const cx=f.x+f.w/2, cy=f.y+f.h/2; return cx>=o.x&&cx<=o.x+o.w&&cy>=o.y&&cy<=o.y+o.h; }
 // grid snap is a session toggle that starts on, so reopening a job or switching to an option with a
 // plan turns it back off — otherwise traced runs land on grid points instead of the plan's corners
-function planSnapOff(){ if(planOf()) snap=false; }
+function planSnapOff(){ if(plansOf().length) snap=false; }
 // 32.5 -> 32' 6"; quarter-inch resolution, finer than anyone reads a plan
 function fmtFtIn(ft){
   if(!(ft>0)) return "—";
@@ -7555,22 +7736,53 @@ const PLAN_SCALES=[   // [label, feet per inch of paper]
 ];
 const PLAN_SCALE_COLOR="#e8590c", PLAN_CHECK_COLOR="#0f8a7e";
 
-function choosePlanPage(pages){
-  if(pages.length===1){ setPlanImage(pages[0]); return; }
-  const h=`<div class="note" style="margin-bottom:8px">This PDF has ${pages.length} pages. Tap the sheet to trace — usually the roof plan.</div>
+// mode "add": tick any number of pages, each becomes a sheet; "replace": one page swaps in for the current sheet
+function choosePlanPage(pages,mode){
+  if(pages.length===1){ placePlanPages(pages,mode); return; }
+  const one=mode==="replace", picked=new Set();
+  const h=`<div class="note" style="margin-bottom:8px">This PDF has ${pages.length} pages. ${one?"Tap the page that replaces this sheet.":"Tap each sheet to trace — the roof plan, a site plan… Each one gets its own scale."}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">${pages.map((pg,i)=>
-      `<button data-pg="${i}" style="border:1px solid var(--line);border-radius:6px;background:#fff;padding:4px;cursor:pointer"><img src="${pg.dataUrl}" style="width:100%;display:block"><div style="font-size:11px;margin-top:3px">Page ${i+1}</div></button>`).join("")}</div>`;
-  openModal("Choose a plan page",h);
-  byId("modalBody").querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{ closeModal(); setPlanImage(pages[+b.dataset.pg]); });
+      `<button data-pg="${i}" class="pl-pick"><img src="${pg.dataUrl}" style="width:100%;display:block"><div style="font-size:11px;margin-top:3px">Page ${i+1}</div></button>`).join("")}</div>`
+    + (one?"":`<div style="margin-top:10px"><button class="btn-sm" id="plPickGo" disabled style="background:var(--prime);color:#fff;border-color:var(--prime)">Add sheets</button></div>`);
+  openModal(one?"Replace the sheet":"Choose plan pages",h);
+  const go=byId("plPickGo");
+  byId("modalBody").querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.pg;
+    if(one){ closeModal(); placePlanPages([pages[i]],mode); return; }
+    picked.has(i)?picked.delete(i):picked.add(i); b.classList.toggle("on",picked.has(i));
+    go.disabled=!picked.size; go.textContent=picked.size>1?"Add "+picked.size+" sheets":"Add sheet";
+  });
+  if(go) go.onclick=()=>{ closeModal(); placePlanPages([...picked].sort((a,b)=>a-b).map(i=>pages[i]),mode); };
 }
-function setPlanImage(pg){
+function placePlanPages(pages,mode){
   recordHistory();
+  const cur=planOf();
+  if(mode==="replace"&&cur) replacePlanSheet(cur,pages[0]);
+  else pages.forEach(addPlanSheet);
+  if(!planMode) enterPlanMode(); else { planMethod=null; planPlace=null; renderPlanPanel(); planHint(); }
+  if(mode!=="replace"&&plansOf().length>1) zoomToPlan(true);
+  refreshAll(); saveLocal();
+}
+function planPageIn(pg){ return pg.ptW>0&&pg.ptH>0 ? {w:pg.ptW/72, h:pg.ptH/72} : null; }
+// a revised sheet keeps its placement, scale and check line: same sheet, same scale, runs stay put
+function replacePlanSheet(o,pg){
   const id=newPhotoId(); putBlob(id,pg.dataUrl);
-  const pageIn=pg.ptW>0&&pg.ptH>0 ? {w:pg.ptW/72, h:pg.ptH/72} : null;
-  let o=planOf();
-  if(o){ // a revised sheet keeps its placement, scale and check line: same sheet, same scale, runs stay put
-    o.img=id; o.h=o.w*pg.h/Math.max(1,pg.w); o.name=pg.name||o.name; o.pageIn=pageIn;
-    planNote="Sheet replaced. Its scale was kept — confirm it with a check line if this sheet's scale differs.";
+  o.img=id; o.h=o.w*pg.h/Math.max(1,pg.w); o.name=pg.name||o.name; o.pageIn=planPageIn(pg);
+  planNote="Sheet replaced. Its scale was kept — confirm it with a check line if this sheet's scale differs.";
+}
+function addPlanSheet(pg){
+  const id=newPhotoId(); putBlob(id,pg.dataUrl);
+  const pageIn=planPageIn(pg), ps=plansOf();
+  let o;
+  if(ps.length){
+    // beside the sheets already down, never on top of one (a segment measures at the sheet it lies on).
+    // Same paper scale as the current sheet when both know their printed size, else the same height
+    const ref=planOf(), right=Math.max(...ps.map(x=>x.x+x.w));
+    const w = pageIn&&ref.pageIn&&ref.pageIn.w>0 ? pageIn.w*ref.w/ref.pageIn.w : ref.h*pg.w/Math.max(1,pg.h);
+    o={t:"underlay",id:uid(),img:id,x:right+GRID*4,y:ref.y,w,h:w*pg.h/Math.max(1,pg.w),opacity:ref.opacity==null?0.6:ref.opacity,
+       print:!!ref.print,hidden:false,name:pg.name||"Plan",pageIn,scale:null,check:null};
+    P.objects.splice(ps.length,0,o);   // after the other sheets, still under everything drawn
+    planNote="Sheet added. Set its own scale before tracing on it — until then it measures at the first sheet's scale.";
   } else {
     // fit the canvas beside the Plan panel (an import always lands in Plan mode, so it's open by then)
     const avail=view.w-360, fit=Math.min(avail*0.9/Math.max(1,pg.w), view.h*0.9/Math.max(1,pg.h));
@@ -7582,8 +7794,7 @@ function setPlanImage(pg){
     snap=false; setGutterLoupe(true); setTapDraw(true);
     planNote="Grid snap is off so runs land on the plan's corners, not grid points.";
   }
-  if(!planMode) enterPlanMode(); else { planMethod=null; renderPlanPanel(); planHint(); }
-  refreshAll(); saveLocal();
+  planCur=o.id;
 }
 const _planImgs=new Map();   // blob id -> decoded <img>, so a redraw never re-decodes a 3000px plan
 function planImage(o){
@@ -7610,6 +7821,10 @@ let planMode=false;
 let planPlace=null;    // armed line placement {line:"scale"|"check", a, b}
 let planEdit=null;     // drag in progress: {kind:"place"|"end"|"move", ...}
 let planMove=false;    // "Move plan": a drag on the sheet moves it instead of panning
+let planMoveAll=null;  // …and carries what's traced on it (overSheet) and the PDF frames over it along.
+                       // null = on with 2+ sheets (arranging them) and off with one (lining it up under runs)
+const planMovesAll=()=>planMoveAll==null ? plansOf().length>1 : planMoveAll;
+let planPick=null;     // {id, pt}: a press on another sheet, which a tap (not a pan) makes current
 let planLevel=true;    // lines square up to the sheet within 3° — plan dimensions are nearly all level or plumb
 let planMethod=null;   // which scale tab the panel shows; null = follow the plan's scale
 let planNote="";       // one-shot message for the next panel render
@@ -7632,10 +7847,10 @@ function exitPlanMode(){
 }
 function updatePlanButton(){
   const b=byId("btnPlan"); if(!b) return;
-  const o=planOf();
+  const ps=plansOf(), ok=ps.length&&ps.every(x=>x.hidden||planFtPerWorld(x)>0);
   b.classList.toggle("on",planMode);
-  b.dataset.state=!o?"":(planFps()?"ok":"warn");
-  b.title=!o?"Trace over a house plan (PDF or image)":(planFps()?"Plan — scale set":"Plan — scale not set yet");
+  b.dataset.state=!ps.length?"":(ok?"ok":"warn");
+  b.title=!ps.length?"Trace over a house plan (PDF or image)":(ok?"Plan — scale set":(ps.length>1?"Plan — a sheet's scale isn't set yet":"Plan — scale not set yet"));
 }
 function planHint(){
   if(!planMode) return;
@@ -7652,32 +7867,36 @@ function planHint(){
    drawing keeps the standard 2 ft/square, and moves the camera to match, so nothing visibly moves.
    Once anything else is drawn it's left alone: resizing would pull the plan out from under it. */
 function normalizePlanWorld(){
-  const o=planOf(), fps=planFps(), target=2;
-  if(!o||!fps||P.objects.some(x=>x.t!=="underlay")) return;
+  const ps=plansOf(), fps=planFps(), target=2;
+  if(!ps.length||!fps||P.objects.some(x=>x.t!=="underlay")) return;
   const k=fps/target; if(Math.abs(k-1)<1e-3) return;
   const c=screenToWorld({x:view.w/2,y:view.h/2});
-  o.x=c.x+(o.x-c.x)*k; o.y=c.y+(o.y-c.y)*k; o.w*=k; o.h*=k;
+  // every sheet by the same factor, layout and all: each keeps its scale relative to the others
+  for(const o of ps){ o.x=c.x+(o.x-c.x)*k; o.y=c.y+(o.y-c.y)*k; o.w*=k; o.h*=k; }
   cam.scale/=k; cam.x=c.x-(c.x-cam.x)*k; cam.y=c.y-(c.y-cam.y)*k;
   if(cam.scale<.15||cam.scale>6){ cam.scale=Math.max(.15,Math.min(6,cam.scale)); cam.x=c.x-view.w/2/cam.scale; cam.y=c.y-view.h/2/cam.scale; }
-  o.lastFps=planFps(); updateZoomLabel(); recordHistory();
+  ps.forEach(o=>{ const f=planFtPerWorld(o)*GRID; if(f) o.lastFps=f; }); updateZoomLabel(); recordHistory();
 }
 /* The scale just changed. A run keeps the lengths it was given when drawn (autoLen at draw time), so
    retuning the scale after tracing would leave every traced length stale. Re-measure the segments that
    still read exactly what auto-measure gave them at the old scale; anything else was typed in by hand
-   (off a plan dimension or a tape) and is kept. o.lastFps is the scale the runs were last measured at. */
+   (off a plan dimension or a tape) and is kept. o.lastFps is the scale the runs were last measured at.
+   Only segments whose scale moved are touched: those on this sheet, plus those off every sheet when this
+   is the first scaled one (drawingFps falls back to it). */
 function commitPlanScale(){
   const o=planOf(); if(!o) return;
-  const nf=planFps(), of=+o.lastFps||+P.settings.feetPerSquare||0;
+  const nf=planFtPerWorld(o)*GRID;
   if(!nf){ recordHistory(); scheduleSave(); updatePlanButton(); return; }
+  const was=[o,+o.lastFps||0];
   let n=0;
-  if(of>0 && Math.abs(nf-of)>1e-9){
-    for(const r of P.objects){
-      if((r.t!=="gutter"&&r.t!=="custom")||!r.pts||!Array.isArray(r.lengths)||r.lengths.length!==r.pts.length-1) continue;
-      for(let i=0;i<r.lengths.length;i++){
-        if(r.lengths[i]===""||r.lengths[i]==null) continue;
-        const d=dist(r.pts[i],r.pts[i+1]), was=autoFeetAt(d,of);
-        if(was>0 && +r.lengths[i]===was){ const now=autoFeetAt(d,nf); if(now!==was){ r.lengths[i]=now; n++; } }
-      }
+  for(const r of P.objects){
+    if((r.t!=="gutter"&&r.t!=="custom")||!r.pts||!Array.isArray(r.lengths)||r.lengths.length!==r.pts.length-1) continue;
+    for(let i=0;i<r.lengths.length;i++){
+      if(r.lengths[i]===""||r.lengths[i]==null) continue;
+      const a=r.pts[i], b=r.pts[i+1], of=segFps(a,b,was), f=segFps(a,b);
+      if(!(of>0)||Math.abs(f-of)<1e-9) continue;
+      const d=dist(a,b), w=autoFeetAt(d,of);
+      if(w>0 && +r.lengths[i]===w){ const now=autoFeetAt(d,f); if(now!==w){ r.lengths[i]=now; n++; } }
     }
   }
   o.lastFps=nf; P.settings.autoMeasure=true;
@@ -7696,13 +7915,15 @@ function commitPlanLine(o,line,a,b){
 function removePlan(){
   const o=planOf(); if(!o) return;
   // the drawing keeps the plan's scale, so anything traced keeps measuring the same
-  const f=planFps(); if(f) P.settings.feetPerSquare=f;
-  P.objects=P.objects.filter(x=>x!==o); planPlace=null; planEdit=null; planNote="";
+  const f=planFtPerWorld(o)*GRID||planFps();
+  P.objects=P.objects.filter(x=>x!==o); if(f&&!planFps()) P.settings.feetPerSquare=f; planCur=null; planPlace=null; planEdit=null; planNote="";
   if(!anyPlan()) setGutterLoupe(false);   // a plain drawing again: the magnifier's default there is off
   recordHistory(); refreshAll(); saveLocal(); renderPlanPanel(); planHint(); updatePlanButton();
 }
-function zoomToPlan(){
-  const o=planOf(); if(!o) return;
+function zoomToPlan(all){
+  const ps=all?plansOf():[planOf()].filter(Boolean); if(!ps.length) return;
+  const x0=Math.min(...ps.map(p=>p.x)), y0=Math.min(...ps.map(p=>p.y));
+  const o={x:x0, y:y0, w:Math.max(...ps.map(p=>p.x+p.w))-x0, h:Math.max(...ps.map(p=>p.y+p.h))-y0};
   const avail=view.w-(planMode?360:0), pad=30;
   cam.scale=Math.max(.15,Math.min(6,Math.min((avail-pad*2)/o.w,(view.h-pad*2)/o.h)));
   cam.x=o.x+o.w/2-avail/(2*cam.scale); cam.y=o.y+o.h/2-view.h/(2*cam.scale);
@@ -7748,10 +7969,31 @@ function planDown(e){
     planEdit={kind:"end",line:h.line,end:h.end,off:{x:s.x-pt.x,y:s.y-pt.y}};
     draw(); return;
   }
-  if(planMove && w.x>=o.x&&w.x<=o.x+o.w&&w.y>=o.y&&w.y<=o.y+o.h){
-    planEdit={kind:"move",start:w,ox:o.x,oy:o.y}; canvas.style.cursor="grabbing"; return;
+  planPick=null;
+  const under=sheetAt(w);
+  if(planMove && under){
+    // grabbing another sheet with Move on makes it the current one and moves it
+    if(under!==o){ planCur=under.id; planPlace=null; renderPlanPanel(); }
+    const s0=under;
+    const riders=planMovesAll() ? P.objects.filter(x=>overSheet(s0,x)).map(x=>[x,JSON.parse(JSON.stringify(x))]) : [];
+    const frames=planMovesAll() ? ((P.pres&&P.pres.pages)||[]).filter(f=>frameOverSheet(s0,f)).map(f=>[f,{...f}]) : [];
+    planEdit={kind:"move",start:w,ox:s0.x,oy:s0.y,riders,frames}; canvas.style.cursor="grabbing"; return;
   }
+  if(under&&under!==o) planPick={id:under.id,pt};
   pan();
+}
+// the sheet (and its riders) back where a move started — a pinch mid-move
+function planMoveRestore(ed){
+  const o=planOf(); if(!o||!ed) return;
+  o.x=ed.ox; o.y=ed.oy;
+  (ed.riders||[]).forEach(([x,c])=>translateInto(x,c,0,0));
+  (ed.frames||[]).forEach(([f,c])=>Object.assign(f,c));
+}
+// a press on another sheet that ended without panning away selects that sheet
+function planPickUp(pt){
+  const pk=planPick; planPick=null;
+  if(!pk||Math.hypot(pt.x-pk.pt.x,pt.y-pk.pt.y)>8) return;
+  planCur=pk.id; planPlace=null; planMethod=null; renderPlanPanel(); planHint(); draw();
 }
 function planMoveEvt(e){
   const o=planOf(); if(!o) return;
@@ -7772,7 +8014,11 @@ function planMoveEvt(e){
     renderPlanReadouts(); draw(); return;
   }
   if(planEdit.kind==="move"){
-    const w=screenToWorld(pt); o.x=planEdit.ox+(w.x-planEdit.start.x); o.y=planEdit.oy+(w.y-planEdit.start.y); draw();
+    const w=screenToWorld(pt), dx=w.x-planEdit.start.x, dy=w.y-planEdit.start.y;
+    o.x=planEdit.ox+dx; o.y=planEdit.oy+dy;
+    planEdit.riders.forEach(([x,c])=>translateInto(x,c,dx,dy));
+    planEdit.frames.forEach(([f,c])=>{ f.x=c.x+dx; f.y=c.y+dy; });
+    draw();
   }
 }
 function planUp(){
@@ -7794,8 +8040,19 @@ function planUp(){
 /* ---- Plan mode canvas overlay: editor chrome only (called from draw(), never prints) ---- */
 function drawPlanOverlay(){
   const o=planOf(); if(!planMode||!o) return;
-  const a=worldToScreen({x:o.x,y:o.y});
+  const a=worldToScreen({x:o.x,y:o.y}), ps=plansOf();
   ctx.save();
+  if(ps.length>1){
+    // every sheet gets a numbered tag (with its scale state) so a tap on it reads as "pick this one"
+    ctx.font="700 12px Arial"; ctx.textBaseline="middle"; ctx.textAlign="left";
+    ps.forEach((x,i)=>{
+      const q=worldToScreen({x:x.x,y:x.y}), cur=x===o, ok=planFtPerWorld(x)>0;
+      if(!cur){ ctx.strokeStyle="rgba(27,37,48,.22)"; ctx.lineWidth=1; ctx.setLineDash([3,4]); ctx.strokeRect(q.x,q.y,x.w*cam.scale,x.h*cam.scale); ctx.setLineDash([]); }
+      const t="Sheet "+(i+1)+(ok?" ✓":" · no scale"), tw=ctx.measureText(t).width+14;
+      ctx.fillStyle=cur?"#1b2530":ok?"rgba(27,37,48,.55)":"#955800"; roundRect(ctx,q.x,q.y-24,tw,20,5); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.fillText(t,q.x+7,q.y-14);
+    });
+  }
   ctx.strokeStyle=planMove?"#2b7fd0":"rgba(27,37,48,.35)"; ctx.lineWidth=planMove?2:1; ctx.setLineDash(planMove?[]:[6,4]);
   ctx.strokeRect(a.x,a.y,o.w*cam.scale,o.h*cam.scale);
   ctx.restore();
@@ -7813,9 +8070,9 @@ function drawPlanOverlay(){
   else if(planEdit&&planEdit.kind==="end"){ const L=planLineOf(o,planEdit.line); if(L){ fp=L[planEdit.end]; other=L[planEdit.end==="a"?"b":"a"]; col=planEdit.line==="scale"?PLAN_SCALE_COLOR:PLAN_CHECK_COLOR; } }
   if(fp) drawPlanLoupe(o,planW(o,fp),other&&planW(o,other),col);
 }
-// what a line on the plan measures at the current scale
+// what a line on the plan measures: at the sheet's own scale, else the one tracing on it would use
 function planLineFeetLabel(o,L){
-  const f=drawingFps(); if(!f) return "";
+  const f=planFtPerWorld(o)*GRID||drawingFps(); if(!f) return "";
   return fmtFtIn(Math.hypot(L.b.u-L.a.u,L.b.v-L.a.v)*o.w/GRID*f);
 }
 function drawPlanDim(o,pa,pb,color,label){
@@ -7943,9 +8200,8 @@ function drawTraceLoupe(){
     others=nb.filter(j=>j>=0&&j!==i).map(j=>v.pts[j]);
   }
   if(!fw) return;
-  const o=planOf(), onPlan=o&&!o.hidden&&fw.x>=o.x&&fw.x<=o.x+o.w&&fw.y>=o.y&&fw.y<=o.y+o.h;
   // lifted higher than Plan mode's, so the length chip (70px above the finger) sits clear below it
-  drawPlanLoupe(onPlan?o:null,fw,others,"#2b7fd0",lastPtrType==="touch"?100:44);
+  drawPlanLoupe(sheetAt(fw),fw,others,"#2b7fd0",lastPtrType==="touch"?100:44);
 }
 
 /* ---- Plan panel ---- */
@@ -7973,7 +8229,8 @@ function renderPlanReadouts(){
 function renderPlanPanel(){
   const el=byId("planPanel"); if(!el||!planMode) return;
   const o=planOf(), native=!!geNative("gutterPdfImport");
-  const sub=o?esc(o.name||"Plan")+(o.pageIn?` · ${Math.round(o.pageIn.w)}×${Math.round(o.pageIn.h)} in`:""):"No plan yet";
+  const nS=plansOf().length;
+  const sub=o?(nS>1?"Sheet "+(plansOf().indexOf(o)+1)+" of "+nS+" · ":"")+esc(o.name||"Plan")+(o.pageIn?` · ${Math.round(o.pageIn.w)}×${Math.round(o.pageIn.h)} in`:""):"No plan yet";
   let h=`<div class="pl-head"><div style="min-width:0"><div class="pl-title">Plan</div><div class="pl-sub">${sub}</div></div><button class="pl-done" id="plDone">Done</button></div><div class="pl-body">`;
   if(planNote) h+=`<div class="pl-flash">${esc(planNote)}</div>`;
   planNote="";
@@ -7991,6 +8248,14 @@ function renderPlanPanel(){
     return;
   }
   const s=o.scale, method=planMethod||(s&&s.mode==="ratio"?"ratio":"line"), line=planLineOf(o,"scale"), ok=!!planFtPerWorld(o);
+  const ps=plansOf(), others=ps.some(x=>x!==o&&planFtPerWorld(x)>0);
+  // sheets: each has its own scale; the rest of the panel edits the current one
+  h+=`<div class="pl-sec"><div class="pl-h">Sheets<span class="pl-n">${ps.length}</span></div><div class="pl-sheets">`
+    + ps.map((x,i)=>`<button class="pl-sh${x===o?" on":""}" data-sheet="${esc(x.id)}" title="${esc(x.name||"Plan")}"><img src="${photoSrc(x.img)||""}" alt=""><span class="pl-shn">${i+1}</span><span class="pl-shs ${planFtPerWorld(x)>0?"ok":"warn"}">${planFtPerWorld(x)>0?"✓":"!"}</span></button>`).join("")
+    + `<button class="pl-sh add" id="plAdd" title="Add another sheet — PDF or image">＋<small>Sheet</small></button></div>`
+    + (ps.length>1 ? `<div class="pl-tip">Tap a sheet here or on the canvas to work on it. Each sheet has its own scale, and what's traced on a sheet measures at that sheet's scale. Frame each area on its own PDF page with <b>PDF pages</b>.</div>` : "")
+    + `</div>`;
+  if(others && !ok) h+=`<div class="pl-flash">Set this sheet's scale before tracing on it — until then it measures at the first scaled sheet's scale.</div>`;
   // 1 · scale
   h+=`<div class="pl-sec"><div class="pl-h"><span class="pl-step">1</span>Scale<span id="plStatus" style="margin-left:auto"></span></div>
     <div class="seg-toggle"><button data-pm="line" class="${method==="line"?"on":""}">Measure a dimension</button><button data-pm="ratio" class="${method==="ratio"?"on":""}">Printed scale</button></div>`;
@@ -8040,7 +8305,8 @@ function renderPlanPanel(){
   h+=`<div class="pl-sec"><div class="pl-h">Sheet</div>
     <div class="pl-sheet"><img src="${photoSrc(o.img)}" alt=""><div style="min-width:0"><b>${esc(o.name||"Plan")}</b><div class="pl-fine">${o.pageIn?`${(+o.pageIn.w).toFixed(1)} × ${(+o.pageIn.h).toFixed(1)} in · PDF`:"Image"}</div></div></div>
     <label class="pl-chk"><input type="checkbox" id="plMove" ${planMove?"checked":""}>Move plan — drag the sheet to line it up</label>
-    <div class="pl-row"><button class="btn-sm" id="plFit">Zoom to plan</button><button class="btn-sm" id="plReplace">Replace sheet…</button><button class="btn-sm danger" id="plRemove">Remove</button></div></div>`;
+    ${planMove?`<label class="pl-chk" style="padding-left:27px"><input type="checkbox" id="plMoveAll" ${planMovesAll()?"checked":""}>Bring what's traced on it along</label>`:""}
+    <div class="pl-row"><button class="btn-sm" id="plFit">Zoom to ${ps.length>1?"sheet":"plan"}</button>${ps.length>1?'<button class="btn-sm" id="plFitAll">Zoom to all</button>':""}<button class="btn-sm" id="plReplace">Replace sheet…</button><button class="btn-sm danger" id="plRemove">Remove${ps.length>1?" sheet":""}</button></div></div>`;
   h+=`</div>`;
   el.innerHTML=h;
   renderPlanReadouts();
@@ -8076,9 +8342,14 @@ function renderPlanPanel(){
   byId("plPrint").onchange=e=>{ o.print=e.target.checked; recordHistory(); scheduleSave(); draw(); };
   byId("plLoupe").onchange=e=>setGutterLoupe(e.target.checked);
   byId("plTapDraw").onchange=e=>setTapDraw(e.target.checked);
-  byId("plMove").onchange=e=>{ planMove=e.target.checked; planPlace=null; planHint(); draw(); };
-  byId("plFit").onclick=zoomToPlan;
-  byId("plReplace").onclick=()=>pickDoc("plan");
+  byId("plMove").onchange=e=>{ planMove=e.target.checked; planPlace=null; renderPlanPanel(); planHint(); draw(); };
+  if(byId("plMoveAll")) byId("plMoveAll").onchange=e=>{ planMoveAll=e.target.checked; };
+  byId("plFit").onclick=()=>zoomToPlan();
+  if(byId("plFitAll")) byId("plFitAll").onclick=()=>zoomToPlan(true);
+  byId("plAdd").onclick=()=>pickDoc("plan");
+  // dataset is a string and sheet ids are numbers (uid()): a plain === never matched, so the strip fell back to sheet 1
+  el.querySelectorAll("[data-sheet]").forEach(b=>b.onclick=()=>{ const x=plansOf().find(x=>String(x.id)===b.dataset.sheet); if(x) planCur=x.id; planPlace=null; planMethod=null; renderPlanPanel(); planHint(); draw(); });
+  byId("plReplace").onclick=()=>pickDoc("plan-replace");
   byId("plRemove").onclick=removePlan;
 }
 
