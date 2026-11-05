@@ -133,8 +133,24 @@ undo `history`; `meta` (customer), `photos` and stamp presets are *shared*. `cap
 **Coordinates:** world units with `GRID = 20`; `cam {x, y, scale}`; `worldToScreen` /
 `screenToWorld`. Job-content line weights, dashes and miter marks go through `wpx(v)` (= `v*cam.scale`,
 its look at 100%), so they stay proportional to the drawing on the canvas at any zoom and in the
-PDF. Selection chrome and handles stay fixed screen px. Don't add a bare px `lineWidth` to job content. Feet are derived, not stored — `P.settings.feetPerSquare` (or calibration)
+PDF. Gutter runs and what rides on them (casing, existing/custom runs, miter marks, chip/arrow clearances) use
+`gpx(v)` instead — `wpx` × `settings.lineWeight`, the ⚙ line-thickness slider. Selection chrome and handles stay fixed screen px. Don't add a bare px `lineWidth` to job content. Feet are derived, not stored — `P.settings.feetPerSquare` (or calibration)
 converts via `feetToWorld` / `autoLen`.
+
+**Selection.** `hitTest()` picks the closest thing, by distance past its painted edge (a tie goes to the narrower
+target, then the topmost), never just the topmost within tolerance. Text chips under 8px tall don't catch taps, and
+markers shrunk by the zoom reach out to a minimum target (not `dsfront`: a stray tap flips the gutter). `hit.loose`
+= in tolerance but off the ink: a tap selects it, a drag starts a box instead of moving it, or nothing could be
+boxed on a dense plan. Touch needs 10px of travel to count as a drag. `selectInMarquee()` tests what's painted
+(`labelBoxes`, arrow lines, a stroke's band), never `objBounds()` boxes, and a tap with no travel isn't a box.
+
+**Arrows** on both pages are `paintArrowShaft()`: a solid arrow is one filled outline, so nothing can poke past
+the tip and part opacity shows no overlap; a dashed shaft is a stroke stopping at the head's base.
+
+**Convert style** (`openConvertSystem()` → `convertGutterStyle()`, Select bar) only changes sizes, since caps,
+miters and footage all derive from them. Selection = whole runs, existing runs are never touched. Converting a
+whole option also moves its `gutterType`/`defaultDownspoutSize`, pins skipped existing items to their old size so
+they don't follow, and rewrites the job details box's gutter line.
 
 **Run connectivity is geometric, not stored.** Endpoints within `CAP_EPS` (11 world units) count
 as joined. `isClosedRun()`, `freeEnds()`, `runCorners()` and `junctionCorners()` all re-derive
@@ -179,14 +195,25 @@ picker, unset = 4, which also repaginates everything). Always read pages through
 `photoSlotRects()` gives the slot rects — `renderPhotos()` scales them onto the sheets and
 `buildEstimateHTML()` prints them.
 Each photo is contain-fit into its slot, as the PDF's `img` is. Reorder is the numbered grip
-(`photoDragStart()` → `movePhoto()`), per-photo zoom/undo/clear/remove live in its ⋯ menu.
-Sheets are one column wide (`photoSheetWidth()` splits the pane into ~560px columns), so
+(`photoDragStart()` → `movePhoto()`), per-photo clear/remove live in its ⋯ menu.
+Sheets are one column wide (`photoSheetMetrics()` splits the pane into ~560px columns), so
 `#photoScroll` needs `scrollbar-gutter:stable` — `renderPhotos()` measures
 after clearing the pane, and without a reserved gutter it sizes columns a scrollbar too wide and
 the last one wraps. Marks are stored against a 520px preview (`PHOTO_REF_W`); every renderer
 scales by `cw/PHOTO_REF_W` via `photoStrokePx()`/`photoTextPx()`. The left rail belongs to the
 Diagram page; `setPage()` parks it on Photos/PDF View and restores the rep's choice on the way
 back.
+
+**Photo page zoom** (`photoZoom`, 1–4×, session only) is one zoom for all the sheets, not a zoom inside each
+photo. Nothing scales at paint time: marks size off `cw`, so zooming is `renderPhotos()` laying the sheets out
+at `photoCardW` = fit width × zoom, in `#photoPages` at a set width so the columns hold and the pane pans. A
+pinch (capture-phase pointers on `#photoScroll`, so it can span two photos) or ctrl+wheel previews with a CSS
+transform and lays out on release, re-finding the sheet under the fingers (`photoAnchorAt()`) to set the scroll.
+A rebuild can land mid-line, so `photoLine` redraws through `photoRedraws`, never a card's closure.
+`photoPlaceControls()` runs on every scroll and layout: it slides each photo's grip and ↶ ↷ ⋯ into the visible
+part of the photo, and past 100% releases the canvas pixels of cards over a screen away (`card._hold()`), since
+40 full-page photos at 4× would otherwise hold about 1.8 GB. So a canvas's `width` can be 1 while its CSS size
+and `cw` stay real; `redrawPhoto()` skips a released one. Size against `cw`, never `cv.width`.
 
 **Photo mark schema** (`P.photos[i].strokes[]`, normalized 0..1 image coords, see the banner
 comment at PHOTO MARKUP PAGE for the full table): every mark has `id` (from `uid()`) and
