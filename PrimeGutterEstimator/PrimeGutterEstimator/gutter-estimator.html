@@ -77,6 +77,7 @@ input,select,textarea{font-family:inherit;font-size:13px}
 .tb-btn{
   background:#2c3c4d;color:#dce6ef;border:1px solid #3a4d61;border-radius:7px;
   padding:7px 12px;cursor:pointer;font-weight:600;font-size:12.5px;display:inline-flex;gap:7px;align-items:center;
+  white-space:nowrap;   /* in iPad portrait "Print / PDF" and "PDF View" used to wrap to three lines */
 }
 @media (hover:hover){.tb-btn:hover{background:#35495d}}
 .tb-btn.primary{background:var(--prime);border-color:var(--prime-dark);color:#fff}
@@ -97,6 +98,12 @@ input,select,textarea{font-family:inherit;font-size:13px}
   padding:6px 14px;border-radius:6px;cursor:pointer;color:#9fb0c0;font-weight:600;font-size:12.5px;border:0;background:transparent
 }
 .page-tab.active{background:#33455a;color:#fff}
+.page-tab{white-space:nowrap}
+/* autosave status: the job saves itself, and nothing on screen used to say so */
+#saveState{font-size:12px;font-weight:700;color:#7fd0a2;white-space:nowrap}
+#saveState.busy{color:#9fb0c0}
+/* narrow (iPad portrait): the P mark alone, so the tabs and buttons keep one line */
+@media (max-width:1000px){ .brand .brand-txt{display:none} #topbar{gap:9px} }
 
 /* options (estimate variants) tab strip */
 #optionsBar{display:flex;align-items:center;gap:6px;flex:0 0 auto;background:#11202e;border-bottom:1px solid #24384c;padding:6px 10px;overflow-x:auto}
@@ -225,31 +232,36 @@ body.plan-mode #flipFrontBtn{display:none!important}
 
 /* tool dock */
 /* Scrolls once custom product tools push it past the stage — the tools below the fold were
-   unreachable. max-height stops 56px short of the bottom to clear #railToggle/#diagUndoBar.
+   unreachable. max-height stops 12px above #railToggle/#diagUndoBar (12 bottom + 32 tall + 12 gap,
+   + 12 top): those ride up by the home-indicator inset, so the cap must subtract it too — without
+   it the dock ran ~8px under them on an iPad (Chrome's inset is 0, so it never showed there).
    The scroller clips the .tip flyouts, so buildDock() also sets a plain title for mouse users. */
 #dock{
   position:absolute;left:12px;top:12px;z-index:6;
   background:var(--ink);border:1px solid #0c131b;border-radius:12px;padding:6px;
-  display:flex;flex-direction:column;gap:4px;box-shadow:0 8px 26px rgba(0,0,0,.35);
-  max-height:calc(100% - 68px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:2px;box-shadow:0 8px 26px rgba(0,0,0,.35);
+  max-height:calc(100% - 68px - env(safe-area-inset-bottom));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;
 }
 #dock::-webkit-scrollbar{display:none}
 #dock > *{flex:0 0 auto}
+/* Every tool carries its name: six had 7.5px abbreviations (GUT, DS, SPL…) and eight were icon-only,
+   which a new rep had to learn by trial. 62px is the narrowest that fits "Downspout" at a readable size. */
 .tool{
-  width:40px;height:40px;border-radius:9px;border:0;background:transparent;color:#aebccb;cursor:pointer;
-  display:grid;place-items:center;position:relative;
+  width:62px;height:46px;border-radius:9px;border:0;background:transparent;color:#aebccb;cursor:pointer;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;
 }
 @media (hover:hover){.tool:hover{background:#2a3a4b;color:#fff}}
 .tool.active{background:var(--prime);color:#fff}
-.tool svg{width:20px;height:20px}
-.tool .tlbl{position:absolute;left:0;right:0;bottom:1px;font-size:7.5px;font-weight:800;text-align:center;letter-spacing:.2px;color:#8fa0b2}
-.tool.active .tlbl{color:rgba(255,255,255,.85)}
-.tool:has(.tlbl) svg{margin-top:-5px}
+.tool svg{width:20px;height:20px;flex:0 0 auto}
+.tool .tlbl{font-size:9.5px;font-weight:700;letter-spacing:.1px;line-height:1.05;color:#9fb0c2;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool.active .tlbl{color:#fff}
+/* an 11" iPad in landscape is ~834px tall: 13 tools only clear the undo row without scrolling at 42px each */
+@media (max-height:880px){ .tool{height:42px;gap:2px} .tool svg{width:18px;height:18px} }
 .tool .kbd{position:absolute;right:3px;top:2px;font-size:8px;color:#6f8092;font-weight:800}
 .tool.active .kbd{color:rgba(255,255,255,.7)}
-.dock-div{height:1px;background:#2a3a4b;margin:3px 2px}
-.tip{position:absolute;left:52px;top:50%;transform:translateY(-50%);background:#0c131b;color:#fff;padding:5px 9px;border-radius:6px;font-size:11.5px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;font-weight:600}
+.dock-div{height:1px;background:#2a3a4b;margin:2px 4px}
+.tip{position:absolute;left:74px;top:50%;transform:translateY(-50%);background:#0c131b;color:#fff;padding:5px 9px;border-radius:6px;font-size:11.5px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;font-weight:600}
 @media (hover:hover){.tool:hover .tip{opacity:1}}
 
 /* contextual options bar (top of canvas)
@@ -258,9 +270,9 @@ body.plan-mode #flipFrontBtn{display:none!important}
    what lets the edge fades hold still while the controls scroll underneath them — a fade drawn
    inside the scroller (::after, or a mask) would either scroll away with the content or eat the
    bar's own border and shadow.
-   left:78px clears the 54px dock (12+54=66) with the same 12px gutter used elsewhere. */
+   left:100px clears the 76px dock (12+76=88) with the same 12px gutter used elsewhere. */
 #optbarWrap{
-  position:absolute;left:78px;top:12px;right:12px;z-index:5;height:42px;
+  position:absolute;left:100px;top:12px;right:12px;z-index:5;height:42px;
   background:#fff;border:1px solid var(--line);border-radius:10px;
   box-shadow:0 6px 18px rgba(0,0,0,.16);overflow:hidden
 }
@@ -354,6 +366,8 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 .pl-badge{font-size:11px;padding:2px 9px;border-radius:10px;text-transform:none;letter-spacing:0}
 .pl-badge.ok{background:#e1f5e9;color:#1d7444}
 .pl-badge.warn{background:#fff0d4;color:#955800}
+/* (the Photos layout picker has its own .plk-btn: sharing this class painted all four of its buttons red,
+   so the lit one — the layout in use — couldn't be told from the rest) */
 .pl-btn{width:100%;background:var(--prime);color:#fff;border:0;border-radius:8px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;margin-top:8px}
 .pl-btn.alt{background:#fff;color:var(--text);border:1px solid var(--line)}
 .pl-btn:disabled{opacity:.45;cursor:default}
@@ -431,7 +445,6 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
    the hint and the spacer so the controls pack tightly instead of pushing each other
    onto extra rows. The tools themselves always stay on screen. */
 @media (max-width:1100px){
-  #photoBarTitle{display:none}
   #photoBar .tb-spacer{display:none}
   #photoBar .tb-btn{padding:6px 9px}
   #photoLayoutPick .pl-lbl{display:none}
@@ -439,7 +452,18 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 }
 /* contextual per-tool options — same idiom as the Diagram's #optbarWrap/#optbar, but
    inline in the page flow (Photos has no floating dock to clear) */
-#photoOptbarWrap{background:#182634;border-bottom:1px solid #24384c;flex:0 0 auto;overflow:hidden}
+#photoOptbarWrap{background:#182634;border-bottom:1px solid #24384c;flex:0 0 auto;overflow:hidden;display:flex;align-items:center}
+/* page layout + zoom ride at the end of the style row: as a third toolbar row of their own they cost the
+   photos ~50px, and with the option tabs the Photos chrome was a third of an 11" iPad's screen */
+#photoOptbar{flex:1 1 0;min-width:0}
+#photoViewGrp{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:6px 14px 6px 12px;border-left:1px solid #33455a}
+@media (max-width:1000px){ #photoOptbarWrap{flex-wrap:wrap} #photoOptbar{flex:1 1 100%} #photoViewGrp{border-left:0;padding-top:0} }
+/* Line / Box / Oval / Shape share one button: eleven tools wrapped to two rows on every iPad */
+.ptool-grp.active{background:var(--prime);border-color:var(--prime);color:#fff}
+.ptool-grp .ptcaret{font-size:13px;opacity:.85;margin-left:1px;line-height:1}
+#ptShapesMenu{position:absolute;z-index:45;display:none;flex-direction:column;gap:4px;padding:6px;background:var(--ink);border:1px solid #3a4d61;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+#ptShapesMenu .tb-btn{justify-content:flex-start;min-width:132px}
+#ptShapesMenu .ptlbl{display:inline}
 /* selecting a mark swaps the one-line hint for its controls — ease that in instead of popping (animatePhotoOptbar) */
 #photoOptbar.ob-drop{animation:obDrop .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes obDrop{from{opacity:0;transform:translateY(-8px)}}
@@ -465,8 +489,10 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
    renderPhotos() measures the empty (scrollbar-free) pane, sizes the columns a scrollbar too
    wide, and the last column wraps — putting back the dead strip this layout exists to remove.
    On iOS scrollbars are overlays, so the gutter costs nothing there. */
-/* #photoPages holds the sheets at a set width, so zooming keeps the columns and pans instead of reflowing */
-#photoPages{flex:none;display:flex;flex-wrap:wrap;align-content:flex-start;transform-origin:0 0}
+/* The sheets are one column, top to bottom, like pages laid on a table one below the next, at any zoom: the rep
+   asked that zooming out not regrid them into the top-left corner. #photoPages is one sheet wide; the auto
+   margins centre it while it's narrower than the pane and resolve to 0 once it's wider, so it pans from the left. */
+#photoPages{flex:none;display:flex;flex-direction:column;margin:0 auto;transform-origin:0 0}
 #photoScroll{flex:1;overflow:auto;scrollbar-gutter:stable;background:#9aa6b1;padding:18px;display:flex;align-items:flex-start;touch-action:pan-x pan-y}
 /* One .photo-sheet per printed photo page, slots at the PDF's own rects (photoSlotRects) scaled by
    sheet width, so what the rep arranges here is what the customer gets. */
@@ -476,7 +502,7 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 .ps-head{box-sizing:border-box;color:#c8202a;font-weight:700;font-family:Arial,Helvetica,sans-serif;white-space:nowrap;overflow:hidden}
 .ps-head span{display:block;border-bottom:2px solid #f0d0d2}
 .ps-area{position:relative}
-.ps-cap{color:#26364a;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px}
+.ps-cap{color:#26364a;font-size:11px;font-weight:700;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px}
 .ps-cap span{margin-right:6px}
 .ps-pl{display:inline-flex;align-items:center;gap:3px;border:1px solid #7f8d9b;background:#e9eef3;color:#26364a;border-radius:6px;padding:3px 7px;font-weight:700;font-size:11px;cursor:pointer}
 .ps-pl.active{background:var(--prime);border-color:var(--prime);color:#fff}
@@ -484,8 +510,9 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 .photo-slot{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:6px}
 .photo-slot.empty{border:2px dashed #c3ccd5;color:#8a98a6;font-size:12px;font-weight:700;box-sizing:border-box}
 .photo-slot.drop-target{outline:3px solid #2b7fd0;outline-offset:2px;background:rgba(43,127,208,.08)}
-.photo-card{position:relative;line-height:0}
-.photo-card canvas{display:block;cursor:crosshair;touch-action:none;border:1px solid #ccc;border-radius:6px}
+.photo-card{position:relative;line-height:0;box-sizing:border-box;border:1px solid #ccc;border-radius:6px;background:#e4e9ee}
+/* the canvas covers only the part of the card on screen (card._view), placed at that offset in image px */
+.photo-card canvas{position:absolute;display:block;cursor:crosshair;touch-action:none}
 .photo-card.dragging{z-index:60;opacity:.85;box-shadow:0 14px 34px rgba(0,0,0,.4);border-radius:6px}
 .pc-grip,.pc-btn{line-height:1;border:0;border-radius:14px;background:rgba(20,28,38,.72);color:#fff;font-weight:800;font-size:12px;padding:6px 9px;cursor:pointer;touch-action:none}
 .pc-grip{position:absolute;top:6px;z-index:2}
@@ -497,14 +524,19 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 .pc-menu button{flex:1;text-align:left;background:none;border:0;border-radius:5px;padding:8px 10px;font-weight:700;font-size:12.5px;color:var(--text);cursor:pointer;white-space:nowrap}
 @media (hover:hover){.pc-menu button:hover{background:#e3e8ee}}
 .pc-menu button.danger{color:var(--prime)}
-#photoLayoutPick .pl-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 8px}
-#photoLayoutPick .pl-btn.active{background:var(--prime);border-color:var(--prime);color:#fff}
+#photoLayoutPick .plk-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 8px}
+#photoLayoutPick .plk-btn.active{background:var(--prime);border-color:var(--prime);color:#fff}
 #photoLayoutPick .pl-lbl{font-size:11px;font-weight:700;color:#9fb0c0;margin-right:2px}
 @media (pointer:coarse){
   .pc-grip,.pc-btn{padding:9px 12px;font-size:14px}
   .pc-menu{top:44px}
   .pc-menu button{padding:11px 12px;font-size:14px}
 }
+/* zoomed out, a photo can be ~60px wide: keep the grip and ⋯ (reorder, menu), drop ↶ ↷ (the top bar's undo still works) */
+.photo-card.pc-tight [data-pundo],.photo-card.pc-tight [data-predo]{display:none}
+.photo-card.pc-tight .pc-grip,.photo-card.pc-tight .pc-btn{padding:3px 6px;font-size:10px}
+.photo-card.pc-tight .pc-grip{top:3px;left:3px}.photo-card.pc-tight .pc-tr{top:3px;right:3px}
+.photo-card.pc-tiny .pc-tr{display:none}   /* ~10%: the grip alone, to reorder from the overview */
 .photo-empty{color:#33455a;text-align:center;margin:auto;font-weight:700}
 
 /* PDF view page — same overlay idiom as #photoStage. In the app a native PDFView is laid over
@@ -642,6 +674,78 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 ::-webkit-scrollbar-thumb{background:#c2cbd4;border-radius:6px;border:2px solid transparent;background-clip:content-box}
 .rail-scroll::-webkit-scrollbar-thumb{background:#c2cbd4;border-radius:6px;border:2px solid var(--rail);background-clip:content-box}
 
+/* app dialog (uiConfirm / uiAlert / uiPrompt): above the modal (50), below the camera (60) */
+#dlgWrap{position:fixed;inset:0;z-index:58;background:rgba(15,22,30,.55);display:none;align-items:center;justify-content:center;padding:20px}
+.dlg{background:#fff;border-radius:14px;max-width:430px;width:100%;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+.dlg-msg{font-size:14.5px;line-height:1.5;font-weight:600;white-space:pre-line;margin-bottom:16px}
+.dlg-in{display:block;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-size:17px;margin-bottom:16px}
+.dlg-btns{display:flex;justify-content:flex-end;gap:8px}
+.dlg-btns button{min-height:44px;padding:10px 18px;border-radius:9px;border:1px solid var(--line);background:#eef1f4;font-weight:800;font-size:14px;cursor:pointer;color:var(--text)}
+.dlg-btns .dlg-ok{background:var(--ink);border-color:var(--ink);color:#fff}
+.dlg-btns .dlg-ok.danger{background:#e01b24;border-color:#e01b24}
+
+/* Jobs list (top bar's Jobs button) */
+.job-acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.job-row{display:flex;align-items:center;gap:10px;min-height:58px;padding:8px 8px 8px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;cursor:pointer;background:#fff}
+.job-row.cur{border-color:var(--prime);background:#fff7f7}
+.job-main{flex:1;min-width:0}
+.job-name{font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.job-sub{font-size:11.5px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.job-tot{font-family:var(--mono);font-weight:700;font-size:13px;flex:0 0 auto}
+.job-del{border:0;background:#eef1f4;border-radius:8px;width:42px;height:42px;cursor:pointer;font-size:15px;flex:0 0 auto}
+@media (hover:hover){.job-row:hover{border-color:#9bbbdc}}
+
+/* ⚙ Settings → Products & price book */
+.set-link{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:#f6f8fa;border-radius:9px;padding:12px;cursor:pointer;margin-bottom:4px;color:var(--text)}
+.set-link b{display:block;font-size:13.5px}
+.set-link span{display:block;font-size:11.5px;color:var(--text-soft);margin-top:2px}
+.set-link i{margin-left:auto;font-style:normal;font-size:20px;color:var(--steel)}
+
+/* a how-it-works paragraph, folded behind its title (infoNote): the rail read like a manual */
+details.info{font-size:11px;color:var(--text-soft);line-height:1.5;background:#fff;border:1px dashed var(--line);border-radius:7px;margin-bottom:9px}
+details.info>summary{list-style:none;cursor:pointer;padding:8px 9px;font-weight:700;display:flex;align-items:center;gap:7px}
+details.info>summary::-webkit-details-marker{display:none}
+details.info>summary::before{content:"i";width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;font:italic 700 10px/1 Georgia,serif;flex:0 0 auto}
+details.info[open]>summary{border-bottom:1px dashed var(--line)}
+details.info>div{padding:8px 9px}
+
+/* Touch: Apple's 44pt minimum. The option bar, Plan panel and keypad were already enlarged, but the chrome a
+   rep hits most — page tabs (27px tall), top-bar buttons (31), rail tabs (34), undo/snap (32), zoom (34),
+   worksheet inputs (25) — was still mouse-sized. Mouse layout stays dense. */
+@media (pointer:coarse){
+  .tb-btn{min-height:44px;padding:8px 13px;font-size:13.5px}
+  #photoBar .tb-btn{padding:8px 11px}
+  #photoLayoutPick .plk-btn{padding:8px 10px}
+  .page-tab{min-height:40px;padding:8px 15px;font-size:13.5px}
+  #optionsBar{padding:7px 10px}
+  .opt-tab,.opt-add{min-height:42px;padding:8px 13px;font-size:13.5px}
+  .opt-tab .opt-x{width:28px;height:28px;font-size:13px;border-radius:7px;margin:-4px -6px -4px 0}
+  .rail-tab{padding:15px 4px;font-size:12.5px}
+  #railToggle{width:44px;height:44px;font-size:18px}
+  #diagUndoBar{left:calc(max(12px,env(safe-area-inset-left)) + 52px)}
+  #diagUndoBar button{width:46px;height:44px}
+  #diagUndoBar button svg{width:20px;height:20px}
+  .zbtn{width:44px;height:44px;font-size:20px}
+  .zlabel{height:44px;font-size:14px}
+  #diagLegend{bottom:72px;padding-right:40px}   /* room for the larger ✕, which sat on the last word */
+  #diagLegend [data-lghide]{width:32px!important;height:32px!important;line-height:32px!important;font-size:14px!important}
+  /* 12 bottom + 44 tall + 12 gap + 12 top: the undo row is taller here */
+  #dock{max-height:calc(100% - 80px - env(safe-area-inset-bottom))}
+  .tool .kbd{display:none}             /* keyboard shortcuts mean nothing on an iPad */
+  .ws-row{min-height:44px}
+  .ws-row .ws-lbl{font-size:12.5px}
+  .ws-row input.ws-price,.ws-row input.ws-qty-in{padding:12px 7px;font-size:14px}
+  .ws-more{padding:13px 9px;font-size:12.5px}
+  .ws-book{padding:10px 8px;font-size:16px}
+  .fld label{font-size:12px}
+  .fld input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),.fld select,.fld textarea{padding:11px 10px;font-size:15px}
+  .seg-toggle button{padding:11px 4px;font-size:13px}
+  .btn-sm{padding:11px 13px;font-size:13px;min-height:42px}
+  .modal-x{width:44px;height:44px;font-size:21px}
+  details.info>summary{padding:13px 10px;font-size:12.5px}
+  details.info>div{font-size:12.5px}
+}
+
 @media print{
   #topbar,#optionsBar,#dock,#optbarWrap,#statusbar,#hint,#rail .rail-tabs,#photoBar,#camStage{display:none!important}
 }
@@ -653,7 +757,7 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
   <div id="topbar">
     <div class="brand">
       <div class="mark">P</div>
-      <div>
+      <div class="brand-txt">
         PRIME GUTTER ESTIMATOR
         <div class="sub">Field worksheet &amp; takeoff tool</div>
       </div>
@@ -662,16 +766,13 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
       <button class="page-tab active" data-page="diagram" id="tabDiagram">Diagram</button>
       <button class="page-tab" data-page="photos" id="tabPhotos">Photos</button>
       <button class="page-tab" data-page="pdf" id="tabPdf">PDF View</button>
-      <button class="page-tab" data-page="products" id="tabProducts">Products</button>
     </div>
     <div class="tb-spacer"></div>
+    <span id="saveState" title="This job saves itself on this iPad as you work">✓ Saved</span>
     <button id="saveWarn" title="Tap for details" style="display:none"></button>
+    <button class="tb-btn ghost" id="btnJobs" title="Your saved jobs — open one, start a new one, or export a backup"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a1 1 0 011-1h5l2 2h8a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V7z"/></svg>Jobs</button>
     <button class="tb-btn ghost" id="btnPlan" title="Trace over a house plan (PDF or image)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 11h8V4M11 15v5M15 11h6"/></svg>Plan</button>
-    <button class="tb-btn ghost" id="btnSettings" title="Your profile, takeoff rules & drawing settings">⚙ Settings</button>
-    <button class="tb-btn ghost" id="btnNew">New</button>
-    <button class="tb-btn ghost" id="btnLoad">Open</button>
-    <button class="tb-btn" id="btnSave">Save</button>
-    <button class="tb-btn primary" id="btnPrint">Print / PDF</button>
+    <button class="tb-btn ghost" id="btnSettings" title="Your profile, products &amp; price book, takeoff rules and drawing settings">⚙ Settings</button>
     <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
     <input type="file" id="photoInput" accept="image/*" multiple style="display:none">
     <!-- plans + extra PDF pages: images, or PDFs rendered natively (see DOCUMENT IMPORT) -->
@@ -762,16 +863,12 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
       <!-- PHOTO PAGE -->
       <div id="photoStage">
         <div id="photoBar">
-          <strong id="photoBarTitle" style="letter-spacing:.4px">PHOTO MARKUP</strong>
           <div class="ob-grp" id="photoTools" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
             <button class="tb-btn ptool" data-ptool="select" title="Select (V)"><span class="pticon">⬚</span><span class="ptlbl">Select</span></button>
             <button class="tb-btn ptool" data-ptool="pen" title="Pen (P)"><span class="pticon">✎</span><span class="ptlbl">Pen</span></button>
             <button class="tb-btn ptool" data-ptool="highlight" title="Marker (M)"><span class="pticon">▬</span><span class="ptlbl">Marker</span></button>
-            <button class="tb-btn ptool" data-ptool="line" title="Line (L)"><span class="pticon">╱</span><span class="ptlbl">Line</span></button>
-            <button class="tb-btn ptool" data-ptool="rect" title="Box (R)"><span class="pticon">▭</span><span class="ptlbl">Box</span></button>
-            <button class="tb-btn ptool" data-ptool="ellipse" title="Oval (O)"><span class="pticon">◯</span><span class="ptlbl">Oval</span></button>
+            <button class="tb-btn ptool-grp" id="ptShapes" title="Line, box, oval or free shape"><span class="pticon" id="ptShapesIcon">▭</span><span class="ptlbl" id="ptShapesLbl">Shapes</span><span class="ptcaret">▾</span></button>
             <button class="tb-btn ptool" data-ptool="arrow" title="Arrow (A)"><span class="pticon">➔</span><span class="ptlbl">Arrow</span></button>
-            <button class="tb-btn ptool" data-ptool="polygon" title="Shape (G)"><span class="pticon">⬠</span><span class="ptlbl">Shape</span></button>
             <button class="tb-btn ptool" data-ptool="text" title="Text (T)"><span class="pticon">T</span><span class="ptlbl">Text</span></button>
             <button class="tb-btn ptool" data-ptool="callout" title="Callout (C)"><span class="pticon">↖T</span><span class="ptlbl">Callout</span></button>
             <button class="tb-btn ptool" data-ptool="eraser" title="Erase (E)"><span class="pticon">⌫</span><span class="ptlbl">Erase</span></button>
@@ -780,26 +877,36 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
             <button class="tb-btn" id="photoUndo" title="Undo (Ctrl+Z)">↶</button>
             <button class="tb-btn" id="photoRedo" title="Redo (Ctrl+Y)">↷</button>
           </div>
-          <div class="ob-grp" id="photoLayoutPick" style="display:flex;gap:4px;align-items:center" title="Photos per PDF page">
-            <span class="pl-lbl">All pages</span>
-            <button class="tb-btn pl-btn" data-playout="1" title="All pages: 1 per page"></button>
-            <button class="tb-btn pl-btn" data-playout="2" title="All pages: 2 per page"></button>
-            <button class="tb-btn pl-btn" data-playout="3" title="All pages: 3 per page"></button>
-            <button class="tb-btn pl-btn" data-playout="4" title="All pages: 4 per page"></button>
-          </div>
-          <div class="ob-grp" id="photoZoomGrp" style="display:flex;gap:4px;align-items:center" title="Zoom the photo pages">
-            <button class="tb-btn" id="pzOut" title="Zoom out">－</button>
-            <span class="pl-lbl" id="pzLabel" style="min-width:36px;text-align:center">100%</span>
-            <button class="tb-btn" id="pzIn" title="Zoom in">＋</button>
-            <button class="tb-btn" id="pzFit" title="Fit the pages to the pane">Fit</button>
-          </div>
           <div class="tb-spacer"></div>
-          <button class="tb-btn" id="btnTakePhoto" title="Open the camera">📷 Take photo</button>
-          <button class="tb-btn" id="btnAddPhoto">+ Add photos</button>
+          <button class="tb-btn" id="btnTakePhoto" title="Open the camera">📷 Camera</button>
+          <button class="tb-btn" id="btnAddPhoto" title="Add photos from the library or Files">＋ Add photos</button>
         </div>
-        <div id="photoOptbarWrap"><div id="photoOptbar"></div></div>
+        <div id="photoOptbarWrap"><div id="photoOptbar"></div>
+          <div id="photoViewGrp">
+            <div class="ob-grp" id="photoLayoutPick" style="display:flex;gap:4px;align-items:center" title="Photos per PDF page">
+              <span class="pl-lbl">Per page</span>
+              <button class="tb-btn plk-btn" data-playout="1" title="All pages: 1 per page"></button>
+              <button class="tb-btn plk-btn" data-playout="2" title="All pages: 2 per page"></button>
+              <button class="tb-btn plk-btn" data-playout="3" title="All pages: 3 per page"></button>
+              <button class="tb-btn plk-btn" data-playout="4" title="All pages: 4 per page"></button>
+            </div>
+            <div class="ob-grp" id="photoZoomGrp" style="display:flex;gap:4px;align-items:center" title="Zoom the photo pages">
+              <button class="tb-btn" id="pzOut" title="Zoom out">－</button>
+              <span class="pl-lbl" id="pzLabel" style="min-width:36px;text-align:center">100%</span>
+              <button class="tb-btn" id="pzIn" title="Zoom in">＋</button>
+              <button class="tb-btn" id="pzFit" title="Fit the pages to the pane">Fit</button>
+            </div>
+          </div>
+        </div>
+        <!-- the Shapes button's flyout; its items are .ptool, so setPhotoTool() wires and lights them like the rest -->
+        <div id="ptShapesMenu">
+          <button class="tb-btn ptool" data-ptool="line" title="Line (L)"><span class="pticon">╱</span><span class="ptlbl">Line</span></button>
+          <button class="tb-btn ptool" data-ptool="rect" title="Box (R)"><span class="pticon">▭</span><span class="ptlbl">Box</span></button>
+          <button class="tb-btn ptool" data-ptool="ellipse" title="Oval (O)"><span class="pticon">◯</span><span class="ptlbl">Oval</span></button>
+          <button class="tb-btn ptool" data-ptool="polygon" title="Shape (G)"><span class="pticon">⬠</span><span class="ptlbl">Shape</span></button>
+        </div>
         <div id="photoScroll">
-          <div class="photo-empty">No photos yet — use “Take photo” or “Add photos”.</div>
+          <div class="photo-empty">No photos yet — use “Camera” or “Add photos”.</div>
         </div>
         <div id="photoHint"></div>
         <div id="photoLineBar" style="display:none">
@@ -849,6 +956,7 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
       <!-- PRODUCTS — the device's price book + product builder (CATALOG, not the job) -->
       <div id="prodStage">
         <div id="prodBar">
+          <button class="tb-btn" id="prodBack" title="Back to the job">‹ Back to job</button>
           <strong id="prodBarTitle" style="letter-spacing:.4px">PRODUCTS &amp; PRICE BOOK</strong>
           <span class="mini">Saved on this iPad · new jobs start from these prices</span>
           <div class="tb-spacer"></div>
@@ -880,6 +988,9 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 
 <!-- MODAL -->
 <div id="modalWrap"><div class="modal"><div class="modal-h"><h3 id="modalTitle"></h3><button class="modal-x" id="modalClose">×</button></div><div class="modal-b" id="modalBody"></div></div></div>
+
+<!-- CONFIRM / ALERT / PROMPT — the app's own dialog, above the modal (see DIALOGS) -->
+<div id="dlgWrap"><div class="dlg"><div class="dlg-msg" id="dlgMsg"></div><input class="dlg-in" id="dlgIn" style="display:none"><div class="dlg-btns"><button id="dlgCancel">Cancel</button><button id="dlgOk" class="dlg-ok">OK</button></div></div></div>
 
 <script>
 /* ============================================================
@@ -3525,22 +3636,25 @@ const ICON={
 };
 // base tools. behavior = which interaction code runs; label shows on the button.
 const BASE_TOOLS=[
-  {id:"select",behavior:"select",icon:"select",name:"Select & move",key:"V"},
-  {id:"hand",behavior:"hand",icon:"hand",name:"Pan (or hold Space)",key:"H"},
-  {id:"pages",behavior:"pages",icon:"pages",name:"PDF pages — frame what each diagram page prints",key:"P",lbl:"PDF"},
+  {id:"select",behavior:"select",icon:"select",name:"Select & move",key:"V",lbl:"Select"},
+  {id:"hand",behavior:"hand",icon:"hand",name:"Pan (or hold Space)",key:"H",lbl:"Pan"},
   {id:"_div"},
-  {id:"gutter",behavior:"gutter",icon:"gutter",name:'Gutter — pick style above',key:"G",lbl:'GUT'},
-  {id:"ds",behavior:"ds",icon:"ds",name:'Downspout — pick size above',key:"D",lbl:'DS'},
-  {id:"valley",behavior:"valley",icon:"valley",name:"Valley shield (VS)",key:"S"},
-  {id:"splash",behavior:"splash",icon:"splash",name:"Splash block — plastic or concrete",key:"B",lbl:"SPL"},
-  {id:"demo",behavior:"demo",icon:"demo",name:"Demo gutter — drag to mark for removal",key:"X",lbl:"DEMO"},
-  {id:"screen",behavior:"screen",icon:"screen",name:"Gutter screen — drag over runs",key:"N",lbl:"SCRN"},
+  {id:"gutter",behavior:"gutter",icon:"gutter",name:'Gutter — pick style above',key:"G",lbl:'Gutter'},
+  {id:"ds",behavior:"ds",icon:"ds",name:'Downspout — pick size above',key:"D",lbl:'Downspout'},
+  {id:"valley",behavior:"valley",icon:"valley",name:"Valley shield (VS)",key:"S",lbl:"Valley"},
+  {id:"splash",behavior:"splash",icon:"splash",name:"Splash block — plastic or concrete",key:"B",lbl:"Splash"},
+  {id:"demo",behavior:"demo",icon:"demo",name:"Demo gutter — drag to mark for removal",key:"X",lbl:"Demo"},
+  {id:"screen",behavior:"screen",icon:"screen",name:"Gutter screen — drag over runs",key:"N",lbl:"Screen"},
   {id:"_div"},
-  {id:"text",behavior:"text",icon:"text",name:"Text box",key:"T"},
-  {id:"arrow",behavior:"arrow",icon:"arrow",name:"Arrow",key:"A"},
-  {id:"stamp",behavior:"stamp",icon:"stamp",name:"Stamp",key:"M"},
-  {id:"hl",behavior:"hl",icon:"hl",name:"Highlighter (demo/labor)",key:"Y"}
+  {id:"text",behavior:"text",icon:"text",name:"Text box",key:"T",lbl:"Text"},
+  {id:"arrow",behavior:"arrow",icon:"arrow",name:"Arrow",key:"A",lbl:"Arrow"},
+  {id:"stamp",behavior:"stamp",icon:"stamp",name:"Stamp",key:"M",lbl:"Stamp"},
+  {id:"hl",behavior:"hl",icon:"hl",name:"Highlighter (demo/labor)",key:"Y",lbl:"Highlight"}
 ];
+/* PDF pages frames what prints — it doesn't draw — so it has no dock button of its own: PDF View's
+   "Diagram pages" (or P) starts it, and its button shows at the foot of the dock only while it's the
+   active tool, so the rep can see the mode they're in and leave it by picking any other tool. */
+const PAGES_TOOL={id:"pages",behavior:"pages",icon:"pages",name:"PDF pages — frame what each diagram page prints",key:"P",lbl:"PDF pages"};
 // every catalog product drawn with its own dock button: custom runs, tapped items, and drawn services.
 // Built-ins wired to their own tool (Demo, splash…) and typed flat/hourly services aren't tools.
 function isToolProduct(p){
@@ -3560,20 +3674,22 @@ const offDockTools=()=>CATALOG.products.filter(p=>isToolProduct(p) && !p.hidden 
 function customTools(){
   // the active one stays even if hidden or off the dock meanwhile, so its button doesn't vanish mid-drawing
   return CATALOG.products.filter(p=>isToolProduct(p) && ((!p.hidden && onDock(p)) || sameProductId(p.id,activeCustom)))
-    .map(p=>({id:"custom:"+p.id,behavior:"custom",icon:"custom",custom:p.id,name:p.name,lbl:(p.name||"").slice(0,5)}));
+    .map(p=>({id:"custom:"+p.id,behavior:"custom",icon:"custom",custom:p.id,name:p.name,lbl:p.name||"Product"}));   // (.tlbl ellipsizes)
 }
 function allTools(){
   // insert custom product tools + an "add custom" button right after the gutter/ds group
   const ct=customTools();
-  const addBtn={id:"addCustom",behavior:"_action",icon:"add",name:"Add a product to the toolbar — new, or one saved in your products"};
+  const addBtn={id:"addCustom",behavior:"_action",icon:"add",name:"Add a product to the toolbar — new, or one saved in your products",lbl:"Add"};
   const out=[];
   for(const t of BASE_TOOLS){
     out.push(t);
     if(t.id==="splash"){ ct.forEach(c=>out.push(c)); out.push(addBtn); }
   }
+  if(activeToolId==="pages"){ out.push({id:"_div"}); out.push(PAGES_TOOL); }
   return out;
 }
 function toolDefById(id){
+  if(id==="pages") return PAGES_TOOL;   // off the dock until it's active (allTools)
   const t=allTools().find(t=>t.id===id); if(t) return t;
   // a product off the dock (Products' "Draw with it") is still a tool — customTools() then keeps its button while active
   const m=/^custom:(.+)$/.exec(id||""), p=m&&catalogProduct(m[1]);
@@ -3597,10 +3713,27 @@ function buildDock(){
     d.appendChild(b);
   }
   d.scrollTop=keepScroll;   // rebuilt on every setTool — don't jump back to the top after picking a low tool
+  // …but the active tool must be on screen (PDF pages is appended at the foot, below the fold on a short iPad)
+  const act=d.querySelector(".tool.active");
+  if(act && d.scrollHeight>d.clientHeight+1){
+    if(act.offsetTop<d.scrollTop) d.scrollTop=act.offsetTop-6;
+    else if(act.offsetTop+act.offsetHeight>d.scrollTop+d.clientHeight) d.scrollTop=act.offsetTop+act.offsetHeight-d.clientHeight+6;
+  }
+}
+/* Switching tools used to throw away the run in progress. With point-by-point drawing the run stays open
+   across lifts, so a rep who tapped another tool before ✓ Finish lost every corner — and nothing was in undo
+   to bring it back. Two or more points are a run: keep it (quietly — no length editor popping up under the
+   tool just picked). Anything less was never a run. */
+function settleDrawing(){
+  if(!drawing) return;
+  if(drawing.t==="gutter" && drawing.pts.length>=2) finishGutter(true);
+  else if(drawing.t==="custom" && !drawing.stroke && drawing.pts.length>=2) finishCustom(true);
+  else cancelDrawing();
+  updateDrawBar();
 }
 function setTool(id){
   commitEditor();
-  cancelDrawing();
+  settleDrawing();
   calib=null;
   const def=toolDefById(id)||{id,behavior:id};
   // Placing a ds/valley/splash selects it (so its options show); switching tools must drop that,
@@ -3616,6 +3749,8 @@ function setTool(id){
   setHint(toolHint(tool));
   draw();
 }
+// the click-corners aside is for a mouse; on an iPad it was a third line of hint covering the drawing
+const MOUSE_HINT = (window.matchMedia && window.matchMedia("(pointer:coarse)").matches) ? "" : " • (mouse: click corners, then ✓ Finish)";
 function toolHint(t){
   if(t===tool && eraseModeActive()) return "Eraser — drag over the highlight to erase it (its footage drops with it) · untick Eraser to draw again";
   // the custom tool is one dock button per product, so its hint depends on that product's mode
@@ -3635,11 +3770,11 @@ function toolHint(t){
     pages:"Drag a page frame to move it • drag a corner to resize • × removes a page • drag empty space or pinch to pan",
     gutter:P.settings.tapDraw
       ? "Tap or drag to each corner • hold to aim • ✓ Finish run when done • start on an existing end (green ring) to add to it"
-      : "Drag to draw a run, lift to finish • start on an existing end (green ring) to add a corner • (mouse: click corners, then ✓ Finish)",
+      : "Drag to draw a run, lift to finish • start on an existing end (green ring) to add a corner"+MOUSE_HINT,
     ds:"Tap to drop a downspout • then type its run, e.g. \"AAA 20\" — 1 outlet is automatic • change its color any time via Select",
     valley:"Tap an inside corner to place a Valley Shield (counts as 2 ft each)",
     splash:"Tap to drop a splash block • pick Plastic or Concrete above • change either any time via Select",
-    custom:"Drag to draw the run, lift to finish • priced per foot • (mouse: click corners, then ✓ Finish)",
+    custom:"Drag to draw the run, lift to finish • priced per foot"+MOUSE_HINT,
     text:"Tap for an auto-size box, or drag to set a width — then type. Tap an existing box to select it, tap again to edit.",
     arrow:"Drag to draw an arrow",
     stamp:"Pick a stamp above, then click to place it",
@@ -4374,6 +4509,7 @@ function restore(s){
   if(typeof photoSelMarks!=="undefined" && photoSelMarks){
     photoSelMarks = selIds ? resolvePhotoSel(selIds) : new Set();
   }
+  captureActive();   // the option record must follow the arrays just swapped in (see buildOptionsBar)
   refreshAll();
   if(planMode){ planPlace=null; planEdit=null; renderPlanPanel(); planHint(); }
   if(curPage==="photos"){ if(typeof cancelPhotoLine==="function") cancelPhotoLine(); renderPhotos(); if(typeof updatePhotoSelBar==="function") updatePhotoSelBar(); if(typeof buildPhotoOptbar==="function") buildPhotoOptbar(); }
@@ -4431,15 +4567,18 @@ function addOption(mode){   // mode: "dup" (copy active drawing+pricing) | "blan
 }
 function deleteOption(i){
   if(OPTIONS.length<=1||!OPTIONS[i]) return;
-  if(!confirm("Delete "+OPTIONS[i].name+"?")) return;
-  // Flush the live drawing/pricing/history back onto the active option first.
-  // restore() reassigns P.objects/P.settings, so without this an undo followed by
-  // deleting a *different* tab reactivated the option's stale pre-undo arrays.
-  captureActive();
-  OPTIONS.splice(i,1);
-  if(activeOpt>=OPTIONS.length) activeOpt=OPTIONS.length-1;
-  else if(i<activeOpt) activeOpt--;
-  activate(activeOpt); saveLocal();
+  const o=OPTIONS[i];
+  uiConfirm("Delete "+o.name+"?\n\nIts drawing and pricing go with it.",{ok:"Delete option",danger:true},()=>{
+    const i=OPTIONS.indexOf(o); if(i<0||OPTIONS.length<=1) return;
+    // Flush the live drawing/pricing/history back onto the active option first.
+    // restore() reassigns P.objects/P.settings, so without this an undo followed by
+    // deleting a *different* tab reactivated the option's stale pre-undo arrays.
+    captureActive();
+    OPTIONS.splice(i,1);
+    if(activeOpt>=OPTIONS.length) activeOpt=OPTIONS.length-1;
+    else if(i<activeOpt) activeOpt--;
+    activate(activeOpt); saveLocal();
+  });
 }
 /* An in-app modal, not prompt(): reps name options ("Seamless 6in", "Repair only") and the tab
    was only renameable by dblclick, which an iPad tap doesn't reliably fire. Callers run this
@@ -4471,6 +4610,10 @@ function initSingleOption(){
 }
 function buildOptionsBar(){
   const bar=byId("optionsBar"); if(!bar) return;
+  // The active tab's total is computed from its option record, and restore() (undo/redo) swaps fresh
+  // arrays into P without touching that record — so after an Undo the tab kept the pre-undo price while
+  // the worksheet beside it showed the right one. P is the truth for the active option: sync first.
+  captureActive();
   let h="";
   OPTIONS.forEach((o,i)=>{
     const x = OPTIONS.length>1 ? `<span class="opt-x" data-del="${i}" title="Delete option">✕</span>` : "";
@@ -4640,6 +4783,48 @@ canvas.addEventListener("dblclick",onDbl);
 canvas.addEventListener("wheel",onWheel,{passive:false});
 canvas.addEventListener("contextmenu",e=>e.preventDefault());
 
+/* iPad long-press on ANY canvas (diagram, photo cards, signature pad). user-select:none +
+   touch-callout:none weren't enough: WKWebView still sometimes ran its long-press text-selection
+   gesture on a held finger — the magnifier loupe, or a blue selection over the page. Cancelling
+   touchstart is the one thing that stops it. Pointer events still arrive (every canvas runs on
+   them), but cancelling touchstart also drops the compat mouse events, so two things are re-done:
+   - focus never leaves a rail field/editor on its own anymore, so blur it the way a tap elsewhere did;
+   - dblclick never fires from touch, so a quick second tap in the same spot dispatches one (it fired
+     only sometimes before; the Diagram's finish-run/snap-back and the photo line/text edits use it).
+   Delegated from document so photo cards and the sign pad, built later, are covered. */
+let touchTap=null, touchLastTap=null;   // {x,y,t} — the tap in progress / the last finished one
+document.addEventListener("touchstart",e=>{
+  const c=e.target;
+  if(!c || c.tagName!=="CANVAS") return;
+  e.preventDefault();
+  const a=document.activeElement;
+  if(a && a!==document.body && (a.matches("input,textarea,select,[contenteditable]")||a.isContentEditable)) a.blur();
+  if(e.touches.length===1){ const t=e.touches[0]; touchTap={x:t.clientX,y:t.clientY,t:performance.now(),el:c}; }
+  else { touchTap=null; touchLastTap=null; }   // a pinch is no tap
+},{passive:false,capture:true});
+document.addEventListener("touchmove",e=>{
+  if(!touchTap) return;
+  const t=e.touches[0];
+  if(t && Math.hypot(t.clientX-touchTap.x,t.clientY-touchTap.y)>10){ touchTap=null; touchLastTap=null; }
+},{passive:true,capture:true});
+document.addEventListener("touchend",e=>{
+  const tap=touchTap; touchTap=null;
+  if(!tap || e.touches.length) return;
+  const now=performance.now(), prev=touchLastTap;
+  if(now-tap.t>350){ touchLastTap=null; return; }   // a hold, not a tap
+  if(prev && prev.el===tap.el && now-prev.t<350 && Math.hypot(tap.x-prev.x,tap.y-prev.y)<30){
+    touchLastTap=null;
+    tap.el.dispatchEvent(new MouseEvent("dblclick",{bubbles:true,cancelable:true,clientX:tap.x,clientY:tap.y,detail:2}));
+  } else touchLastTap={x:tap.x,y:tap.y,t:now,el:tap.el};
+},{capture:true});
+document.addEventListener("touchcancel",()=>{ touchTap=null; touchLastTap=null; },{capture:true});
+/* and nothing outside a text field ever starts a selection (a held finger on the dock or rail) */
+document.addEventListener("selectstart",e=>{
+  const t=e.target, el=t&&(t.nodeType===1?t:t.parentElement);
+  if(el && el.closest("input,textarea,[contenteditable]")) return;
+  e.preventDefault();
+});
+
 function gestCenter(a,b){ return {x:(a.x+b.x)/2,y:(a.y+b.y)/2}; }
 function gestDist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y)||1; }
 // abort any single-finger interaction when a 2nd finger lands (make way for pan/zoom)
@@ -4706,14 +4891,16 @@ function onDown(e){
       const worldDist=dist(calib.a,calib.b);
       draw();
       if(worldDist<3){ calib=null; setHint(toolHint(tool)); return; }
-      const ans=prompt("How many feet is that line in real life?","");
-      if(ans!=null && +ans>0){
-        const squares=worldDist/GRID;
-        P.settings.feetPerSquare=Math.round((+ans/squares)*100)/100;
-        P.settings.autoMeasure=true;
-        setHint("Scale set: 1 grid square ≈ "+P.settings.feetPerSquare+" ft. Auto-measure is ON.");
-      } else { setHint(toolHint(tool)); }
-      calib=null; buildOptbar(); draw();
+      // (calib keeps both ends on screen while the dialog is up; the dialog covers the canvas meanwhile)
+      uiPrompt("How many feet is that line in real life?",{numeric:true,ok:"Set scale",placeholder:"e.g. 24"},ans=>{
+        if(ans!=null && +ans>0){
+          const squares=worldDist/GRID;
+          P.settings.feetPerSquare=Math.round((+ans/squares)*100)/100;
+          P.settings.autoMeasure=true;
+          setHint("Scale set: 1 grid square ≈ "+P.settings.feetPerSquare+" ft. Auto-measure is ON.");
+        } else { setHint(toolHint(tool)); }
+        calib=null; buildOptbar(); draw();
+      });
     }
     return;
   }
@@ -5258,7 +5445,7 @@ function markClosed(o){
     if(P.settings.autoMeasure&&o.lengths) o.lengths[L-1]=autoLen(o.pts[L-1],o.pts[L]);
   }
 }
-function finishGutter(){
+function finishGutter(quiet){   // quiet: committed by a tool switch (settleDrawing) — don't open the length editor
   if(!(drawing&&drawing.t==="gutter")) return;
   if(drawing.pts.length<2){ drawing=null; gutterExtend=null; draw(); return; }
   const auto=P.settings.autoMeasure;
@@ -5290,7 +5477,7 @@ function finishGutter(){
       }
       markClosed(R);
       sel=new Set([R.id]); lastRunId=R.id; drawing=null; const wasAuto=auto; const rid=R.id; gutterExtend=null; refreshAll();
-      if(!wasAuto){ setTimeout(()=>openSeg(rid,firstNewSeg),30); }
+      if(!wasAuto && !quiet){ setTimeout(()=>openSeg(rid,firstNewSeg),30); }
       return;
     }
     gutterExtend=null;
@@ -5304,11 +5491,11 @@ function finishGutter(){
   const o={t:"gutter",id:uid(),pts,lengths,size:gutterDrawSize,color:gutterDrawColor,caps:[true,true]};
   markClosed(o);
   P.objects.push(o); sel=new Set([o.id]); lastRunId=o.id; drawing=null; refreshAll();
-  if(!auto){ setTimeout(()=>openSeg(o.id,0),30); }
+  if(!auto && !quiet){ setTimeout(()=>openSeg(o.id,0),30); }
 }
 function cancelDrawing(){ if(drawing){drawing=null;gutterExtend=null;draw();} }
 
-function finishCustom(){
+function finishCustom(quiet){
   if(!(drawing&&drawing.t==="custom")||drawing.stroke) return;   // stroke-mode customs finish on pointer-up
   if(drawing.pts.length<2){ drawing=null; draw(); return; }
   recordHistory();
@@ -5319,7 +5506,7 @@ function finishCustom(){
   // no color copy: the run takes its product's color at draw time, so recoloring the tool recolors it
   const o={t:"custom",id:uid(),productId:activeCustom,pts,lengths};
   P.objects.push(o); sel=new Set([o.id]); drawing=null; refreshAll();
-  if(!auto){ setTimeout(()=>openSeg(o.id,0),30); }
+  if(!auto && !quiet){ setTimeout(()=>openSeg(o.id,0),30); }
 }
 
 function startCalibration(){
@@ -5995,7 +6182,7 @@ function buildEstimatePane(){
   h+=`<div class="totline foot"><span>${P.settings.depositPct}% Deposit</span><span class="v">${money(r.deposit)}</span></div>`;
   h+=`<div class="totline grand"><span>Turnkey Total</span><span class="v">${money(r.grand)}</span></div>`;
 
-  h+=`<div class="note" style="margin-top:12px">Quantities update automatically as you draw. Editable fields (diverters, leaf guard) are entered by hand. Splash blocks are placed on the diagram with the SPL tool. Highlight demo / misc areas with the highlighter tool and enter the dollar amount under <b>Pricing → Misc / Demo / Labor</b>.</div>`;
+  h+=infoNote("est","How this worksheet works",`Quantities update automatically as you draw. Editable fields (diverters, leaf guard) are entered by hand. Splash blocks are placed on the diagram with the Splash tool. Highlight demo / misc areas with the Highlight tool and enter the dollar amount under <b>Pricing → Misc / Demo / Labor</b>.`,"margin-top:12px");
 
   pane.innerHTML=h;
 
@@ -6019,6 +6206,17 @@ function buildEstimatePane(){
   });
 }
 
+/* A how-it-works paragraph folded behind its title: the rail and Settings read like a manual. The panes are
+   rebuilt on every refresh, so which ones the rep opened is remembered here — a bare <details> would snap
+   shut on the next keystroke. */
+const infoOpen=new Set();
+function infoNote(key,title,html,style){
+  return `<details class="info" data-info="${key}"${infoOpen.has(key)?" open":""}${style?` style="${style}"`:""}><summary>${title}</summary><div>${html}</div></details>`;
+}
+document.addEventListener("toggle",e=>{   // (toggle doesn't bubble: capture)
+  const d=e.target; if(!d||!d.matches||!d.matches("details.info[data-info]")) return;
+  if(d.open) infoOpen.add(d.dataset.info); else infoOpen.delete(d.dataset.info);
+},true);
 function fld(label,id,val,type,attrs){
   type=type||"text";
   return `<div class="fld"><label>${label}</label><input id="${id}" type="${type}" value="${esc(val)}" ${attrs||""}></div>`;
@@ -6126,7 +6324,7 @@ function buildJobPane(){
   h+=`<div class="fld"><label>Gutter color</label><div class="colorsel"><span class="swatch" id="swGut" style="background:${colorHex(P.settings.gutterColor,gutterBrand())}"></span><select id="jiGutColor" aria-label="Gutter color">${colorOptions(P.settings.gutterColor,gutterBrand())}</select></div></div>`;
   h+=`<div class="fld"><label>Downspout brand</label><select id="jiDsBrand" aria-label="Downspout brand">${brandOpts(downspoutBrand())}</select></div>`;
   h+=`<div class="fld"><label>Downspout color</label><div class="colorsel"><span class="swatch" id="swDs" style="background:${colorHex(P.settings.downspoutColor,downspoutBrand())}"></span><select id="jiDsColor" aria-label="Downspout color">${colorOptions(P.settings.downspoutColor,downspoutBrand())}</select></div></div>`;
-  h+=`<div class="note">Pick Spectra or ABC independently for gutters and downspouts — the proposal shows the matching color chart(s). Individual downspouts can override the color via Select or the Downspout tool.</div>`;
+  h+=infoNote("colors","About brands and colors",`Pick Spectra or ABC independently for gutters and downspouts — the proposal shows the matching color chart(s). Individual downspouts can override the color via Select or the Downspout tool.`);
   const multi=OPTIONS.length>1 && OPTIONS[activeOpt];
   h+=`<div class="sec-h">PDF notes &amp; terms${multi?" — "+esc(OPTIONS[activeOpt].name):""}</div>`;
   P.pres.notes.forEach(n=>{
@@ -6173,7 +6371,7 @@ function buildPricingPane(){
   let h="";
   // The Products page is the price book; this tab is THIS job's copy of it. Say so, with the push.
   const drift=bookDrift();
-  h+=`<div class="note" style="margin-bottom:6px">Prices here belong to this job. Your price book lives on the <b>Products</b> tab — new jobs start from it.${drift?` <b>${drift} price${drift===1?"":"s"}</b> here differ${drift===1?"s":""} from the book.`:""}</div>`;
+  h+=`<div class="note" style="margin-bottom:6px">Prices here belong to this job. Your price book lives in <b>⚙ Settings → Products</b> — new jobs start from it.${drift?` <b>${drift} price${drift===1?"":"s"}</b> here differ${drift===1?"s":""} from the book.`:""}</div>`;
   h+=`<div class="fld" style="display:flex;gap:8px"><button class="btn-sm" id="pcApplyBook"${drift?"":" disabled"}>⇣ Apply price book to this job</button><button class="btn-sm" id="pcOpenBook">Products ›</button></div>`;
   h+=`<div class="sec-h">Pricing mode</div>`;
   h+=`<div class="seg-toggle"><button data-mode="flat" class="${flat?"on":""}">Flat $/ft</button><button data-mode="itemized" class="${flat?"":"on"}">Itemized</button></div>`;
@@ -6207,13 +6405,13 @@ function buildPricingPane(){
     // label runs a size down so a long name ("Fire and EMS Discount") still fits on one line
     h+=`<div class="totline disc" style="margin-top:8px"><span style="font-size:12px">${esc(discountLabel(s))}</span><span class="v">${r1(rDisc.discountPct)}% · −${money(rDisc.discountAmt)}</span></div>`;
   }
-  h+=`<div class="note"><b>List</b> is your standard rate — the printed estimate shows the discount as the percentage between it and <b>Your</b> rate. <b>Min</b> is a hard floor: typing below it snaps back up and flags the row <span class="min-pill">MIN</span> (set 0 for no floor). <b>Discount name</b> labels that row on the estimate — type <i>Military</i> and it prints “Military Discount”. Editing a style's <b>Your</b> rate also sets that style's end caps, miters and (for downspouts) outlets to the same price — fine-tune any of those individually below. In flat $/ft mode the single rates below are used instead.</div>`;
+  h+=infoNote("rates","How List, Min and Your rates work",`<b>List</b> is your standard rate — the printed estimate shows the discount as the percentage between it and <b>Your</b> rate. <b>Min</b> is a hard floor: typing below it snaps back up and flags the row <span class="min-pill">MIN</span> (set 0 for no floor). <b>Discount name</b> labels that row on the estimate — type <i>Military</i> and it prints “Military Discount”. Editing a style's <b>Your</b> rate also sets that style's end caps, miters and (for downspouts) outlets to the same price — fine-tune any of those individually below. In flat $/ft mode the single rates below are used instead.`);
 
   if(flat){
     h+=`<div class="sec-h">Flat rates</div>`;
     h+=`<div class="row3">${fld("Gutter list $/ft","pcGutList",s.flatGutterList,"number",'step="0.25" inputmode="decimal"')}${fld("Gutter min $/ft","pcGutMin",s.flatGutterMin,"number",'step="0.25" inputmode="decimal"')}${fld("Gutter $/ft","pcGutRate",s.flatGutterRate,"number",'step="0.25" inputmode="decimal"')}</div>`;
     h+=`<div class="row3">${fld("Downspout list $/ft","pcDsList",s.flatDownspoutList,"number",'step="0.25" inputmode="decimal"')}${fld("Downspout min $/ft","pcDsMin",s.flatDownspoutMin,"number",'step="0.25" inputmode="decimal"')}${fld("Downspout $/ft","pcDsRate",s.flatDownspoutRate,"number",'step="0.25" inputmode="decimal"')}</div>`;
-    h+=`<div class="note">Flat mode multiplies total gutter footage (including corner, outlet, and valley allowances) by your $/ft. Per-component prices are ignored. The <b>list</b> rates drive the discount percentage printed on the estimate; the <b>min</b> rates are a hard floor.</div>`;
+    h+=infoNote("flat","How flat $/ft pricing works",`Flat mode multiplies total gutter footage (including corner, outlet, and valley allowances) by your $/ft. Per-component prices are ignored. The <b>list</b> rates drive the discount percentage printed on the estimate; the <b>min</b> rates are a hard floor.`);
     // splash blocks are charged in flat mode too (compute()'s splashAmount), but their prices
     // only lived in the itemized component list — so in flat mode there was no way to change them
     h+=`<div class="sec-h">Splash blocks <span style="font-weight:600;color:var(--text-soft);font-size:11px">$ each</span></div>`;
@@ -6232,7 +6430,7 @@ function buildPricingPane(){
       h+=`<div class="ws-row" style="grid-template-columns:1fr 90px 26px"><div class="ws-lbl">${L.label}${derived?' <span style="color:var(--steel-2);font-weight:700;font-size:9px">AUTO</span>':''}</div><input class="ws-price" data-price="${L.key}"${derived?"":' data-edit="1"'} value="${s.prices[L.key]||0}"${attrs} inputmode="decimal"><div class="ws-bk">${bookBtnHTML(L.key)}</div></div>`;
     }
     h+=`</div>`;
-    h+=`<div class="note">Components marked <b>AUTO</b> follow the gutter / downspout style price above: end caps, outlets &amp; valley shields are gutter material (valley = ${s.footagePerValley||0} LF), miters match the gutter $/ft, and elbows &amp; offsets follow the downspout $/ft. Edit a style rate to change them all at once.</div>`;
+    h+=infoNote("auto","What AUTO prices follow",`Components marked <b>AUTO</b> follow the gutter / downspout style price above: end caps, outlets &amp; valley shields are gutter material (valley = ${s.footagePerValley||0} LF), miters match the gutter $/ft, and elbows &amp; offsets follow the downspout $/ft. Edit a style rate to change them all at once.`);
   }
 
   // every screen / service / custom product's job price, grouped like the Products page
@@ -6249,7 +6447,7 @@ function buildPricingPane(){
     }
     h+=`</div>`;
   }
-  h+=`<div class="note">Priced in both flat and itemized modes. Highlighted footage rounds up to each product's step (Demo: whole ft; screens: their own, 4 ft by default). Add or change products on the <b>Products</b> tab.</div>`;
+  h+=infoNote("svc","How these are priced",`Priced in both flat and itemized modes. Highlighted footage rounds up to each product's step (Demo: whole ft; screens: their own, 4 ft by default). Add or change products in <b>⚙ Settings → Products</b>.`);
 
   h+=`<div class="sec-h">Misc / Demo / Labor</div>`;
   h+=fld("Lump $ (highlighted areas)","pcMisc",s.miscDemoLabor,"number",'step="1" inputmode="decimal"');
@@ -6483,11 +6681,12 @@ function bookInto(s){
 function applyPriceBook(){
   captureActive();
   const n=Math.max(1,OPTIONS.length);
-  if(!confirm("Replace this job's prices"+(n>1?" in all "+n+" options":"")+" with your price book?\n\nAny discount typed on this job is cleared. The price override, deposit and card fees are kept.")) return;
-  recordHistory();
-  (OPTIONS.length?OPTIONS:[{settings:P.settings}]).forEach(o=>bookInto(o.settings));
-  ensurePrices(); buildOptbar(); refreshAll();
-  if(curPage==="products") renderProductsPage();
+  uiConfirm("Replace this job's prices"+(n>1?" in all "+n+" options":"")+" with your price book?\n\nAny discount typed on this job is cleared. The price override, deposit and card fees are kept.",{ok:"Replace prices"},()=>{
+    recordHistory();
+    (OPTIONS.length?OPTIONS:[{settings:P.settings}]).forEach(o=>bookInto(o.settings));
+    ensurePrices(); buildOptbar(); refreshAll();
+    if(curPage==="products") renderProductsPage();
+  });
 }
 
 /* Apply one item instead of the whole book: a product's own price plus its fixed-price parts (a
@@ -6812,17 +7011,19 @@ function createProduct(d){
 }
 function deleteProduct(p){
   if(!p || p.builtin || productUsage(p)) return;
-  if(!confirm('Delete "'+p.name+'" from your products? Saved jobs that use it keep their own copy.')) return;
-  CATALOG.products=CATALOG.products.filter(x=>x!==p);
-  if(p.kind==="downspout") CATALOG.products.forEach(g=>{ if(g.kind==="gutter" && g.ds){ g.ds=g.ds.filter(id=>id!==p.id); if(g.dsDefault===p.id) g.dsDefault=g.ds[0]; } });
-  if(sameProductId(activeCustom,p.id)){ activeCustom=null; setTool("gutter"); }
-  prodSel=null;
-  catalogChanged();
+  uiConfirm('Delete "'+p.name+'" from your products?\n\nSaved jobs that use it keep their own copy.',{ok:"Delete product",danger:true},()=>{
+    if(!CATALOG.products.includes(p) || productUsage(p)) return;
+    CATALOG.products=CATALOG.products.filter(x=>x!==p);
+    if(p.kind==="downspout") CATALOG.products.forEach(g=>{ if(g.kind==="gutter" && g.ds){ g.ds=g.ds.filter(id=>id!==p.id); if(g.dsDefault===p.id) g.dsDefault=g.ds[0]; } });
+    if(sameProductId(activeCustom,p.id)){ activeCustom=null; setTool("gutter"); }
+    prodSel=null;
+    catalogChanged();
+  });
 }
 function toggleHidden(p){
   // the pickers can never be left empty — a gutter, downspout and screen must stay drawable
   if(!p.hidden && ["gutter","downspout","screen"].includes(p.kind) && CATALOG.products.filter(x=>x.kind===p.kind && !x.hidden).length<=1){
-    alert("This is the only "+KIND_INFO[p.kind].one.toLowerCase()+" left showing — add or show another first."); return;
+    uiAlert("This is the only "+KIND_INFO[p.kind].one.toLowerCase()+" left showing — add or show another first."); return;
   }
   p.hidden=!p.hidden; delete p.fromJob;
   if(p.hidden && sameProductId(activeCustom,p.id)){ activeCustom=null; setTool("gutter"); }
@@ -6904,8 +7105,8 @@ byId("prodFile").onchange=e=>{
   const f=e.target.files[0]; if(!f) return;
   const rd=new FileReader();
   rd.onload=()=>{
-    let d; try{ d=JSON.parse(rd.result); }catch(err){ alert("That file isn't a price book."); return; }
-    if(!d || !Array.isArray(d.products)){ alert("That file isn't a price book (no products in it)."); return; }
+    let d; try{ d=JSON.parse(rd.result); }catch(err){ uiAlert("That file isn't a price book."); return; }
+    if(!d || !Array.isArray(d.products)){ uiAlert("That file isn't a price book (no products in it)."); return; }
     let n=0;
     for(const src of d.products){
       if(!src || src.id==null || !KIND_INFO[src.kind]) continue;
@@ -6918,7 +7119,7 @@ byId("prodFile").onchange=e=>{
     }
     if(d.flat && typeof d.flat==="object") Object.assign(CATALOG.flat, d.flat);
     catalogChanged();
-    alert("Loaded "+n+" product"+(n===1?"":"s")+" into your price book. The open job keeps its prices until you press Apply.");
+    uiAlert("Loaded "+n+" product"+(n===1?"":"s")+" into your price book. The open job keeps its prices until you press Apply.");
   };
   rd.readAsText(f); e.target.value="";
 };
@@ -7050,6 +7251,43 @@ function closeModal(){
   if(curPage==="pdf") refreshPdfView();   // Settings may have changed prices; rebuilding also re-shows it
 }
 byId("modalClose").onclick=closeModal;
+
+/* ---- DIALOGS: the app's own confirm / alert / prompt ----
+   Native confirm()/alert()/prompt() worked (WebView.swift implements the panels) but they are iOS system
+   alerts dropped into the middle of the app, and prompt() gave a bare text field where a number was wanted.
+   One layer above the modal, so a confirm raised from inside one (Jobs → delete) doesn't replace it.
+   Callbacks, not return values: nothing blocks, so a caller's "after" code moves into the callback.
+   opts: {ok, cancel, danger, value, placeholder, numeric}. */
+let _dlgDone=null;
+function dlgOpen(kind,msg,opts,done){
+  opts=opts||{};
+  const w=byId("dlgWrap"), inp=byId("dlgIn"), ok=byId("dlgOk"), cn=byId("dlgCancel");
+  if(_dlgDone){ const f=_dlgDone; _dlgDone=null; f(null); }      // a dialog over a dialog: the first counts as cancelled
+  byId("dlgMsg").textContent=msg;
+  ok.textContent=opts.ok||"OK"; ok.classList.toggle("danger",!!opts.danger);
+  cn.textContent=opts.cancel||"Cancel"; cn.style.display = kind==="alert" ? "none" : "";
+  inp.style.display = kind==="prompt" ? "block" : "none";
+  if(kind==="prompt"){ inp.value=opts.value==null?"":String(opts.value); inp.placeholder=opts.placeholder||""; inp.setAttribute("inputmode",opts.numeric?"decimal":"text"); }
+  _dlgDone=done||null;
+  w.dataset.kind=kind;
+  w.style.display="flex";
+  if(curPage==="pdf") pdfNative({action:"hide"});               // the native PDF sits above ALL web content
+  if(kind==="prompt"){ inp.focus(); if(inp.select) inp.select(); }
+}
+function dlgClose(v){
+  const w=byId("dlgWrap"); if(w.style.display!=="flex") return;
+  w.style.display="none";
+  const f=_dlgDone; _dlgDone=null;
+  if(f) f(v);
+  // put the PDF back unless a modal (or the dialog the callback just raised) is still up
+  if(curPage==="pdf" && w.style.display!=="flex" && modalWrap.style.display!=="flex") refreshPdfView();
+}
+function uiConfirm(msg,opts,yes){ dlgOpen("confirm",msg,opts,v=>{ if(v===true && yes) yes(); }); }
+function uiAlert(msg,done){ dlgOpen("alert",msg,null,()=>{ if(done) done(); }); }
+function uiPrompt(msg,opts,done){ dlgOpen("prompt",msg,opts,v=>done(typeof v==="string"?v:null)); }
+byId("dlgOk").onclick=()=>dlgClose(byId("dlgWrap").dataset.kind==="prompt" ? byId("dlgIn").value : true);
+byId("dlgCancel").onclick=()=>dlgClose(null);
+byId("dlgIn").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); byId("dlgOk").click(); } else if(e.key==="Escape"){ e.preventDefault(); dlgClose(null); } };
 /* See-through modal while a live slider is held (⚙ label size / line thickness): everything but that
    slider's row fades out so the rep watches the diagram change behind it, instead of closing and
    reopening Settings to judge each step. Re-asserted on every input (iOS can cancel the pointer
@@ -7097,7 +7335,7 @@ function openStampManager(){
     byId("modalBody").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{ stampPresets.splice(+b.dataset.del,1); if(stampPresets.length===0) stampPresets.push({text:"NOTE",color:"#c8202a"}); activeStamp=stampPresets[0]; render(); buildOptbar(); });
     byId("modalBody").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{
       const i=+b.dataset.edit; const sp=stampPresets[i];
-      const nt=prompt("Stamp text:",sp.text); if(nt!=null){ sp.text=nt.toUpperCase(); render(); buildOptbar(); }
+      uiPrompt("Stamp text",{value:sp.text,ok:"Save"},nt=>{ if(nt!=null && nt.trim()){ sp.text=nt.trim().toUpperCase(); render(); buildOptbar(); } });
     });
     byId("smAdd").onclick=()=>{
       const t=(byId("smText").value||"").trim().toUpperCase(); if(!t) return;
@@ -7117,6 +7355,7 @@ function openSettings(){
   const multi=OPTIONS.length>1;
   const tog=(attr,on,a,b)=>`<div class="seg-toggle"><button data-${attr}="1" class="${on?"on":""}">${a}</button><button data-${attr}="0" class="${on?"":"on"}">${b}</button></div>`;
   let h="";
+  h+=`<button class="set-link" id="stProducts"><div><b>Products &amp; price book</b><span>Your saved products and prices — new jobs start from them</span></div><i>›</i></button>`;
   h+=`<div class="sec-h">My profile</div>`;
   h+=`<div class="row2">${fld("Your name","stPName",prof.name)}${fld("Your phone","stPPhone",fmtPhone(prof.phone),"tel")}</div>`;
   h+=fld("Your e-mail","stPEmail",prof.email,"email");
@@ -7127,10 +7366,10 @@ function openSettings(){
   const dsAllowed=allowedDsSizes(s.gutterType);
   h+=`<div class="fld"><label>Default downspout size</label><select id="stDsDef">${dsAllowed.map(id=>`<option value="${id}" ${s.defaultDownspoutSize===id?"selected":""}>${dsStyle(id).label}</option>`).join("")}</select></div>`;
   h+=fld("Bay miter if ±° from 90","stBay",s.bayDeviation,"number",'step="1" inputmode="decimal"');
-  h+=`<div class="note">A corner whose angle differs from 90° by at least this much becomes a <b>bay miter</b>. End caps auto-count: one per open end; corners and closed loops get none.</div>`;
+  h+=infoNote("bay","What counts as a bay miter",`A corner whose angle differs from 90° by at least this much becomes a <b>bay miter</b>. End caps auto-count: one per open end; corners and closed loops get none.`);
   h+=`<div class="row3">${fld("Ft / corner","stCorner",s.footagePerCorner,"number",'step="0.5" inputmode="decimal"')}${fld("Ft / outlet","stOutlet",s.footagePerOutlet,"number",'step="0.5" inputmode="decimal"')}${fld("Ft / valley","stValley",s.footagePerValley,"number",'step="0.5" inputmode="decimal"')}</div>`;
   h+=`<div class="row3">${fld("Ft / elbow","stElbow",s.footagePerElbow,"number",'step="0.5" inputmode="decimal"')}${fld("Ft / offset","stOffset",s.footagePerOffset,"number",'step="0.5" inputmode="decimal"')}${fld("Ft / end cap","stEndcap",s.footagePerEndcap,"number",'step="0.5" inputmode="decimal"')}</div>`;
-  h+=`<div class="note">Footage allowances: corners, outlets, valleys &amp; end caps roll into gutter footage; elbows &amp; offsets into downspout footage. They raise the priced footage in flat mode and set the AUTO component prices in itemized mode.</div>`;
+  h+=infoNote("allow","What footage allowances do",`Footage allowances: corners, outlets, valleys &amp; end caps roll into gutter footage; elbows &amp; offsets into downspout footage. They raise the priced footage in flat mode and set the AUTO component prices in itemized mode.`);
   h+=`<div class="fld"><label>Downspout pipe</label>${tog("r10",s.roundDownspoutTo10!==false,"Round up to 10 ft","Exact footage")}</div>`;
 
   h+=`<div class="sec-h">Drawing</div>`;
@@ -7145,6 +7384,7 @@ function openSettings(){
   if(multi) h+=`<div class="note">Takeoff rules and drawing settings apply to every option in this job.</div>`;
   openModal("Settings",h);
   const b=byId("modalBody");
+  byId("stProducts").onclick=()=>{ closeModal(); openProductsPage(); };
   // write a rule to every option (P.settings is the active option's own object, so it's covered)
   const setAll=(key,val)=>{ OPTIONS.forEach(o=>{ if(o.settings) o.settings[key]=val; }); P.settings[key]=val; };
   const prof2=()=>{ saveProfile({name:byId("stPName").value.trim(),phone:fmtPhone(byId("stPPhone").value),email:byId("stPEmail").value.trim()}); applyProfile(P.meta); if(railPane==="job") buildJobPane(); };
@@ -7177,14 +7417,22 @@ let curPage="diagram";
    worksheet stranded beside a photo grid just steals width from the photos, so both
    auto-hide it and the rep's own choice is put back on the way back to Diagram. */
 let railWasHidden=false;
+/* The tabs are the job's own flow: Diagram → Photos → PDF View. Products is the device's price book, not
+   part of a job, so it's reached from ⚙ Settings (and Pricing's "Products ›") and returns to where it was
+   opened from (‹ Back to job). */
+let prodReturn="diagram";
 function setPage(pg){
   if(pg!=="diagram" && planMode) exitPlanMode();
   const prev=curPage;
+  if(pg==="products" && prev!=="products") prodReturn=prev;
   curPage=pg;
   byId("tabDiagram").classList.toggle("active",pg==="diagram");
   byId("tabPhotos").classList.toggle("active",pg==="photos");
   byId("tabPdf").classList.toggle("active",pg==="pdf");
-  byId("tabProducts").classList.toggle("active",pg==="products");
+  byId("btnSettings").classList.toggle("on",pg==="products");
+  // Option tabs choose a drawing + pricing variant. Photos are shared by every option and the price book
+  // isn't a job at all, so there the strip only cost a row of screen. (Before renderPhotos() measures.)
+  byId("optionsBar").style.display = (pg==="photos"||pg==="products") ? "none" : "";
   const ps=byId("photoStage"), fs=byId("pdfStage"), ks=byId("prodStage");
   // The rail moves FIRST: #photoStage lives inside #stage, so parking the rail widens the
   // photo pane, and renderPhotos() below then measures the width the cards will really get.
@@ -7207,7 +7455,7 @@ function setPage(pg){
 byId("tabDiagram").onclick=()=>setPage("diagram");
 byId("tabPhotos").onclick=()=>setPage("photos");
 byId("tabPdf").onclick=()=>setPage("pdf");
-byId("tabProducts").onclick=()=>setPage("products");
+byId("prodBack").onclick=()=>setPage(prodReturn==="products"?"diagram":prodReturn);
 
 /* ============================================================ */
 /* PHOTO BLOB STORE                                            */
@@ -7227,22 +7475,24 @@ function photoSrc(id){ return (id && photoBlobs.get(id)) || ""; }
 function putBlob(id,dataUrl){ if(!id||!dataUrl) return; photoBlobs.set(id,dataUrl); idbPut(id,dataUrl); }
 
 const IDB_NAME="primeGutterPhotos", IDB_STORE="blobs";
+// v2 adds the job list (see JOBS): each stored job's JSON, and a small record to list it by
+const IDB_JOBS="jobs", IDB_META="jobmeta";
 let _idb=null, idbBroken=false;
 function idbOpen(){
   if(_idb) return Promise.resolve(_idb);
   if(idbBroken) return Promise.reject(new Error("indexeddb unavailable"));
   return new Promise((res,rej)=>{
     let rq;
-    try{ rq=indexedDB.open(IDB_NAME,1); }catch(e){ idbBroken=true; rej(e); return; }
-    rq.onupgradeneeded=()=>{ const db=rq.result; if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE); };
+    try{ rq=indexedDB.open(IDB_NAME,2); }catch(e){ idbBroken=true; rej(e); return; }
+    rq.onupgradeneeded=()=>{ const db=rq.result; [IDB_STORE,IDB_JOBS,IDB_META].forEach(n=>{ if(!db.objectStoreNames.contains(n)) db.createObjectStore(n); }); };
     rq.onsuccess=()=>{ _idb=rq.result; res(_idb); };
     rq.onerror=()=>{ idbBroken=true; rej(rq.error); };
     rq.onblocked=()=>{ idbBroken=true; rej(new Error("indexeddb blocked")); };
   });
 }
-function idbTx(mode,fn){
+function idbTx(mode,fn,store){
   return idbOpen().then(db=>new Promise((res,rej)=>{
-    const tx=db.transaction(IDB_STORE,mode), st=tx.objectStore(IDB_STORE);
+    const tx=db.transaction(store||IDB_STORE,mode), st=tx.objectStore(store||IDB_STORE);
     let out; try{ out=fn(st); }catch(e){ rej(e); return; }
     tx.oncomplete=()=>res(out && out.result!==undefined ? out.result : out);
     tx.onerror=()=>rej(tx.error);
@@ -7253,22 +7503,33 @@ function idbTx(mode,fn){
 // working from memory, but we say so instead of losing the photos quietly.
 function idbPut(id,dataUrl){ return idbTx("readwrite",st=>st.put(dataUrl,id)).catch(()=>{ notePhotoStorageFailure(); }); }
 function idbDel(id){ return idbTx("readwrite",st=>st.delete(id)).catch(()=>{}); }
-function idbLoadAll(){
-  return idbTx("readonly",st=>st.getAllKeys()).then(keys=>{
-    if(!keys||!keys.length) return 0;
-    return idbTx("readonly",st=>st.getAll()).then(vals=>{
-      keys.forEach((k,i)=>{ if(vals[i]) photoBlobs.set(k,vals[i]); });
-      return keys.length;
-    });
-  }).catch(()=>{ notePhotoStorageFailure(); return 0; });
+// every image id the open job needs: its photos, the title image, plans (any option) and extra pages
+function jobBlobIds(){
+  const ids=new Set();
+  (P.photos||[]).forEach(p=>{ if(p&&p.id) ids.add(p.id); });
+  if(P.meta && P.meta.titleImage) ids.add(P.meta.titleImage);
+  extraBlobIds().forEach(id=>ids.add(id));
+  return ids;
 }
-// drop blobs no longer referenced by any photo or the title image (startup only,
-// so that undo/redo of a photo removal can still find its image mid-session)
+/* Only the open job's images are held in memory. This used to load every blob in the store — right while
+   the store held one job, but with a job list on the device it would grow with every job ever saved. */
+function idbLoadKeys(ids){
+  ids=[...new Set(ids)].filter(id=>id && !photoBlobs.has(id));
+  if(!ids.length) return Promise.resolve(0);
+  return idbTx("readonly",st=>{ ids.forEach(id=>{ const r=st.get(id); r.onsuccess=()=>{ if(r.result) photoBlobs.set(id,r.result); }; }); })
+    .then(()=>ids.length).catch(()=>{ notePhotoStorageFailure(); return 0; });
+}
+/* Drop blobs no job references any more (startup only, so that undo/redo of a photo removal can still find
+   its image mid-session). "Any job" = the open one plus every job in the list; if the list can't be read,
+   nothing is deleted — a wrong guess here would wipe the photos of every job but the one on screen. */
 function idbGC(){
-  const live=new Set((P.photos||[]).map(p=>p.id));
-  if(P.meta && P.meta.titleImage) live.add(P.meta.titleImage);
-  extraBlobIds().forEach(id=>live.add(id));   // or startup would delete every plan + extra page
-  [...photoBlobs.keys()].forEach(k=>{ if(!live.has(k)){ photoBlobs.delete(k); idbDel(k); } });
+  const live=jobBlobIds();
+  return jobMetaAll().then(list=>{
+    list.forEach(j=>(j.blobs||[]).forEach(id=>live.add(id)));
+    return idbTx("readonly",st=>st.getAllKeys());
+  }).then(keys=>{
+    (keys||[]).forEach(k=>{ if(!live.has(k)){ photoBlobs.delete(k); idbDel(k); } });
+  }).catch(()=>{});
 }
 
 /* ============================================================ */
@@ -7568,9 +7829,23 @@ const PHOTO_TOOL_HINTS={
   callout:"Callout: press on what you're pointing at, drag to where the label should sit.",
   eraser:"Eraser: drag over pen/marker ink to erase it. Shapes and text are untouched — delete those with Select."
 };
+// Line / Box / Oval / Shape sit behind one "Shapes" button that takes the icon + name of the one in use
+const PHOTO_SHAPES={line:["╱","Line"],rect:["▭","Box"],ellipse:["◯","Oval"],polygon:["⬠","Shape"]};
+let photoLastShape="rect";
+function showShapesMenu(on){
+  const m=byId("ptShapesMenu"), b=byId("ptShapes"); if(!m||!b) return;
+  if(!on){ m.style.display="none"; return; }
+  const br=b.getBoundingClientRect(), sr=byId("photoStage").getBoundingClientRect();
+  m.style.left=Math.max(6,br.left-sr.left)+"px"; m.style.top=(br.bottom-sr.top+6)+"px"; m.style.display="flex";
+}
 function setPhotoTool(t){
   photoTool=t;
   document.querySelectorAll(".ptool").forEach(b=>b.classList.toggle("active",b.dataset.ptool===t));
+  { const g=byId("ptShapes"), sh=PHOTO_SHAPES[t];
+    if(sh) photoLastShape=t;
+    const cur=PHOTO_SHAPES[photoLastShape];
+    if(g){ g.classList.toggle("active",!!sh); byId("ptShapesIcon").textContent=sh?sh[0]:cur[0]; byId("ptShapesLbl").textContent=sh?sh[1]:"Shapes"; }
+    showShapesMenu(false); }
   const hint=byId("photoHint");
   if(hint){ hint.textContent=PHOTO_TOOL_HINTS[t]||""; hint.style.display=hint.textContent?"block":"none"; }
   cancelPhotoLine();
@@ -7583,6 +7858,13 @@ function setPhotoTool(t){
   redrawAllPhotos();
 }
 document.querySelectorAll(".ptool").forEach(b=>b.onclick=()=>setPhotoTool(b.dataset.ptool));
+// first tap picks the shape last used (Box to start with); a tap while a shape tool is active opens the list
+byId("ptShapes").onclick=()=>{
+  if(byId("ptShapesMenu").style.display==="flex"){ showShapesMenu(false); return; }
+  if(!PHOTO_SHAPES[photoTool]) setPhotoTool(photoLastShape);
+  showShapesMenu(true);
+};
+document.addEventListener("pointerdown",e=>{ if(byId("ptShapesMenu").style.display==="flex" && !e.target.closest("#ptShapesMenu,#ptShapes")) showShapesMenu(false); },true);
 setPhotoTool("pen");
 
 // in-progress polyline/polygon for the line/polygon tools (single active across cards).
@@ -7764,7 +8046,7 @@ function importPhotoFiles(files){
     if(--pending>0) return;
     // Every file failed to decode — say so instead of looking like the button did nothing.
     if(!commitPhotos(slots.filter(Boolean)))
-      alert(files.length>1 ? "Those photos couldn\u2019t be read." : "That photo couldn\u2019t be read.");
+      uiAlert(files.length>1 ? "Those photos couldn\u2019t be read." : "That photo couldn\u2019t be read.");
   };
   files.forEach((f,i)=>{
     const rd=new FileReader();
@@ -8528,7 +8810,7 @@ function renderPlanPanel(){
 /* ---- extra PDF pages ----
    P.meta.extraPages: [{id,name,w,h,on}] — shared by every option, like photos, and printed as
    full pages just before the customer info page (which always stays last). They're company
-   material more than job material, so New carries the list over to the next job (btnNew). */
+   material more than job material, so New carries the list over to the next job (startNewJob). */
 function extraPages(){ return (P.meta.extraPages=Array.isArray(P.meta.extraPages)?P.meta.extraPages:[]); }
 function addExtraPages(pages){
   recordHistory();
@@ -8917,10 +9199,9 @@ function photoNeighborSwap(id,dir){
   if(i>=0 && o) swapPhotoSlots(pos[i],o);
 }
 
-/* Sheets used to be cards a fixed 520px wide, so the pane only ever filled to a whole number of
-   them and everything past that was a dead strip down the right-hand side. Instead: work out how
-   many ~PHOTO_SHEET_TARGET columns fit, then share the full width out between them.
-   PHOTO_GAP is #photoPages' gap at 100%. */
+/* 100% = one sheet as wide as the pane (fit width); the sheets run down one column and the zoom scales
+   from there. PHOTO_GAP is the gap between sheets at 100%. PHOTO_SHEET_TARGET is only the width used
+   while the pane is hidden. */
 const PHOTO_SHEET_TARGET=560, PHOTO_GAP=18, PHOTO_SHEET_PAD=24;
 let photoCardW=0;                  // sheet width laid out now (fit width x photoZoom)
 let photoFitW=0;                   // last fit width, so a resize only rebuilds on a real change
@@ -8928,12 +9209,11 @@ function photoSheetMetrics(){
   const scroll=byId("photoScroll");
   // clientWidth is 0 while the photo page is hidden; fall back so an off-screen
   // renderPhotos() (loading a job, switching options) doesn't lay out 120px sheets.
-  if(!scroll || !scroll.clientWidth) return {w:PHOTO_SHEET_TARGET,cols:1};
+  if(!scroll || !scroll.clientWidth) return {w:PHOTO_SHEET_TARGET};
   const cs=getComputedStyle(scroll);
   const pad=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
   const avail=Math.max(160, scroll.clientWidth-pad);
-  const cols=Math.max(1, Math.floor((avail+PHOTO_GAP)/(PHOTO_SHEET_TARGET+PHOTO_GAP)));
-  return {w:Math.floor((avail-(cols-1)*PHOTO_GAP)/cols),cols};
+  return {w:Math.floor(avail)};
 }
 
 /* Drag a photo by its numbered grip onto another slot (any sheet) to reorder. Hit-tests slot rects
@@ -9242,7 +9522,8 @@ function openPhotoTextEditor(ph, mark, cv, cw, chh, isNew){
   photoTextEditOpen=true;
   photoCardInfo.set(ph.id,{cv,cw,chh});
   const stageEl=byId("stage");
-  const stageR=stageEl.getBoundingClientRect(), cvR=cv.getBoundingClientRect();
+  // the image's origin is the card's, inside its 1px border: the canvas is only the on-screen window
+  const stageR=stageEl.getBoundingClientRect(), cR=cv.parentNode.getBoundingClientRect(), cvR={left:cR.left+1,top:cR.top+1};
   const b=markBoundsN(mark,cw,chh,ctx);
   const scrX=cvR.left-stageR.left+b.x0*cw, scrY=cvR.top-stageR.top+b.y0*chh;
   const scrW=Math.max(20,(b.x1-b.x0)*cw), scrH=Math.max(20,(b.y1-b.y0)*chh);
@@ -9306,14 +9587,14 @@ function renderPhotos(){
   [...photoImgCache.keys()].forEach(k=>{ if(!live.has(k)) photoImgCache.delete(k); });
   [...photoCardInfo.keys()].forEach(k=>{ if(!live.has(k)) photoCardInfo.delete(k); });
   if(!P.photos.length){
-    scroll.innerHTML=`<div class="photo-empty">No photos yet — use “Take photo” or “Add photos”.</div>`;
+    scroll.innerHTML=`<div class="photo-empty">No photos yet — use “Camera” or “Add photos”.</div>`;
     return;
   }
   // one sheet per printed page, laid out from the PDF's own rects scaled to the sheet
   // plus one blank sheet past the end: drop a photo there to start a new page (it isn't printed)
   const pages=document.createElement("div"); pages.id="photoPages";
-  const gap=Math.round(PHOTO_GAP*photoZoom);
-  pages.style.gap=gap+"px"; pages.style.width=(fit.cols*photoCardW+(fit.cols-1)*gap)+"px";
+  const gap=Math.max(4,Math.round(PHOTO_GAP*photoZoom));
+  pages.style.gap=gap+"px"; pages.style.width=photoCardW+"px";
   scroll.appendChild(pages);
   const plan=photoPagePlan(), nSheets=plan.length, slotOf=new Map(), printNo=new Map();
   const pad=Math.round(PHOTO_SHEET_PAD*photoCardW/PDF_PAGE.w), k=(photoCardW-2*pad)/PDF_PAGE.w;
@@ -9323,7 +9604,7 @@ function renderPhotos(){
     const wrap=document.createElement("div"); wrap.className="photo-sheet-wrap"+(isNew?" new":""); wrap.style.width=photoCardW+"px";
     const sheet=document.createElement("div"); sheet.className="photo-sheet"; sheet.style.padding=pad+"px";
     const head=document.createElement("div"); head.className="ps-head";
-    head.style.height=Math.round(PHOTO_HEAD_H*k)+"px"; head.style.fontSize=Math.max(8,18.7*k)+"px";
+    head.style.height=Math.round(PHOTO_HEAD_H*k)+"px"; head.style.fontSize=(photoZoom<1?18.7*k:Math.max(8,18.7*k))+"px";   // the floor overflowed a zoomed-out head
     head.innerHTML=`<span style="padding-bottom:${Math.round(4*k)}px">Job Photos${s?" (continued)":""}</span>`;
     const area=document.createElement("div"); area.className="ps-area"; area.style.height=Math.round(PHOTO_AREA_H*k)+"px";
     rects.forEach((r,j)=>{
@@ -9337,8 +9618,8 @@ function renderPhotos(){
     });
     sheet.append(head,area);
     const cap=document.createElement("div"); cap.className="ps-cap";
-    if(isNew) cap.innerHTML=`<span>New page — not printed until a photo is dropped on it</span>`;
-    else cap.innerHTML=`<span>Photo page ${s+1} of ${nSheets}</span>`+[1,2,3,4].map(n=>`<button class="ps-pl${n===pg.n?" active":""}" data-ppage="${n}" title="${n} photo${n>1?"s":""} on this page">${photoLayoutIcon(n)}</button>`).join("");
+    if(isNew) cap.innerHTML=`<span>${photoCardW<300?"New page":"New page — not printed until a photo is dropped on it"}</span>`;
+    else cap.innerHTML=(photoCardW<300?`<span>${s+1} / ${nSheets}</span>`:`<span>Photo page ${s+1} of ${nSheets}</span>`)+(photoCardW<240?[]:[1,2,3,4]).map(n=>`<button class="ps-pl${n===pg.n?" active":""}" data-ppage="${n}" title="${n} photo${n>1?"s":""} on this page">${photoLayoutIcon(n)}</button>`).join("");
     cap.querySelectorAll("[data-ppage]").forEach(b=>b.onclick=()=>setPhotoPageLayout(s,+b.dataset.ppage));
     wrap.append(sheet,cap); pages.appendChild(wrap);
   }
@@ -9350,9 +9631,10 @@ function renderPhotos(){
     // (photoStrokePx/photoTextPx), so they keep their printed proportion at any layout.
     const fit=Math.min((slot._w-2)/ph.w,(slot._h-2)/ph.h);
     const cw=Math.max(1,Math.floor(ph.w*fit)), chh=Math.max(1,Math.floor(ph.h*fit));
-    const cv=document.createElement("canvas"); cv.width=cw; cv.height=chh;
-    // its backing store can be released (card._hold), its size can't. +2: the 1px border, inside border-box
-    cv.style.width=(cw+2)+"px"; cv.style.height=(chh+2)+"px";
+    // the card holds the size (+2: its 1px border); the canvas starts empty and card._view gives it the
+    // part that's on screen, so a 16x photo never asks for a canvas bigger than iOS will allocate
+    card.style.width=(cw+2)+"px"; card.style.height=(chh+2)+"px";
+    const cv=document.createElement("canvas"); cv.width=1; cv.height=1;
     card.appendChild(cv);
     const grip=document.createElement("button"); grip.className="pc-grip"; grip.textContent="⠿ "+no;
     grip.title="Drag onto another slot or page ("+ph.name+")";
@@ -9364,6 +9646,8 @@ function renderPhotos(){
     tr.innerHTML=`<button class="pc-btn" data-pundo title="Undo last mark on this photo">↶</button><button class="pc-btn" data-predo title="Redo">↷</button><button class="pc-btn pc-more" title="Photo options">⋯</button>`;
     const undoB=tr.querySelector("[data-pundo]"), redoB=tr.querySelector("[data-predo]"), more=tr.querySelector(".pc-more");
     card.append(grip,tr);
+    if(cw<170) card.classList.add("pc-tight");
+    if(cw<90) card.classList.add("pc-tiny");
     slot.appendChild(card);
 
     photoCardInfo.set(ph.id,{cv,cw,chh});
@@ -9381,16 +9665,40 @@ function renderPhotos(){
       im.src=photoSrc(ph.id);
     }
     photoRedraws.set(ph.id, ()=>redrawPhoto());
-    card._hold=on=>{
-      if(on===(cv.width===cw)) return;
-      cv.width=on?cw:1; cv.height=on?chh:1;
-      if(on) redrawPhoto();
+    /* What the canvas covers, in card px ({x,y,w,h}), or null = released. A card up to PHOTO_CANVAS_FULL px
+       gets all of itself; a bigger one (deep zoom) gets what's on screen padded half a screen each way, so
+       a scroll only repaints when it runs past that. vp = the pane's client rect, or null to release. */
+    let win=null;
+    function setWin(x,y,w,h){
+      w=Math.max(1,w); h=Math.max(1,h);
+      if(win&&win.x===x&&win.y===y&&win.w===w&&win.h===h) return;
+      win={x,y,w,h}; cv.width=w; cv.height=h;
+      cv.style.left=x+"px"; cv.style.top=y+"px"; cv.style.width=w+"px"; cv.style.height=h+"px";
+      cv.style.borderRadius=(w===cw&&h===chh)?"5px":"0";
+      redrawPhoto();
+    }
+    card._view=vp=>{
+      if(vp && cw*chh<=PHOTO_CANVAS_FULL) return setWin(0,0,cw,chh);
+      const c=vp&&card.getBoundingClientRect(), k=c&&(c.width/(cw+2)||1);   // k≠1 only mid-pinch
+      const cl=(v,hi)=>Math.max(0,Math.min(hi,v));
+      const x0=vp&&cl((vp.left-c.left-k)/k,cw), x1=vp&&cl((vp.right-c.left-k)/k,cw);
+      const y0=vp&&cl((vp.top-c.top-k)/k,chh), y1=vp&&cl((vp.bottom-c.top-k)/k,chh);
+      if(!vp || x1<=x0 || y1<=y0){ if(win){ win=null; cv.width=cv.height=1; } return; }
+      if(win && x0>=win.x && y0>=win.y && x1<=win.x+win.w && y1<=win.y+win.h) return;   // still covered
+      const px=(vp.right-vp.left)/k/2, py=(vp.bottom-vp.top)/k/2;
+      const X0=Math.floor(cl(x0-px,cw)), Y0=Math.floor(cl(y0-py,chh)), X1=Math.ceil(cl(x1+px,cw)), Y1=Math.ceil(cl(y1+py,chh));
+      setWin(X0,Y0,X1-X0,Y1-Y0);
     };
     function redrawPhoto(cursor){
       undoB.disabled=!ph.strokes.length && !(photoLine&&photoLine.ph===ph); redoB.disabled=!photoMarkCanRedo(ph);
-      if(cv.width!==cw) return;   // released while off screen; painted when card._hold brings it back
-      pctx.clearRect(0,0,cw,chh);
-      if(imLoaded) pctx.drawImage(im,0,0,cw,chh);
+      if(!win) return;   // released (off screen); card._view paints it when it comes back
+      // everything below draws in whole-card px; the transform shifts the window onto the canvas
+      pctx.setTransform(1,0,0,1,-win.x,-win.y);
+      pctx.clearRect(win.x,win.y,win.w,win.h);
+      if(imLoaded){   // only the window's slice of the image: a 16x card's full-size drawImage is wasted work
+        const sx=im.naturalWidth/cw, sy=im.naturalHeight/chh;
+        pctx.drawImage(im,win.x*sx,win.y*sy,win.w*sx,win.h*sy,win.x,win.y,win.w,win.h);
+      }
       drawPhotoMarks(pctx,ph,cw,chh,cursor);
       if(linePreview){
         const lst=photoToolStyle[photoTool==="polygon"?"polygon":"line"];
@@ -9466,9 +9774,10 @@ function renderPhotos(){
         pctx.fillRect(x,y,w2,h2);pctx.strokeRect(x,y,w2,h2);pctx.restore();
       }
     }
+    // from the card, not the canvas: the canvas is only the on-screen window. k≠1 mid-pinch
     function pos(ev){
-      const r=cv.getBoundingClientRect();
-      return {x:(ev.clientX-r.left)/(r.width||cw), y:(ev.clientY-r.top)/(r.height||chh)};
+      const r=card.getBoundingClientRect(), k=r.width/(cw+2)||1;
+      return {x:(ev.clientX-r.left-k)/(k*cw), y:(ev.clientY-r.top-k)/(k*chh)};
     }
 
     let penStroke=null, selDrag=null, marq=null, movedFlag=false, handleDrag=null;
@@ -9722,8 +10031,9 @@ function renderPhotos(){
     // Paint now if the image was already decoded. This runs last because
     // redrawPhoto() reads state declared above but only initialised further down —
     // calling it any earlier hits their TDZ.
-    if(imLoaded&&photoZoom<=1) redrawPhoto();
-    else if(photoZoom>1) card._hold(false);   // photoPlaceControls brings back the ones in view
+    // Nothing to paint yet: the canvas is 1x1 until photoPlaceControls() below gives the cards in view a window,
+    // synchronously, so a rebuild never shows them blank. (card._view → redrawPhoto must not run any earlier
+    // in this loop: redrawPhoto reads state declared above but initialised further down — TDZ.)
   });
   scroll.scrollTop=keepTop; scroll.scrollLeft=keepLeft;
   photoPlaceControls();
@@ -9745,8 +10055,9 @@ function photoTextAt(ph,p,cw,chh,pctx){
    slow. Pointers are tracked here on the pane, in the capture phase, so a pinch can span two photos
    or a photo and a gap; the capture stops a pinch's events reaching the cards. */
 let photoZoom=1, photoPinch=null, photoWheel=null, photoCardAbort=null, photoControlsRaf=0;
-const PHOTO_ZOOM_MAX=4, photoPtrs=new Map();
-const photoZoomClamp=z=>Math.max(1,Math.min(PHOTO_ZOOM_MAX,z));
+// 16x is for fine markup; the canvases stay small because each covers only what's on screen (card._view)
+const PHOTO_ZOOM_MIN=.1, PHOTO_ZOOM_MAX=16, PHOTO_CANVAS_FULL=2.5e6, photoPtrs=new Map();
+const photoZoomClamp=z=>Math.max(PHOTO_ZOOM_MIN,Math.min(PHOTO_ZOOM_MAX,z));
 // which sheet is under a point, and where on it. Captions don't scale, so a ratio of the scroll
 // offset drifts further with each row; re-finding the sheet after layout can't.
 function photoAnchorAt(cx,cy){
@@ -9772,12 +10083,13 @@ function setPhotoZoom(z,anchor,cx,cy){
   photoPlaceControls();
 }
 function photoZoomButton(z){
+  if((photoZoom<1&&z>1)||(photoZoom>1&&z<1)) z=1;   // ×1.25 steps from the 10% floor miss 100%: stop there on the way through
   const sc=byId("photoScroll"), r=sc.getBoundingClientRect(), cx=r.left+sc.clientWidth/2, cy=r.top+sc.clientHeight/2;
   setPhotoZoom(z,photoAnchorAt(cx,cy),cx,cy);
 }
 function updatePhotoZoomBar(){
   byId("pzLabel").textContent=Math.round(photoZoom*100)+"%";
-  byId("pzOut").disabled=photoZoom<=1; byId("pzIn").disabled=photoZoom>=PHOTO_ZOOM_MAX; byId("pzFit").disabled=photoZoom<=1;
+  byId("pzOut").disabled=photoZoom<=PHOTO_ZOOM_MIN+1e-3; byId("pzIn").disabled=photoZoom>=PHOTO_ZOOM_MAX; byId("pzFit").disabled=Math.abs(photoZoom-1)<1e-3;
 }
 function photoGestureStart(c){
   const pages=byId("photoPages"), r=pages.getBoundingClientRect();
@@ -9785,7 +10097,7 @@ function photoGestureStart(c){
 }
 // keep the point that was under g.c under c, at k times the size
 function photoGesturePreview(g,k,c){
-  g.k=Math.max(1/g.z0,Math.min(PHOTO_ZOOM_MAX/g.z0,k)); g.now=c;
+  g.k=Math.max(PHOTO_ZOOM_MIN/g.z0,Math.min(PHOTO_ZOOM_MAX/g.z0,k)); g.now=c;
   const tx=c.x-g.left-g.k*(g.c.x-g.left), ty=c.y-g.top-g.k*(g.c.y-g.top);
   byId("photoPages").style.transform=`translate(${tx}px,${ty}px) scale(${g.k})`;
 }
@@ -9802,15 +10114,16 @@ function photoPinchEnd(){
 /* Runs on every scroll and layout, for the cards in view.
    The ↶ ↷ ⋯ and grip sit in a photo's corners, which are off screen once it's zoomed bigger than the
    pane, so they slide to stay in the part of the photo that's showing.
-   Zoomed in, only cards within a screen of the view keep their canvas pixels: 40 full-page photos at
-   4x would otherwise hold about 1.8 GB, and iOS answers too much canvas memory with blank canvases. */
+   Only cards within two screens of the view keep canvas pixels, and a big card only its on-screen window
+   (card._view): 40 full-page photos would otherwise hold gigabytes at deep zoom, and iOS answers too much
+   canvas memory with blank canvases. */
 function photoPlaceControls(){
   const sc=byId("photoScroll");
   const r=sc.getBoundingClientRect(), R=r.left+sc.clientWidth, B=r.top+sc.clientHeight;
-  const mx=sc.clientWidth, my=sc.clientHeight;
+  const mx=2*sc.clientWidth, my=2*sc.clientHeight;   // two screens: a fling shouldn't outrun the repaint
   sc.querySelectorAll(".photo-card").forEach(card=>{
     const c=card.getBoundingClientRect();
-    card._hold(photoZoom<=1||!(c.bottom<r.top-my||c.top>B+my||c.right<r.left-mx||c.left>R+mx));
+    card._view(c.bottom<r.top-my||c.top>B+my||c.right<r.left-mx||c.left>R+mx ? null : {left:r.left,top:r.top,right:R,bottom:B});
     if(photoDrag||c.bottom<r.top||c.top>B||c.right<r.left||c.left>R) return;
     const grip=card.querySelector(".pc-grip"), tr=card.querySelector(".pc-tr"), menu=card.querySelector(".pc-menu");
     const y=Math.max(0,Math.min(r.top-c.top,c.height-tr.offsetHeight-12));
@@ -9928,7 +10241,7 @@ function serialize(withPhotos){
   const photos = withPhotos
     ? (P.photos||[]).map(p=>Object.assign({}, p, {dataUrl:photoSrc(p.id)}))
     : (P.photos||[]);
-  const payload = {v:3, meta:P.meta, photos, nextId, stampPresets, active:activeOpt,
+  const payload = {v:3, jobId:curJobId, meta:P.meta, photos, nextId, stampPresets, active:activeOpt,
     options:OPTIONS.map(o=>({id:o.id,name:o.name,settings:o.settings,objects:o.objects,pres:o.pres})),
     products:jobProducts()};   // the job's non-built-in product definitions — see adoptProducts()
   if(withPhotos && P.meta.titleImage) payload.titleImageData = photoSrc(P.meta.titleImage);
@@ -10010,39 +10323,159 @@ function download(name,text,type){
   const a=document.createElement("a"); a.href=url; a.download=name; a.click();
   setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-byId("btnSave").onclick=()=>{
+function exportBackup(){
   const fn=(P.meta.name||"estimate").replace(/[^\w\-]+/g,"_").slice(0,40)+"_gutter.json";
   download(fn,serialize(true));   // exported backups embed the photos
   saveLocal();
-};
-byId("btnLoad").onclick=()=>byId("fileInput").click();
-byId("fileInput").onchange=e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const rd=new FileReader();
-  rd.onload=()=>{
-    try{
-      applyLoaded(JSON.parse(rd.result));
-      sel.clear();
-      byId("paneJob").innerHTML=""; byId("panePricing").innerHTML="";
-      buildRail(); buildDock(); buildOptbar(); buildOptionsBar(); zoomFit(); refreshAll();
-      if(curPage==="photos") renderPhotos();
-      saveLocal();
-    }catch(err){ alert("Could not read that file: "+err.message); }
-  };
-  rd.readAsText(f); e.target.value="";
-};
-byId("btnNew").onclick=()=>{
-  captureActive();
-  if(OPTIONS.some(o=>o.objects&&o.objects.length)||(P.photos&&P.photos.length)){ if(!confirm("Start a new estimate? Unsaved changes will be lost.")) return; }
+}
+
+/* ============================================================ */
+/* JOBS — every estimate on this iPad, not just the open one    */
+/* ============================================================ */
+/* There used to be exactly one job (localStorage["primeGutterEstimate"]), and New threw it away unless the
+   rep had exported a file first. Now every job with something in it is also kept in IndexedDB: its JSON in
+   IDB_JOBS and a small record to list it by in IDB_META (name, address, total, when, and the ids of the
+   images it needs), both keyed by the job's id and written in one transaction.
+     • The open job still autosaves to localStorage exactly as before — startup reads that, synchronously.
+     • Images stay in the shared blob store. Only the open job's are in memory (idbLoadKeys); idbGC() keeps
+       a blob while ANY listed job names it, which is what `blobs` on the record is for.
+     • curJobId is deliberately not in P.meta: undo/redo swap meta, and an id must not ride a snapshot.
+   A new blob-backed field goes in jobBlobIds()/extraBlobIds(), or opening another job drops its images. */
+let curJobId=newJobId();
+let jobStored=false;      // this job has a record in the list — keep it current even if it's emptied out
+function newJobId(){ return "job"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+// an untouched blank job isn't worth a row in the list
+function jobWorthKeeping(){
+  return OPTIONS.some(o=>o.objects&&o.objects.length) || !!(P.photos&&P.photos.length) || !!((P.meta.name||"").trim()||(P.meta.address||"").trim());
+}
+function jobMeta(){
+  let total=0; try{ total=optionTotal(OPTIONS[activeOpt])||0; }catch(e){}
+  return {id:curJobId, name:(P.meta.name||"").trim(), address:(P.meta.address||"").trim(), updated:Date.now(), total, options:OPTIONS.length, blobs:[...jobBlobIds()]};
+}
+function jobMetaAll(){ return idbTx("readonly",st=>st.getAll(),IDB_META).then(l=>(l||[]).filter(j=>j&&j.id)); }
+function jobRecordsTx(fn){
+  return idbOpen().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction([IDB_JOBS,IDB_META],"readwrite");
+    try{ fn(tx.objectStore(IDB_JOBS),tx.objectStore(IDB_META)); }catch(e){ rej(e); return; }
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); tx.onabort=()=>rej(tx.error);
+  }));
+}
+// every autosave hands over the JSON it just wrote
+function storeJob(json){
+  if(idbBroken || !(jobStored||jobWorthKeeping())) return;
+  const meta=jobMeta();
+  jobStored=true;
+  jobRecordsTx((jobs,metas)=>{ jobs.put(json,meta.id); metas.put(meta,meta.id); })
+    .catch(()=>{ jobStored=false; setSaveTrouble("The jobs list isn't saving on this device"); });
+}
+/* Put a parsed save on screen as the open job — from the list, or from a backup file. If it can't be
+   applied, the job that was on screen comes back (applyLoaded() has half-replaced it by then). */
+function showLoadedJob(d,id,stored){
+  commitEditor(); cancelDrawing(); if(planMode) exitPlanMode();
+  const back=serialize(false), backId=curJobId, backStored=jobStored;
+  // memory only: every other job's images stay in IndexedDB (a backup file's embedded ones are put back
+  // by absorbPhotoBlobs inside applyLoaded)
+  photoBlobs.clear(); photoImgCache.clear(); _planImgs.clear();
+  let failed=null;
+  try{ applyLoaded(d); curJobId=id||newJobId(); jobStored=!!stored; }
+  catch(err){ failed=err; applyLoaded(JSON.parse(back)); curJobId=backId; jobStored=backStored; }
+  sel.clear();
+  byId("paneJob").innerHTML=""; byId("panePricing").innerHTML="";
+  buildRail(); buildDock(); buildOptbar(); buildOptionsBar(); zoomFit(); refreshAll();
+  if(curPage==="photos") renderPhotos();
+  saveLocal();
+  idbLoadKeys(jobBlobIds()).then(n=>{ if(!n) return; draw(); if(curPage==="photos") renderPhotos(); if(curPage==="pdf") refreshPdfView(); });
+  if(failed) throw failed;
+}
+function openJob(id){
+  if(id===curJobId){ closeModal(); return; }
+  saveLocal();                                   // the job on screen goes back into the list first
+  idbTx("readonly",st=>st.get(id),IDB_JOBS).then(json=>{
+    if(!json) throw new Error("missing");
+    const d=JSON.parse(json);
+    closeModal();
+    showLoadedJob(d,id,true);
+  }).catch(()=>uiAlert("That job couldn't be opened — its saved copy is missing or damaged."));
+}
+function startNewJob(skipFlush){
+  commitEditor(); cancelDrawing(); if(planMode) exitPlanMode();
+  if(!skipFlush) saveLocal();                    // keeps the job on screen in the list
   const keepPages=extraPages();   // company pages (financing flyer…) carry on to the next job
   P=defaultProject(); applyProfile(P.meta); nextId=1; sel.clear();
   P.meta.extraPages=keepPages;
   const keepIds=new Set(keepPages.map(pg=>pg.id));
-  photoBlobs.forEach((_,k)=>{ if(!keepIds.has(k)){ idbDel(k); photoBlobs.delete(k); } });   // drop the old job's images
+  // memory only — the last job's images stay in IndexedDB for when it's reopened (this used to delete them)
+  [...photoBlobs.keys()].forEach(k=>{ if(!keepIds.has(k)) photoBlobs.delete(k); });
+  curJobId=newJobId(); jobStored=false;
   initSingleOption(); seedHistory(); OPTIONS[0].history=history; OPTIONS[0].hidx=hidx;
   byId("paneJob").innerHTML=""; byId("panePricing").innerHTML="";
   buildRail(); buildOptbar(); buildOptionsBar(); zoomFit(); refreshAll();
   if(curPage==="photos") renderPhotos();
+  saveLocal();
+}
+// nothing to confirm while the job on screen is safe in the list; only when this device can't keep it
+function newJob(){
+  const go=()=>{ closeModal(); startNewJob(); };
+  if(idbBroken && jobWorthKeeping()) uiConfirm("This iPad isn't storing the jobs list right now, so the job on screen will be lost unless you export it first.\n\nStart a new job anyway?",{ok:"Start new job",danger:true},go);
+  else go();
+}
+function deleteJob(j){
+  uiConfirm('Delete "'+jobTitle(j)+'" from this iPad?\n\nThis can\'t be undone. Export it first if you might need it again.',{ok:"Delete job",danger:true},()=>{
+    jobRecordsTx((jobs,metas)=>{ jobs.delete(j.id); metas.delete(j.id); }).then(()=>{
+      // (its images go at the next launch — idbGC — once no job names them)
+      if(j.id===curJobId){ jobStored=false; startNewJob(true); }
+      renderJobsList();
+    }).catch(()=>uiAlert("That job couldn't be deleted."));
+  });
+}
+const jobTitle=j=>j.name||j.address||"Untitled job";
+function jobWhen(t){ try{ return new Date(t).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}); }catch(e){ return ""; } }
+function openJobs(){
+  commitEditor();
+  saveLocal();                                   // so the job on screen is in the list, and current
+  openModal("Jobs",`<div class="job-acts">
+      <button class="btn-sm" id="jbNew" style="background:var(--prime);color:#fff;border-color:var(--prime)">＋ New job</button>
+      <button class="btn-sm" id="jbExport" title="Save this job as a file — a backup, or to open on another iPad">⇪ Export this job</button>
+      <button class="btn-sm" id="jbOpenFile" title="Open a job that was exported earlier">Open a file…</button>
+    </div>
+    <div id="jbList"><div class="note">Loading…</div></div>
+    ${infoNote("jobs","How jobs are saved","Every job saves itself on this iPad as you work — there is nothing to press. <b>New job</b> keeps the one on screen in this list. <b>Export</b> makes a file with the photos in it: a backup, or a way to move a job to another iPad. Deleting a job here can't be undone.","margin-top:10px")}`);
+  byId("jbNew").onclick=newJob;
+  byId("jbExport").onclick=exportBackup;
+  byId("jbOpenFile").onclick=()=>byId("fileInput").click();
+  renderJobsList();
+}
+function renderJobsList(){
+  if(!byId("jbList")) return;
+  jobMetaAll().then(l=>l,()=>null).then(list=>{
+    const box=byId("jbList"); if(!box) return;   // the modal was closed meanwhile
+    if(!list){ box.innerHTML=`<div class="note">This iPad isn't storing the jobs list right now. Export this job to keep it.</div>`; return; }
+    const stored=new Set(list.map(j=>j.id));
+    if(!stored.has(curJobId)) list.push(jobMeta());   // the job on screen, while it's still too empty to be listed
+    list.sort((a,b)=>a.id===curJobId?-1:b.id===curJobId?1:(b.updated||0)-(a.updated||0));
+    box.innerHTML=list.map((j,i)=>{
+      const cur=j.id===curJobId;
+      const sub=[j.name&&j.address?j.address:"", cur?"Open now":jobWhen(j.updated), j.options>1?j.options+" options":""].filter(Boolean).join(" · ");
+      return `<div class="job-row${cur?" cur":""}" data-job="${i}"><div class="job-main"><div class="job-name">${esc(jobTitle(j))}</div><div class="job-sub">${esc(sub)}</div></div>
+        <div class="job-tot">${money(j.total||0)}</div>${stored.has(j.id)?`<button class="job-del" data-jobdel="${i}" title="Delete this job">🗑</button>`:""}</div>`;
+    }).join("");
+    box.querySelectorAll("[data-job]").forEach(r=>r.onclick=e=>{ if(e.target.closest("[data-jobdel]")) return; openJob(list[+r.dataset.job].id); });
+    box.querySelectorAll("[data-jobdel]").forEach(b=>b.onclick=()=>deleteJob(list[+b.dataset.jobdel]));
+  });
+}
+byId("btnJobs").onclick=openJobs;
+byId("fileInput").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    let d; try{ d=JSON.parse(rd.result); }catch(err){ uiAlert("Could not read that file: "+err.message); return; }
+    saveLocal();                                 // the job on screen goes back into the list first
+    closeModal();
+    // Always a NEW job in the list, never a replacement: a backup can be older than the listed job it
+    // came from, and overwriting that silently would lose the newer work.
+    try{ showLoadedJob(d,null,false); }catch(err){ uiAlert("Could not read that file: "+err.message); }
+  };
+  rd.readAsText(f); e.target.value="";
 };
 
 /* ---- autosave status ----
@@ -10055,28 +10488,41 @@ function setSaveTrouble(msg){
   const b=byId("saveWarn"); if(!b) return;
   b.style.display = msg ? "inline-flex" : "none";
   if(msg) b.textContent = "⚠ "+msg;
+  const st=byId("saveState"); if(st) st.style.display = msg ? "none" : "";   // the warning replaces "✓ Saved"
+}
+// the quiet "✓ Saved" in the top bar — autosave was invisible, so reps reached for Save to be sure
+function setSaveState(busy){
+  const e=byId("saveState"); if(!e) return;
+  e.textContent = busy ? "Saving…" : "✓ Saved"; e.classList.toggle("busy",!!busy);
 }
 function notePhotoStorageFailure(){ setSaveTrouble("Photos won't be saved on this device"); }
 function saveLocal(){
+  clearTimeout(_autosaveT);
+  let json="";
   try{
-    localStorage.setItem("primeGutterEstimate",serialize(false));
+    json=serialize(false);
+    localStorage.setItem("primeGutterEstimate",json);
     if(!idbBroken) setSaveTrouble("");
   }catch(e){
-    setSaveTrouble("Autosave failed — tap Save to export this job");
+    setSaveTrouble("Autosave failed — open Jobs and export this job");
   }
+  if(json) storeJob(json);   // the list copy is in IndexedDB, so it still lands when localStorage is full
+  setSaveState(false);
 }
 byId("saveWarn").onclick=()=>{
   openModal("Autosave problem", `<div class="note" style="margin-bottom:10px">${esc(saveTrouble)}</div>
     <p style="font-size:12.5px;line-height:1.55;color:var(--text-soft)">This device is refusing to store the job automatically, so your work is
     only held in memory and will be lost if the app is closed or reclaimed.</p>
-    <p style="font-size:12.5px;line-height:1.55;color:var(--text-soft)"><b>Use the Save button</b> to export a
-    <code>.json</code> backup (it includes the photos) and keep working. Re-open it later with <b>Open</b>.</p>`);
+    <p style="font-size:12.5px;line-height:1.55;color:var(--text-soft)"><b>Open Jobs and tap Export this job</b> to save a
+    <code>.json</code> backup (it includes the photos) and keep working. Re-open it later with <b>Jobs → Open a file</b>.</p>`);
 };
 function loadLocal(){
   try{
     const s=localStorage.getItem("primeGutterEstimate");
     if(!s) return false;
-    applyLoaded(JSON.parse(s));
+    const d=JSON.parse(s);
+    applyLoaded(d);
+    if(d && d.jobId) curJobId=d.jobId;   // (older autosaves have none: the id made at load stands)
     return true;
   }catch(e){ return false; }
 }
@@ -10202,11 +10648,16 @@ async function buildEstimateHTML(chosen){
     const matRows=mats.map(x=>{ const sw=`<span class="msw" style="background:${swatchHex(x.color,x.brand)}"></span>`; const name=x.color?(/^#/.test(x.color)?"":esc(x.color)):""; const colTxt=x.color?((x.brand?esc(x.brand)+" ":"")+name):"—"; return `<tr><td>${esc(x.item)}</td><td class="n">${x.qty} ${x.unit}</td><td>${x.color?sw:""}${colTxt}</td></tr>`; }).join("");
     const materialHTML = mats.length ? `<div class="mat-list avoid"><h3 class="sec">Material List</h3><table class="mat"><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th>Color</th></tr></thead><tbody>${matRows}</tbody></table></div>` : "";
     const priceRows=pdfPriceRows(s,r).map(([l,v,cls])=>`<tr${cls?` class="${cls}"`:""}><td>${l}</td><td class="n">${v}</td></tr>`).join("");
+    // the type(s) quoted, beside the footage: what's drawn (existing runs aren't sold), else the option's default
+    const gIds=new Set(), dIds=new Set();
+    for(const o of P.objects){ if(isExisting(o)) continue; if(o.t==="gutter") gIds.add(gutterSizeFor(o)); else if(o.t==="ds") dIds.add(dsSizeFor(o)); }
+    const styTxt=(ids,def,look)=>{ const st=[...(ids.size?ids:[def])].map(look); return st.length>1 ? st.map(x=>x.short).join(" / ") : st[0].label; };
+    const gSty=styTxt(gIds,s.gutterType,gutterStyle), dSty=styTxt(dIds,s.defaultDownspoutSize,dsStyle);
     // footage isn't a price, so it lives in the summary beside the price stack
     const priceBlock=`<div class="price">
       <div class="summary"><div class="cl">Job summary</div><div class="stats">
-        <div class="stat"><span>Gutter</span><b>${ftStr(r.gutterFootage)}</b><i><span class="ssw" style="background:${swatchHex(s.gutterColor,gBrand)}"></span>${esc(gBrand)} ${esc(s.gutterColor)}</i></div>
-        <div class="stat"><span>Downspout</span><b>${ftStr(r.dsFootage)}</b><i><span class="ssw" style="background:${swatchHex(s.downspoutColor,dBrand)}"></span>${esc(dBrand)} ${esc(s.downspoutColor)}</i></div></div></div>
+        <div class="stat"><span>Gutter</span><b>${ftStr(r.gutterFootage)}<em class="sty">${esc(gSty)}</em></b><i><span class="ssw" style="background:${swatchHex(s.gutterColor,gBrand)}"></span>${esc(gBrand)} ${esc(s.gutterColor)}</i></div>
+        <div class="stat"><span>Downspout</span><b>${ftStr(r.dsFootage)}<em class="sty">${esc(dSty)}</em></b><i><span class="ssw" style="background:${swatchHex(s.downspoutColor,dBrand)}"></span>${esc(dBrand)} ${esc(s.downspoutColor)}</i></div></div></div>
       <div class="stack"><table class="tot">${priceRows}</table>
         <div class="grand"><span>Turnkey Total</span><span class="gv">${money(r.grand)}</span></div></div>
     </div>
@@ -10303,7 +10754,9 @@ async function buildEstimateHTML(chosen){
     .stats{display:flex;gap:8px;margin-top:4px}
     .stat{flex:1;background:#f3f6f9;border:1px solid #e1e7ed;border-radius:6px;padding:6px 10px}
     .stat span{display:block;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#5b6b7a}
-    .stat b{display:block;font-size:17px;margin-top:1px}
+    .stat b{display:block;font-size:17px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    /* the type rides the footage line and never wraps: PDFL.summary budgets page 1 at this height */
+    .stat .sty{font-style:normal;font-size:10.5px;font-weight:700;color:#3d4c5b;margin-left:6px}
     /* the color the rep is quoting, right beside the footage — per-object overrides stay on the material list */
     .stat i{display:block;font-style:normal;font-size:9.5px;line-height:1.25;color:#3d4c5b;margin-top:2px;overflow-wrap:anywhere}
     .stat .ssw{display:inline-block;width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.3);vertical-align:middle;margin-right:4px}
@@ -10439,7 +10892,7 @@ function pdfExport(action){
   if(!pdfLastHTML) return;
   if(pdfNative({action})) return;
   const win=window.open("","_blank");
-  if(!win){ alert("Please allow pop-ups to export the estimate."); return; }
+  if(!win){ uiAlert("Please allow pop-ups to export the estimate."); return; }
   win.document.write(pdfLastHTML); win.document.close();
   setTimeout(()=>{ try{win.focus();win.print();}catch(e){} },350);
 }
@@ -10651,7 +11104,6 @@ function openLegendArranger(optIdx){
 }
 byId("pdfShare").onclick=()=>pdfExport("share");
 byId("pdfPrint").onclick=()=>pdfExport("print");
-byId("btnPrint").onclick=()=>setPage("pdf");
 
 /* ============================================================ */
 /* KEYBOARD                                                    */
@@ -10666,6 +11118,7 @@ window.addEventListener("keydown",e=>{
   const typing = tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable;
   if(e.code==="Space" && !typing){ spaceDown=true; if(!panning)canvas.style.cursor="grab"; e.preventDefault(); return; }
   if(typing) return;
+  if(byId("dlgWrap").style.display==="flex"){ if(e.key==="Escape") dlgClose(null); else if(e.key==="Enter") byId("dlgOk").click(); return; }
   if(modalWrap.style.display==="flex" && e.key==="Escape"){ closeModal(); return; }
   // photo page: undo/redo, delete selection, finish/cancel line, tool keys; don't trigger diagram tools
   if(curPage==="photos"){
@@ -10686,7 +11139,7 @@ window.addEventListener("keydown",e=>{
     if(e.ctrlKey||e.metaKey){
       if(k==="z"){ e.preventDefault(); if(e.shiftKey)redo(); else undo(); }
       else if(k==="y"){ e.preventDefault(); redo(); }
-      else if(k==="s"){ e.preventDefault(); byId("btnSave").click(); }
+      else if(k==="s"){ e.preventDefault(); exportBackup(); }
       return;
     }
     if(e.key==="Escape"){ if(planPlace){ planPlace=null; renderPlanPanel(); planHint(); draw(); } else exitPlanMode(); }
@@ -10696,7 +11149,7 @@ window.addEventListener("keydown",e=>{
     if(e.key.toLowerCase()==="z"){ e.preventDefault(); if(e.shiftKey)redo(); else undo(); return; }
     if(e.key.toLowerCase()==="y"){ e.preventDefault(); redo(); return; }
     if(e.key.toLowerCase()==="d"){ e.preventDefault(); duplicateSelected(); return; }
-    if(e.key.toLowerCase()==="s"){ e.preventDefault(); byId("btnSave").click(); return; }
+    if(e.key.toLowerCase()==="s"){ e.preventDefault(); exportBackup(); return; }
     if(e.key.toLowerCase()==="a"){ e.preventDefault(); sel=new Set(P.objects.filter(o=>o.t!=="underlay").map(o=>o.id)); draw(); refreshSelInfo(); return; }
     return;
   }
@@ -10713,7 +11166,7 @@ window.addEventListener("keyup",e=>{
 
 /* periodic autosave */
 let _autosaveT=0;
-function scheduleSave(){ clearTimeout(_autosaveT); _autosaveT=setTimeout(saveLocal,1200); }
+function scheduleSave(){ clearTimeout(_autosaveT); _autosaveT=setTimeout(saveLocal,1200); setSaveState(true); }
 const _origRefreshAll=refreshAll;
 refreshAll=function(){ _origRefreshAll(); scheduleSave(); updatePlanButton(); updateSnapBar(); if(curPage==="pdf") refreshPdfView(); };
 
@@ -10731,13 +11184,14 @@ function init(){
       legendCollapsed=!legendCollapsed; legendSig=""; updateLegendOverlay();
     }; }
   if(!loadLocal()){ applyProfile(P.meta); initSingleOption(); seedHistory(); }
-  // The autosave holds only photo ids; the images come back from IndexedDB.
-  idbLoadAll().then(()=>{
-    idbGC();                                     // drop images no longer referenced
+  // The autosave holds only image ids; the open job's images come back from IndexedDB.
+  idbLoadKeys(jobBlobIds()).then(()=>{
+    idbGC();                                     // drop images no job references any more
     const missing=(P.photos||[]).filter(p=>!photoSrc(p.id)).length;
     if(missing) setSaveTrouble(missing+" photo"+(missing>1?"s":"")+" could not be restored");
     if(curPage==="photos") renderPhotos();
   });
+  setSaveState(false);
   resize();
   buildDock();
   buildRail();

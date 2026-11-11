@@ -113,6 +113,11 @@ holds; never reassign them, and call `catalogChanged()` after any catalog edit. 
 (`isToolProduct()`) gets a dock button unless `dock:false` (`onDock()`/`setOnDock()`): it stays in the catalog
 and the dock's ＋ (`openQuickProduct()`) lists it to put back; unlike `hidden`, it's still drawable
 (`toolDefById()` resolves `custom:<id>` for it, and `customTools()` keeps the active one's button).
+Every dock tool has a `lbl` (shown under its icon). `PAGES_TOOL` (PDF pages) has no dock button: PDF View's
+"Diagram pages" starts it and it's appended to the dock only while active. `setTool()` commits a run in
+progress with 2+ points (`settleDrawing()`) instead of discarding it. The page tabs are the job flow (Diagram →
+Photos → PDF View); Products is reached from ⚙ Settings or Pricing and returns via `prodReturn`. The option
+tabs are hidden on Photos and Products.
 Every highlight-style tool (Demo, Screen, Highlighter, a Highlight-behaviour product: `isHighlightTool()`) has an
 Eraser toggle in its option bar, kept per dock button in `eraseFor`; `eraseMatch()` limits it to that tool's own
 strokes (a product's eraser only touches that product), and `eraseStrokesAt()` splits them so footage drops. The catalog is a
@@ -125,6 +130,21 @@ products too — is `settings.prices[priceKey]`; flat/hourly service quantities 
 `migrateLegacyPricing()` (inside `ensurePrices`) converts old saves' `demoRate`/`screen*Rate` and per-job
 `customProducts`; `normalizeProduct()` upgrades older product shapes (the retired one-"own miter" gutter). Saves embed the non-built-in products they use (`jobProducts()` → `adoptProducts()` on
 load, added hidden), so a job opens on an iPad whose catalog never had them.
+
+**Jobs** (JOBS banner; top bar's Jobs button → `openJobs()`). The open job still autosaves to
+`localStorage["primeGutterEstimate"]`; every job with something in it is also kept in IndexedDB (same
+`primeGutterPhotos` DB, v2): its JSON in `IDB_JOBS`, a list record in `IDB_META` (`jobMeta()`: name, address,
+total, updated, `blobs`), both keyed by `curJobId` and written in one transaction by `storeJob()` from every
+`saveLocal()`. `curJobId` is serialized as top-level `jobId`, deliberately not in `P.meta` (undo swaps meta).
+Only the open job's images are in memory (`idbLoadKeys(jobBlobIds())`); `idbGC()` keeps a blob while any listed
+job's record names it and deletes nothing if the list can't be read. New job / opening another job only drop
+blobs from memory, never from IndexedDB. A backup file always opens as a new job (`showLoadedJob(d,null)`), so
+an old backup can't overwrite a newer listed job. "Save" is now Jobs → Export this job (`exportBackup()`).
+
+**Dialogs** are the app's own: `uiConfirm(msg,opts,yes)`, `uiAlert(msg)`, `uiPrompt(msg,opts,done)` (DIALOGS,
+`#dlgWrap`, a layer above the modal). They're callbacks, not blocking — don't add native `confirm()`/`alert()`/
+`prompt()`. Long how-it-works text goes in `infoNote(key,title,html)` (a folded `<details>`; `infoOpen`
+remembers which are open across pane rebuilds), not a bare `.note`.
 
 **Options are estimate variants.** `OPTIONS[]` each own their own `settings`, `objects` and
 undo `history`; `meta` (customer), `photos` and stamp presets are *shared*. `captureActive()` /
@@ -204,16 +224,20 @@ scales by `cw/PHOTO_REF_W` via `photoStrokePx()`/`photoTextPx()`. The left rail 
 Diagram page; `setPage()` parks it on Photos/PDF View and restores the rep's choice on the way
 back.
 
-**Photo page zoom** (`photoZoom`, 1–4×, session only) is one zoom for all the sheets, not a zoom inside each
-photo. Nothing scales at paint time: marks size off `cw`, so zooming is `renderPhotos()` laying the sheets out
-at `photoCardW` = fit width × zoom, in `#photoPages` at a set width so the columns hold and the pane pans. A
-pinch (capture-phase pointers on `#photoScroll`, so it can span two photos) or ctrl+wheel previews with a CSS
-transform and lays out on release, re-finding the sheet under the fingers (`photoAnchorAt()`) to set the scroll.
+**Photo page zoom** (`photoZoom`, 0.1–16×, session only) is one zoom for all the sheets, not a zoom inside each
+photo. The sheets are always ONE column, top to bottom (the rep asked: pages on a table, one below the next — never
+regridded into the corner when zoomed out); 100% = one sheet as wide as the pane, and `#photoPages`' auto margins
+centre it while narrower. Nothing scales at paint time: marks size off `cw`, so zooming is `renderPhotos()` laying the
+sheets out at `photoCardW` = fit width × zoom. Small cards shed chrome (`pc-tight` < 170px, `pc-tiny` < 90px, short
+captions). A pinch (capture-phase pointers on `#photoScroll`, so it can span two photos) or ctrl+wheel previews with a
+CSS transform and lays out on release, re-finding the sheet under the fingers (`photoAnchorAt()`) to set the scroll.
 A rebuild can land mid-line, so `photoLine` redraws through `photoRedraws`, never a card's closure.
-`photoPlaceControls()` runs on every scroll and layout: it slides each photo's grip and ↶ ↷ ⋯ into the visible
-part of the photo, and past 100% releases the canvas pixels of cards over a screen away (`card._hold()`), since
-40 full-page photos at 4× would otherwise hold about 1.8 GB. So a canvas's `width` can be 1 while its CSS size
-and `cw` stay real; `redrawPhoto()` skips a released one. Size against `cw`, never `cv.width`.
+**A card's canvas covers only its on-screen window.** The card div holds the size (cw+2 with its 1px border); the
+canvas is absolutely placed at `win` {x,y,w,h} in card px and `redrawPhoto()` paints through a `-win` transform, so a
+16× card (~10000×8000) never needs a canvas iOS won't allocate. `card._view(vp)` (from `photoPlaceControls()`, on every
+scroll and layout) gives cards ≤ `PHOTO_CANVAS_FULL` px all of themselves, bigger ones what's visible padded half a
+screen, and releases (1×1) cards over two screens away. Pointer → image coords (`pos()`) and the text editor's origin
+come from the card's rect, never the canvas's. Size against `cw`, never `cv.width`.
 
 **Photo mark schema** (`P.photos[i].strokes[]`, normalized 0..1 image coords, see the banner
 comment at PHOTO MARKUP PAGE for the full table): every mark has `id` (from `uid()`) and
@@ -237,7 +261,7 @@ separately in `renderPhotos()`'s per-card `redrawPhoto()`, same split as the Dia
 `drawScene()`/`draw()`.
 
 **Photo tools** live in `photoTool` (`select|pen|highlight|line|rect|ellipse|arrow|polygon|
-text|callout|eraser`), each with its own remembered style in `photoToolStyle[tool]` (or
+text|callout|eraser`), each with its own remembered style in `photoToolStyle[tool]` (line/rect/ellipse/polygon share the toolbar's one Shapes button, `#ptShapes` + `#ptShapesMenu`) (or
 `photoTextStyle` for text/callout) so switching tools doesn't clobber another tool's width/
 opacity. `#photoOptbar` (`buildPhotoOptbar()`/`wirePhotoOptbar()`) is the Photos equivalent of
 the Diagram's `buildOptbar()`/`#optbar` — contextual per-tool controls that, with a mark
@@ -336,7 +360,8 @@ not the job. `applyProfile()` fills only blank salesperson fields. `repLine()` b
 for both `buildEstimateHTML` and `pdfBoxFor`'s height model. The ⚙ Settings modal holds profile,
 takeoff rules and drawing settings, written to every option. The Pricing tab holds money only. Don't
 put a setting in both places. The legend (`legendItems()`/`legendHTML()`) is an HTML overlay, both on
-the stage (`#diagLegend`) and in the PDF's `.dg` box, so it costs no `pdfBoxFor` height. Page 1's
+the stage (`#diagLegend`) and in the PDF's `.dg` box, so it costs no `pdfBoxFor` height. Page 1's Job summary
+cards show footage + the quoted style(s) on one nowrap line — it must not grow past `PDFL.summary`. Page 1's
 legend placement is per option (`P.pres.legend` {x,y,s}: fractions of the box's free space + scale,
 `legendPlaceStyle()`). The native PDFView can't host draggable HTML, so PDF View's ◳ Legend opens
 `openLegendArranger()`, which replays the diagram box with that same CSS. Text boxes
@@ -345,6 +370,9 @@ quiz writes a normal `{t:"text",quiz:true}` box.
 
 ## Conventions
 
+- **Touch sizes live in one `@media (pointer:coarse)` block at the end of the `<style>`** (44pt targets for
+  tabs, top-bar buttons, the undo/zoom rows, worksheet inputs); the mouse layout stays dense. The dock is 62px
+  wide for its labels, and 42px-tall tools under `max-height:880px` so 13 fit an 11" iPad in landscape.
 - **iPad touch hygiene lives in CSS near the top of the `<style>`:** `user-select:none` +
   `-webkit-touch-callout:none` on `body` (inputs/textareas opt back in, or iOS won't let you type),
   transparent tap highlight, `touch-action:manipulation`, and every `:hover` rule wrapped in
