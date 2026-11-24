@@ -64,6 +64,7 @@ Membership" — that advice no longer applies. The filename `gutter-estimator.ht
 Navigate the file by its banner comments (`/* ==== STATE ==== */`, `CAMERA / CANVAS`,
 `GEOMETRY HELPERS`, `TAKEOFF / COMPUTE`, `RENDERING`, `TOOLS + DOCK`, `HIT TESTING`,
 `POINTER EVENTS`, `LEFT RAIL`, `PHOTO MARKUP PAGE`, `SAVE / LOAD / NEW`, `PRINT`, …).
+Subsystem notes split out of this file live in `docs/claude/`; each section below says when to read which.
 
 **Global mutable state, no framework.** `P` is the live project (`P.meta`, `P.settings`,
 `P.objects`, `P.photos`). Mutate it directly, then call `refreshAll()` (redraw + rebuild the
@@ -98,48 +99,20 @@ but `materialList()` still lists them; `settings.priceOverride` (>0) replaces th
 `r.calcTurnkey`), deposit/card fee follow it, and `pdfPriceRows()` then prints only deposit + card fee. Acute corners
 (≤ 90−`bayDeviation`, inside or outside) bill the style's strip miter (never bay) **plus** `prices.acute`
 (hand-edited add-on, $60 default, charged in flat mode too); `materialList()` splits miter rows
-"— inside"/"— outside" and adds one style-less "Acute miter" row.
+"— inside"/"— outside" and adds one style-less "Acute miter" row. Gutter bills whole feet: every *gutter*
+segment rounds up (`segFt()`/`runFt()`), at read time — stored lengths keep their measured precision, so read
+gutter footage through those helpers, never a raw `lengths` sum.
 
-**Products are data: the catalog / price book** (PRODUCT CATALOG banner, Products page). Every
-quotable product — gutters, downspouts, screens, services, accessories, custom runs, the shared
-valley/acute parts — is one entry in `CATALOG.products`, device-wide in
-`localStorage["primeGutterCatalog"]` (built-ins in `BUILTIN_PRODUCTS` are merged in on every load, can be
-hidden, never deleted). `kind` decides behaviour and components (`COMPONENTS`: a gutter gets end caps +
-its own strip + bay miters (`stripKey`/`bayKey`, e.g. `strip6hr`/`bay6hr`), a downspout gets outlet/elbows/offsets; each is priced "follow" — parent $/ft ×
-the Settings allowance, as always — or "fixed"). `applyCatalog()` refills `GUTTER_STYLES`, `DS_STYLES`,
-`SCREEN_TYPES`, `PRICE_KEYS`, `DERIVED_KEYS`, `LINES` and `BOOK` **in place** — they're consts other code
-holds; never reassign them, and call `catalogChanged()` after any catalog edit. Pickers go through
-`pickable()` so hidden products drop out while jobs using them still draw and price. A drawn product
-(`isToolProduct()`) gets a dock button unless `dock:false` (`onDock()`/`setOnDock()`): it stays in the catalog
-and the dock's ＋ (`openQuickProduct()`) lists it to put back; unlike `hidden`, it's still drawable
-(`toolDefById()` resolves `custom:<id>` for it, and `customTools()` keeps the active one's button).
-Every dock tool has a `lbl` (shown under its icon). `PAGES_TOOL` (PDF pages) has no dock button: PDF View's
-"Diagram pages" starts it and it's appended to the dock only while active. `setTool()` commits a run in
-progress with 2+ points (`settleDrawing()`) instead of discarding it. The page tabs are the job flow (Diagram →
-Photos → PDF View); Products is reached from ⚙ Settings or Pricing and returns via `prodReturn`. The option
-tabs are hidden on Photos and Products.
-Every highlight-style tool (Demo, Screen, Highlighter, a Highlight-behaviour product: `isHighlightTool()`) has an
-Eraser toggle in its option bar, kept per dock button in `eraseFor`; `eraseMatch()` limits it to that tool's own
-strokes (a product's eraser only touches that product), and `eraseStrokesAt()` splits them so footage drops. The catalog is a
-**price book**: a job copies a key's book price into `settings.prices` the first time `ensurePrices()` meets
-it and keeps it; `applyPriceBook()` is the explicit push, `applyBookKeys(keys)` the per-item one (a product
-plus its fixed-price parts via `productBookKeys()`; the Products editor and each Pricing row that differs show a ⇣).
-Compare a job to the book through `keyDrifts()` — a style's book list is `bookList()`, lifted to its min as
-`ensurePrices()` does, or the job never "matches". Every product's job price — demo, screens, custom
-products too — is `settings.prices[priceKey]`; flat/hourly service quantities are `settings.qty[priceKey]`.
-`migrateLegacyPricing()` (inside `ensurePrices`) converts old saves' `demoRate`/`screen*Rate` and per-job
-`customProducts`; `normalizeProduct()` upgrades older product shapes (the retired one-"own miter" gutter). Saves embed the non-built-in products they use (`jobProducts()` → `adoptProducts()` on
-load, added hidden), so a job opens on an iPad whose catalog never had them.
+**Products are data: the catalog / price book** (PRODUCT CATALOG banner, Products page; `CATALOG.products`,
+device-wide). `applyCatalog()` refills `GUTTER_STYLES`, `DS_STYLES`, `SCREEN_TYPES`, `PRICE_KEYS`, `DERIVED_KEYS`,
+`LINES` and `BOOK` **in place** — they're consts other code holds; never reassign them, and call `catalogChanged()`
+after any catalog edit. Every product's job price is `settings.prices[priceKey]`, copied from the book the first time
+`ensurePrices()` meets it and then kept. **Before touching products, pricing, product dock buttons, highlight
+erasers or Convert style, read `docs/claude/catalog-pricing.md`.**
 
-**Jobs** (JOBS banner; top bar's Jobs button → `openJobs()`). The open job still autosaves to
-`localStorage["primeGutterEstimate"]`; every job with something in it is also kept in IndexedDB (same
-`primeGutterPhotos` DB, v2): its JSON in `IDB_JOBS`, a list record in `IDB_META` (`jobMeta()`: name, address,
-total, updated, `blobs`), both keyed by `curJobId` and written in one transaction by `storeJob()` from every
-`saveLocal()`. `curJobId` is serialized as top-level `jobId`, deliberately not in `P.meta` (undo swaps meta).
-Only the open job's images are in memory (`idbLoadKeys(jobBlobIds())`); `idbGC()` keeps a blob while any listed
-job's record names it and deletes nothing if the list can't be read. New job / opening another job only drop
-blobs from memory, never from IndexedDB. A backup file always opens as a new job (`showLoadedJob(d,null)`), so
-an old backup can't overwrite a newer listed job. "Save" is now Jobs → Export this job (`exportBackup()`).
+**Jobs** (JOBS banner) live in IndexedDB as well as the `localStorage` autosave. `curJobId` is serialized as
+top-level `jobId`, deliberately not in `P.meta` (undo swaps meta), and `idbGC()` must never delete a blob a listed
+job names. **Before touching jobs, save/load or IndexedDB, read `docs/claude/jobs-storage.md`.**
 
 **Dialogs** are the app's own: `uiConfirm(msg,opts,yes)`, `uiAlert(msg)`, `uiPrompt(msg,opts,done)` (DIALOGS,
 `#dlgWrap`, a layer above the modal). They're callbacks, not blocking — don't add native `confirm()`/`alert()`/
@@ -167,11 +140,6 @@ boxed on a dense plan. Touch needs 10px of travel to count as a drag. `selectInM
 **Arrows** on both pages are `paintArrowShaft()`: a solid arrow is one filled outline, so nothing can poke past
 the tip and part opacity shows no overlap; a dashed shaft is a stroke stopping at the head's base.
 
-**Convert style** (`openConvertSystem()` → `convertGutterStyle()`, Select bar) only changes sizes, since caps,
-miters and footage all derive from them. Selection = whole runs, existing runs are never touched. Converting a
-whole option also moves its `gutterType`/`defaultDownspoutSize`, pins skipped existing items to their old size so
-they don't follow, and rewrites the job details box's gutter line.
-
 **Run connectivity is geometric, not stored.** Endpoints within `CAP_EPS` (11 world units) count
 as joined. `isClosedRun()`, `freeEnds()`, `runCorners()` and `junctionCorners()` all re-derive
 this from the points every time. Don't cache a "closed"/"joined" flag on an object — extending,
@@ -196,107 +164,15 @@ snapshots ~27 MB and blew WKWebView's localStorage quota silently. Exported "Sav
 embed images so backups stay portable (`serialize(true)`). Every photo enters through
 `commitPhotos()` and is capped at `PHOTO_MAX_EDGE` (2000px) on the way in.
 
-**The camera needs the native side.** "Take photo" opens an in-app `getUserMedia` viewfinder
-(`openCamera()`) so a rep can shoot a burst; iOS's `<input capture>` sheet closes after one
-frame, and that input is now only the fallback. Three things gate it and all live outside the
-HTML: `INFOPLIST_KEY_NSCameraUsageDescription` (without it iOS kills the app the moment the
-camera is touched), `requestMediaCapturePermissionFor` in `WebView.swift` (without it WKWebView
-auto-denies `getUserMedia`), and `mediaTypesRequiringUserActionForPlayback = []` (without it the
-preview stays black). **The simulator has no camera at all** — this path can only be tested on a
-real iPad.
+**Photos page** (PHOTO MARKUP PAGE banner): photo slots are fixed (no auto-reflow across pages), one painter
+(`paintPhotoMark`) serves the card and the PDF, card canvases cover only their on-screen window, the eraser only
+touches ink, and the camera needs native-side support (no simulator camera). **Before touching anything on the
+Photos page — layout, zoom, marks, tools, text/callouts, camera — read `docs/claude/photos-page.md`.**
 
-**Photo pane layout.** The Photos page is the PDF's photo pages: one `.photo-sheet` per printed
-page. Every photo has a fixed slot: `P.meta.photoPages = [{n:1..4, ids:[id|null]}]` (shared),
-page order = print order, a null slot prints blank. A drop swaps two slots (`swapPhotoSlots()`)
-and nothing else moves — deliberately, the rep asked for no auto-reflow across pages. Unplaced
-photos (new, or older saves) are appended at `P.meta.photoLayout` per page (the "All pages"
-picker, unset = 4, which also repaginates everything). Always read pages through
-`photoPagePlan()` (it normalizes stale ids/empty pages), write via `commitPhotoPages()`.
-`photoSlotRects()` gives the slot rects — `renderPhotos()` scales them onto the sheets and
-`buildEstimateHTML()` prints them.
-Each photo is contain-fit into its slot, as the PDF's `img` is. Reorder is the numbered grip
-(`photoDragStart()` → `movePhoto()`), per-photo clear/remove live in its ⋯ menu.
-Sheets are one column wide (`photoSheetMetrics()` splits the pane into ~560px columns), so
-`#photoScroll` needs `scrollbar-gutter:stable` — `renderPhotos()` measures
-after clearing the pane, and without a reserved gutter it sizes columns a scrollbar too wide and
-the last one wraps. Marks are stored against a 520px preview (`PHOTO_REF_W`); every renderer
-scales by `cw/PHOTO_REF_W` via `photoStrokePx()`/`photoTextPx()`. The left rail belongs to the
-Diagram page; `setPage()` parks it on Photos/PDF View and restores the rep's choice on the way
-back.
-
-**Photo page zoom** (`photoZoom`, 0.1–16×, session only) is one zoom for all the sheets, not a zoom inside each
-photo. The sheets are always ONE column, top to bottom (the rep asked: pages on a table, one below the next — never
-regridded into the corner when zoomed out); 100% = one sheet as wide as the pane, and `#photoPages`' auto margins
-centre it while narrower. Nothing scales at paint time: marks size off `cw`, so zooming is `renderPhotos()` laying the
-sheets out at `photoCardW` = fit width × zoom. Small cards shed chrome (`pc-tight` < 170px, `pc-tiny` < 90px, short
-captions). A pinch (capture-phase pointers on `#photoScroll`, so it can span two photos) or ctrl+wheel previews with a
-CSS transform and lays out on release, re-finding the sheet under the fingers (`photoAnchorAt()`) to set the scroll.
-A rebuild can land mid-line, so `photoLine` redraws through `photoRedraws`, never a card's closure.
-**A card's canvas covers only its on-screen window.** The card div holds the size (cw+2 with its 1px border); the
-canvas is absolutely placed at `win` {x,y,w,h} in card px and `redrawPhoto()` paints through a `-win` transform, so a
-16× card (~10000×8000) never needs a canvas iOS won't allocate. `card._view(vp)` (from `photoPlaceControls()`, on every
-scroll and layout) gives cards ≤ `PHOTO_CANVAS_FULL` px all of themselves, bigger ones what's visible padded half a
-screen, and releases (1×1) cards over two screens away. Pointer → image coords (`pos()`) and the text editor's origin
-come from the card's rect, never the canvas's. Size against `cw`, never `cv.width`.
-
-**Photo mark schema** (`P.photos[i].strokes[]`, normalized 0..1 image coords, see the banner
-comment at PHOTO MARKUP PAGE for the full table): every mark has `id` (from `uid()`) and
-`opacity`. `pen`/`highlight`/`line` keep freehand/polyline `pts`; `rect`/`ellipse`/`polygon`/
-`arrow` also carry `pts` (two drag corners, or `[tail,head]` for an arrow, or a closed ring for a
-polygon) plus `fill`/`dash`/`heads` as applicable. A `text` mark (callout or plain) uses the
-shared TEXT BOX fields above, plus an optional `tip` — the point a leader line points at, i.e. a
-callout. **`ensurePhotoMarks(ph)`** is the migration hook (called from `absorbPhotoBlobs()` on
-load and defensively at the top of `renderPhotos()`): it back-fills `type`/`id`/`opacity` on
-legacy marks and migrates legacy prompt()-authored text to the shared fields. After it runs, no
-reader needs a `||` fallback — don't add new ones.
-
-**One painter for every mark, on screen and in the PDF.** `paintPhotoMark(ctx,st,cw,chh)` is
-called from both `drawPhotoMarks()` (the live card) and `photoSnapshot()` (the full-res PDF
-flatten) — `cw` is the card's on-screen width or `ph.w` in the PDF; everything else scales off
-it. Pen/highlight strokes are smoothed at render time (`paintSmoothPath`, `quadraticCurveTo`
-through segment midpoints) — the stored points stay a raw polyline, this is paint-only.
-Arrowheads (`paintArrowShaft`) are filled triangles sized from the stroke width. Selection
-chrome (bbox handles, vertex dots, the marquee) is NOT in `paintPhotoMark` — it's drawn
-separately in `renderPhotos()`'s per-card `redrawPhoto()`, same split as the Diagram's
-`drawScene()`/`draw()`.
-
-**Photo tools** live in `photoTool` (`select|pen|highlight|line|rect|ellipse|arrow|polygon|
-text|callout|eraser`), each with its own remembered style in `photoToolStyle[tool]` (line/rect/ellipse/polygon share the toolbar's one Shapes button, `#ptShapes` + `#ptShapesMenu`) (or
-`photoTextStyle` for text/callout) so switching tools doesn't clobber another tool's width/
-opacity. `#photoOptbar` (`buildPhotoOptbar()`/`wirePhotoOptbar()`) is the Photos equivalent of
-the Diagram's `buildOptbar()`/`#optbar` — contextual per-tool controls that, with a mark
-selected, edit *that mark* live instead of the tool's defaults (`photoOptTarget()` resolves
-which). A freshly drawn rect/ellipse/arrow/polygon/callout **stays selected** while its tool
-remains active (`photoSelMarks` holds it); a pointerdown on one of its handles
-(`photoHandleHit()`) reshapes it, any other pointerdown releases it and starts a new mark. Handle
-reshaping is deliberately single-selection only — see the comment at `scaleMarkByHandle()`. The
-5-chip palette (`photoPalette()`, persisted in `P.meta.photoPalette`) is shared by every tool's
-stroke/fill/text color; long-press or right-click a chip to redefine it.
-
-**The eraser only touches ink.** `photoEraseAt()` (ported from the Diagram's
-`eraseStrokesAt()`) splits `pen`/`highlight` strokes into surviving runs and leaves every other
-mark type untouched, so scrubbing out a stray scribble can't delete a carefully placed arrow.
-Shapes, lines, text and callouts are removed with Select → Delete.
-
-**Native bridge.** `geNative(name)` returns a `webkit.messageHandlers` handler or `null`, so the
-same code runs in a plain browser and in the app. `gutterPdfImport` ({id,data:base64,maxEdge}) →
-PDFKit renders each page to JPEG and calls back `pdfImportPage()`/`pdfImportDone()`/`pdfImportFailed()`
-(DOCUMENT IMPORT banner); a browser has no PDF rasterizer, so there only images import. `gutterSave` → iOS share sheet; `gutterPdf`
-(`build`/`frame`/`hide`/`show`/`share`/`print`) → native pagination into a real PDF shown in a
-`PDFView` laid over the PDF View tab's `#pdfHost`, with Share/Print sending that same PDF data. The
-overlay sits above ALL web content, so anything modal on that tab must `hide` it first. Handlers
-are registered in `WebView.swift`; both sides must change together.
-
-**Signatures** (`P.meta.signatures`, shared across options; see the SIGNATURES banner) are vector
-ink signed on a white pad in `openSignModal()`. `build` carries `sigs` (each with a web-rendered
-`sigCardPNG()`), and native stamps them on as `SignatureAnnotation`s the rep can press-and-hold to
-drag, even across pages. Native reports every landing spot back through `pdfSigMoved(id,page,x,y)`
-(PDF points, top-left origin). Custom annotations aren't serialized, so Share/Print use
-`exportData()`, which redraws the pages flattened. Signatures stay out of undo: `restore()` carries
-them across the `P.meta` swap. The card (`SIG_W`×`SIG_H`, 170×44pt) is sized to fit the band under
-page 1's footer. In the native PDF that footer ends at ~735pt of 792 on every job, because the diagram
-box absorbs page 1's slack. New signatures land there (`SIG_FOOT_Y`). Changing page 1's layout means
-re-measuring that band with the simulator harness.
+**Native bridge + signatures.** `geNative(name)` returns a `webkit.messageHandlers` handler or `null`; handlers
+are registered in `WebView.swift` and **both sides must change together**. The native PDF overlay sits above ALL
+web content, so anything modal on PDF View must `hide` it first. **Before touching the native bridge, PDF
+import/export, PDF View, signatures or page 1's legend/summary, read `docs/claude/pdf-native.md`.**
 
 **The PDF diagram is vector.** `diagramSVG()` replays `drawScene()` into `makeSvgCtx()`, a recorder
 that turns the 2D-context calls RENDERING uses into SVG. Put job content in `drawScene()` (it prints)
@@ -322,51 +198,14 @@ which `#photoStage` also sits inside), just computing its screen rect differentl
 **synchronously inside the pointer-up** that created or tapped the box, or iOS won't raise the
 keyboard.
 
-**Plan underlay + extra pages** (DOCUMENT IMPORT banner). Both store their images in the
-photo blob store by id, like photos. `{t:"underlay",img,x,y,w,h,opacity,print,hidden,pageIn,scale,check,lastFps}`
-is one per **sheet** — several plan pages can share one canvas (`plansOf()`; `planOf()` is the sheet Plan
-mode is editing, `planCur`) — per option; it's skipped by the takeoff, by marquee, and by hit testing — it's only edited in
-**Plan mode** (top bar's Plan button → `enterPlanMode()`/`exitPlanMode()`, `#planPanel`, which routes
-canvas pointers to `planDown`/`planMoveEvt`/`planUp` and hides the dock/optbar via `body.plan-mode`).
-The scale is an object on the plan: `scale` = `{mode:"line",a,b,ft}` (a dimension line, ends as
-plan-local `{u,v}` fractions of the plan's width, so they ride with the sheet) or
-`{mode:"ratio",ftPerIn,label}` (needs `pageIn`, the PDF page size, sent by `gutterPdfImport`).
-**`fpsAt(w)` is the scale reader**: the scaled sheet under the point (hidden sheets included), else
-`drawingFps()` — the first scaled sheet (`planFps()`) or `settings.feetPerSquare`. Never copy a plan's scale
-into settings. **Each sheet keeps its own scale**: a segment measures at the sheet under its midpoint
-(`segFps()`), so the same drawn length reads differently on a 1/8" and a 1/4" sheet. `autoLen`, `pathFeetRaw`
-and `feetToWorld(ft,at)` all go through it — don't measure with a bare `drawingFps()`. Moving a sheet carries
-what's traced on it (`overSheet()`: bounds center on the sheet) and the PDF frames over it; PDF pages' "Page per
-sheet" frames each one. Plan points never snap to
-the grid. Stored run lengths don't follow a scale change, so `commitPlanScale()` re-measures segments whose
-scale moved (`segFps(a,b,[sheet,o.lastFps])` vs now) that still equal their old auto length, and keeps hand-typed ones. `normalizePlanWorld()` resizes
-the sheets (while nothing else is drawn) to 2 ft/square on Done (camera-compensated) so symbols aren't out of proportion. `print:false`
-draws from `draw()` and `objBounds()` returns null for it, so it neither prints nor stretches the PDF
-fit. `print:true` draws inside `drawScene()`, which is why the recorder has `drawImage`. Scale/check
-lines and the loupe are `draw()` chrome only. The same loupe (`drawPlanLoupe`) magnifies under the finger while the
-Gutter tool draws or a gutter corner is dragged (`drawTraceLoupe()`, gated by `tracePress`/`vertexDrag` +
-`settings.gutterLoupe` — off for plain drawings, on for plans: a plan import switches it on, removing the
-last plan switches it off, and `applyLoaded()` sets it from whether a job has a plan when the save predates
-the key; renamed from `planLoupe`, whose old default of true was saved into jobs). Over a
-plan it re-draws the plan image; elsewhere it copies the canvas as painted so far, so it's called late in `draw()`. Finger-riding chrome
-(the length chip, loupes) stays inside `canvasClearRect()` — the canvas minus dock, options bar, Plan panel. `settings.tapDraw`
-(point-by-point drawing, touch only; a new plan turns it on) keeps a touch run open across lifts — each lift
-commits a corner, ✓ Finish run (`drawBar`) or closing on its own start ends it — via `drawing.tap`/`tapPress`. `P.meta.extraPages` (shared, carried over by **New**) print as full
-pages just before the customer info page. `serialize(true)` embeds both under `blobs`, and
-`extraBlobIds()` keeps `idbGC()` from deleting them at startup. Add any new blob-backed field there.
+**Plan underlay + extra pages** (DOCUMENT IMPORT banner). Measure only through `fpsAt()`/`segFps()` (`autoLen`,
+`pathFeetRaw`, `feetToWorld(ft,at)`) — never a bare `drawingFps()`, and never copy a plan's scale into settings.
+Any new blob-backed field must go in `extraBlobIds()` or `idbGC()` deletes it at startup. **Before touching plans,
+Plan mode, scales, the trace loupe, tap-draw or extra pages, read `docs/claude/plans.md`.**
 
-**Profile, settings, legend.** The rep's name/phone/e-mail live in `localStorage["primeGutterProfile"]`,
-not the job. `applyProfile()` fills only blank salesperson fields. `repLine()` builds "Prepared by"
-for both `buildEstimateHTML` and `pdfBoxFor`'s height model. The ⚙ Settings modal holds profile,
-takeoff rules and drawing settings, written to every option. The Pricing tab holds money only. Don't
-put a setting in both places. The legend (`legendItems()`/`legendHTML()`) is an HTML overlay, both on
-the stage (`#diagLegend`) and in the PDF's `.dg` box, so it costs no `pdfBoxFor` height. Page 1's Job summary
-cards show footage + the quoted style(s) on one nowrap line — it must not grow past `PDFL.summary`. Page 1's
-legend placement is per option (`P.pres.legend` {x,y,s}: fractions of the box's free space + scale,
-`legendPlaceStyle()`). The native PDFView can't host draggable HTML, so PDF View's ◳ Legend opens
-`openLegendArranger()`, which replays the diagram box with that same CSS. Text boxes
-scale from their corners (size and width together) and set width from their sides. The job details
-quiz writes a normal `{t:"text",quiz:true}` box.
+**Profile vs settings vs pricing.** The rep's name/phone/e-mail are device-wide (`localStorage["primeGutterProfile"]`),
+not in the job. The ⚙ Settings modal holds profile, takeoff rules and drawing settings, written to every option; the
+Pricing tab holds money only. Don't put a setting in both places.
 
 ## Conventions
 

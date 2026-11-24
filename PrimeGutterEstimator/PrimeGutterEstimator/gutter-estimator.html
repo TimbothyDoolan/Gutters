@@ -490,10 +490,17 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
    wide, and the last column wraps — putting back the dead strip this layout exists to remove.
    On iOS scrollbars are overlays, so the gutter costs nothing there. */
 /* The sheets are one column, top to bottom, like pages laid on a table one below the next, at any zoom: the rep
-   asked that zooming out not regrid them into the top-left corner. #photoPages is one sheet wide; the auto
-   margins centre it while it's narrower than the pane and resolve to 0 once it's wider, so it pans from the left. */
+   asked that zooming out not regrid them into the top-left corner. #photoPages is one sheet wide, inside #photoTable,
+   whose padding (renderPhotos(), PHOTO_PAN_KEEP) is almost a screen each way: the pages are always scrollable, so a pan
+   or pinch leaves them where the rep let go. Without it a zoomed-out stack had nothing to scroll and clamped back to
+   the centre on every release — the rep found that jarring. */
+#photoTable{flex:none;margin:0 auto}
 #photoPages{flex:none;display:flex;flex-direction:column;margin:0 auto;transform-origin:0 0}
-#photoScroll{flex:1;overflow:auto;scrollbar-gutter:stable;background:#9aa6b1;padding:18px;display:flex;align-items:flex-start;touch-action:pan-x pan-y}
+/* touch-action:none, and the one-finger pan is JS (wirePhotoZoom): with pan-x pan-y only the canvases were
+   none, so a finger on the grey table or a sheet's margin let iOS start a native scroll mid-pinch — it
+   cancelled that finger (the pinch ended early, at whatever size it had reached) and scrolled under the
+   CSS preview, so a pinch acted differently depending on where the fingers landed. */
+#photoScroll{flex:1;overflow:auto;scrollbar-gutter:stable;background:#9aa6b1;padding:18px;display:flex;align-items:flex-start;touch-action:none}
 /* One .photo-sheet per printed photo page, slots at the PDF's own rects (photoSlotRects) scaled by
    sheet width, so what the rep arranges here is what the customer gets. */
 .photo-sheet-wrap{display:flex;flex-direction:column;gap:6px}
@@ -610,6 +617,13 @@ body.plan-mode #hint{left:calc((100% - 352px)/2)}
 .pe-comp{border:1px solid var(--line);border-radius:9px;padding:10px 10px 2px;margin-bottom:9px;background:#fafbfc}
 .pe-comp-h{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:12.5px;margin-bottom:7px}
 .pe-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+/* one formula: "Every [2] [ft] add [1] [Hanger] ✕" — wraps onto two lines on a narrow editor */
+.pe-fx{display:flex;flex-wrap:wrap;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;padding:8px 9px;margin-bottom:7px;background:#fafbfc;font-size:12.5px;font-weight:700}
+.pe-fx input,.pe-fx select{padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--field);color:var(--text);font:inherit;min-height:36px}
+.pe-fx input{width:64px}
+.pe-fx select{flex:1;min-width:110px}
+.pe-fx .pe-fx-per{flex:none;min-width:0;width:auto}
+.pe-fx .pe-fx-u{color:var(--steel-2);font-weight:600}
 .pe-empty{color:var(--text-soft);text-align:center;margin-top:40px;font-weight:600;line-height:1.6}
 @media (hover:hover){
   .pk-row:hover,.pk-kid:hover{background:#f3f6f9}
@@ -1194,6 +1208,45 @@ function sameProductId(a,b){ return a!=null && b!=null && String(a)===String(b);
 // unique across devices: a job saved on one iPad must not collide with another iPad's products
 function newProductId(){ return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
+/* ---- product formulas: "every N <unit> of this product, add M of that one" ----
+   A product's formulas (p.formulas = [{id,per,every,add,qty}]) are BOOK data like its price: a job
+   copies them into settings.formulas[productId] the first time ensurePrices() meets the product and
+   keeps that copy, so editing a formula later never silently changes a quote already given — the
+   rep asked for that. applyPriceBook / the per-item ⇣ (bookKeyInto) push the book's copy.
+   compute() counts each formula PER RUN (each gutter run, downspout, custom run, highlight stroke),
+   rounding the "every N" up within the run: 5' runs at "every 2 ft" get 3 each, as a crew hangs them.
+   Items and typed services have no runs, so they count over the job. One level only: what a formula
+   adds never triggers the added product's own formulas (no chains, so no loops). */
+const FORMULA_PER={ft:["ft","ft"],corner:["corner","corners"],endcap:["end cap","end caps"],run:["run","runs"],
+  downspout:["downspout","downspouts"],elbow:["elbow","elbows"],outlet:["outlet","outlets"],each:["of these","of these"],hour:["hour","hours"]};
+// the units a product can be counted in — empty = it can't carry formulas
+function formulaPers(p){
+  if(!p) return [];
+  if(p.kind==="gutter") return ["ft","corner","endcap","run"];
+  if(p.kind==="downspout") return ["ft","downspout","elbow","outlet"];
+  if(p.kind==="screen" || p.fixed==="demo") return ["ft"];
+  if(p.fixed || p.kind==="part") return [];
+  const m=productMode(p);
+  if(m==="flat"||m==="item") return ["each"];
+  if(m==="hour") return ["hour"];
+  if(strokeMode(p)) return ["ft"];
+  return p.kind==="line" ? ["ft","corner","run"] : [];
+}
+// what a formula can add: anything billed on one price key — not a gutter/downspout (they bring parts)
+function formulaCanAdd(p){ return !!p && !p.fixed && ["item","line","service","screen"].includes(p.kind); }
+function normFormula(f){
+  return {id:String(f.id||newProductId()), per:FORMULA_PER[f.per]?f.per:"ft",
+    every:Math.max(.01,+f.every||1), add:f.add==null?"":String(f.add), qty:Math.max(0,+f.qty||0)};
+}
+const formulasOf=p=>((p&&p.formulas)||[]).map(normFormula);
+// a product's formulas in one option's settings, as the job froze them
+function jobFormulas(s,pid){ return ((s.formulas||{})[pid]||[]); }
+function formulaInto(s,p){ if(formulaPers(p).length){ s.formulas=s.formulas||{}; s.formulas[p.id]=formulasOf(p); } }
+function formulaDrifts(s,p){
+  if(!p || !formulaPers(p).length) return false;
+  return JSON.stringify(jobFormulas(s,p.id).map(normFormula))!==JSON.stringify(formulasOf(p));
+}
+
 /* ============================================================ */
 /* STATE                                                        */
 /* ============================================================ */
@@ -1491,6 +1544,10 @@ function ensurePrices(){
   for(const k in BOOK){ if(p[k]==null) p[k]=BOOK[k].price; }
   // anything not seeded yet defaults to 0
   PRICE_KEYS.forEach(k=>{ if(p[k]==null) p[k]=0; });
+  // formulas freeze like prices: a product the job meets for the first time takes the book's (even an
+  // empty list, so a formula added to the book later doesn't reach a job already quoted without it)
+  if(!s.formulas || typeof s.formulas!=="object") s.formulas={};
+  for(const pr of CATALOG.products) if(s.formulas[pr.id]==null && formulaPers(pr).length) s.formulas[pr.id]=formulasOf(pr);
 
   // --- discount baselines ---------------------------------------------------
   // List $/ft seeds from whatever rate the job is already using (NOT from the book's list),
@@ -2195,11 +2252,16 @@ function compute(){
   const dsRaw={};   // downspout pipe footage by size|color, before 10ft rounding
   let demoRaw=0;                       // raw demo highlight footage (rounded up to whole ft after loop)
   const screenRaw={};                  // raw gutter-screen footage by type (rounded up to mult of 4)
+  // product formulas: one measure set per run ({ft,corner,…}), counted after the loop (junction miters
+  // join their run first); items and typed services pool into one job-wide set per product
+  const fRuns=[], fRunOf=new Map(), fJob={};
+  const fRun=(pid,m,o)=>{ const r={pid,m}; fRuns.push(r); if(o) fRunOf.set(o,r); };
+  const fPool=(pid,per,n)=>{ const m=fJob[pid]=fJob[pid]||{}; m[per]=(m[per]||0)+n; };
 
   for(const o of P.objects){
     if(isExisting(o)) continue;   // the homeowner's existing system: drawn for context, never billed
     if(o.t==="gutter"){
-      const ft=(o.lengths||[]).reduce((a,b)=>a+(+b||0),0);
+      const ft=runFt(o);
       const gs=gutterStyle(gutterSizeFor(o));
       q[gs.priceKey]+=ft;
       // corners
@@ -2215,12 +2277,14 @@ function compute(){
       let caps=0;
       for(let i=0;i<2;i++){ if(fe[i] && cm[i]!==false) caps++; }
       q[gs.endKey]+=caps;
+      fRun(gs.id,{ft,corner:cs.length,endcap:caps,run:1},o);
     } else if(o.t==="ds"){
       const d=parseDS(o.notation);
       const ds=dsStyle(dsSizeFor(o));
       const colorName=o.color||s.downspoutColor;
       dsRaw[ds.id+"|"+colorName]=(dsRaw[ds.id+"|"+colorName]||0)+d.feet;  // raw pipe, rounded after loop
       q[ds.elbowKey]+=d.elbows; q[ds.offsetKey]+=d.offsets; q[ds.outletKey]+=d.outlets;
+      fRun(ds.id,{ft:d.feet,downspout:1,elbow:d.elbows,outlet:d.outlets});
     } else if(o.t==="valley"){
       q.valley++;
     } else if(o.t==="splash"){
@@ -2234,16 +2298,21 @@ function compute(){
       const raw = (o.stroke||mode!=="line") ? pathFeetRaw(o.pts) : (o.lengths||[]).reduce((a,b)=>a+(+b||0),0);
       customAgg[pid]=customAgg[pid]||newCustomAgg(pid,prod,o,mode);
       customAgg[pid].rawFeet+=raw;
+      if(prod) fRun(prod.id,{ft:raw,corner:(o.stroke||mode!=="line")?0:Math.max(0,(o.pts||[]).length-2),run:1});
     } else if(o.t==="item"){
       const prod=productOf(o.productId);
       const pid=o.productId||"_";
       customAgg[pid]=customAgg[pid]||newCustomAgg(pid,prod,o,"item");
       customAgg[pid].count++;                      // items are counted, not measured
+      if(prod) fPool(prod.id,"each",1);
     } else if(o.t==="demo"){
-      demoRaw += pathFeetRaw(o.pts);
+      const f=pathFeetRaw(o.pts);
+      demoRaw += f;
+      fRun("demo",{ft:f});
     } else if(o.t==="screen"){
-      const ty=o.screenType||"ez";
-      screenRaw[ty]=(screenRaw[ty]||0)+pathFeetRaw(o.pts);
+      const ty=o.screenType||"ez", f=pathFeetRaw(o.pts);
+      screenRaw[ty]=(screenRaw[ty]||0)+f;
+      fRun(ty,{ft:f});
     }
   }
   // corners where separate runs meet — outside the per-object loop, they belong to no one run
@@ -2252,6 +2321,34 @@ function compute(){
     const gms=gutterStyle(gutterSizeFor(c.run));
     q[c.bay?gms.bayKey:gms.stripKey]++;
     if(c.acute) q.acute++;
+    const fr=fRunOf.get(c.run); if(fr) fr.m.corner++;   // a junction miter counts toward the run it's billed to
+  }
+  // typed flat / hourly services: their quantity is the job's, so they count once, over the job
+  for(const prod of CATALOG.products){
+    if(prod.kind!=="service" || (prod.mode!=="flat" && prod.mode!=="hour")) continue;
+    const qty=+s.qty[prod.priceKey]||0; if(qty) fPool(prod.id,prod.mode==="hour"?"hour":"each",qty);
+  }
+  // apply them: every N <per> (rounded up within the run) adds qty of the target, at the target's job price
+  const fAdd={};
+  const fApply=(pid,m)=>{
+    for(const f of jobFormulas(s,pid)){
+      const base=+m[f.per]||0, every=+f.every||0, n=+f.qty||0;
+      if(base<=0 || every<=0 || n<=0 || f.add==="") continue;
+      fAdd[f.add]=(fAdd[f.add]||0)+Math.ceil(base/every-1e-9)*n;
+    }
+  };
+  fRuns.forEach(r=>fApply(r.pid,r.m));
+  for(const pid in fJob) fApply(pid,fJob[pid]);
+  const fSvc={};   // formula qty for typed services, added to what was typed below
+  for(const tid in fAdd){
+    const prod=productOf(tid), n=fAdd[tid];
+    if(!formulaCanAdd(prod)) continue;   // deleted, or changed into something a formula can't add
+    if(prod.kind==="screen"){ screenRaw[prod.id]=(screenRaw[prod.id]||0)+n; continue; }
+    const m=productMode(prod);
+    if(prod.kind==="service" && (m==="flat"||m==="hour")){ fSvc[prod.id]=n; continue; }
+    const mode=m==="item"?"item":strokeMode(prod)?"stroke":"line";
+    const a=customAgg[prod.id]=customAgg[prod.id]||newCustomAgg(prod.id,prod,{},mode);
+    if(a.mode==="item") a.count+=n; else a.rawFeet+=n;
   }
   // custom product rows + total cost (stroke-mode products round their aggregate footage).
   // Every row carries qty+unit so materialList() and the worksheet can print "ea" or "ft" without
@@ -2270,7 +2367,7 @@ function compute(){
   const serviceRows=aggRows.filter(c=>c.kind==="service");
   for(const prod of CATALOG.products){
     if(prod.kind!=="service" || (prod.mode!=="flat" && prod.mode!=="hour")) continue;
-    const qty=+s.qty[prod.priceKey]||0; if(!qty) continue;
+    const qty=(+s.qty[prod.priceKey]||0)+(fSvc[prod.id]||0); if(!qty) continue;
     const rate=+s.prices[prod.priceKey]||0;
     serviceRows.push({id:prod.id,kind:"service",name:prod.name,rate,color:prod.color||"",mode:prod.mode,feet:0,qty,unit:prod.mode==="hour"?"hr":"ea",amount:qty*rate});
   }
@@ -2362,6 +2459,14 @@ function compute(){
 
 function money(n){ return "$"+(Math.round((+n||0)*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function ftStr(n){ n=+n||0; return (Math.round(n*10)/10)+"'"; }
+/* Gutter is billed by the whole foot: every segment rounds UP (10.5' -> 11'), since each piece is cut
+   whole. Done when lengths are READ, not stored: measurements and old saves keep their precision,
+   and a typed length still resizes the drawing exactly (storing the round-up stretched it 6"). The
+   chips, compute() and materialList() all read through here so the diagram and the estimate agree.
+   Gutter only — custom runs and downspouts keep their own rounding. */
+function gutSegFt(v){ if(v===""||v==null) return v; const n=+v||0; return n>0 ? Math.ceil(n-1e-6) : 0; }
+function segFt(o,i){ const v=(o.lengths||[])[i]; return o.t==="gutter" ? gutSegFt(v) : v; }
+function runFt(o){ let f=0; for(let i=0;i<(o.lengths||[]).length;i++) f+=+segFt(o,i)||0; return f; }
 // a service row's quantity as printed: 24' / 3 ea / 2.5 hr
 function svcQtyStr(r){ return r.unit==="ft" ? ftStr(r.qty) : r1(r.qty)+" "+r.unit; }
 // ISO yyyy-mm-dd -> "Month D, YYYY" (parsed by parts to avoid UTC off-by-one)
@@ -2400,7 +2505,7 @@ function materialList(){
       const colorName=o.color||s.gutterColor;
       const brand=effBrand(o);                          // per-object brand (falls back to job)
       const k=brand+"|"+colorName;
-      const ft=(o.lengths||[]).reduce((a,b)=>a+(+b||0),0);
+      const ft=runFt(o);
       add(gut,size+"|"+k,{item:"Gutter "+size,unit:"ft",color:colorName,brand}).qty+=ft;
       const gms=gutterStyle(gutterSizeFor(o));
       for(const c of runCorners(o,fronts)){
@@ -2820,7 +2925,7 @@ function drawGutter(o){
   for(let i=0;i<o.pts.length-1;i++){
     const a=pts[i], b=pts[i+1];
     const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
-    const ft=o.lengths[i];
+    const ft=segFt(o,i);
     const txt=(ft==null||ft==="")?"+":(ftStr(ft));
     const empty=(ft==null||ft==="");
     const _sz=chipPx(12);
@@ -2845,7 +2950,7 @@ function drawExistingGutter(o,pts,isSel){
   for(let i=0;i<o.pts.length-1;i++){
     const a=pts[i], b=pts[i+1];
     const d=Math.hypot(b.x-a.x,b.y-a.y); if(d>best){ best=d; longest=i; }
-    const ft=o.lengths[i], empty=(ft==null||ft==="");
+    const ft=segFt(o,i), empty=(ft==null||ft==="");
     const _sz=chipPx(12), txt=empty?"+":ftStr(ft);
     const opt={size:_sz,pad:Math.max(2,_sz*0.42),bold:true,bg:"#fff",fg:"#5d6a78",bc:EXISTING_COL,bw:1};
     const box=segChip(o,i,(a.x+b.x)/2,(a.y+b.y)/2,txt,opt,segBackOffset(o,i,txt,opt,gpx(4)/2));
@@ -3481,8 +3586,9 @@ function diagramSVG(frame){
 function liveLengthChip(){
   if(!P.settings.autoMeasure || !cursorW || !drawing || drawing.pts.length<1) return;
   const pts=drawing.pts, last=pts[pts.length-1];
-  const ft=autoLen(last,cursorW); if(!(ft>0)) return;
-  let run=ft; for(let i=0;i<pts.length-1;i++) run+=autoLen(pts[i],pts[i+1]);
+  const g=drawing.t==="gutter" ? gutSegFt : (x=>x);   // a gutter reads in the whole feet it will bill
+  const ft=g(autoLen(last,cursorW)); if(!(ft>0)) return;
+  let run=ft; for(let i=0;i<pts.length-1;i++) run+=g(autoLen(pts[i],pts[i+1]));
   const txt=ftStr(ft)+(pts.length>1?"  ·  run "+ftStr(run):"");
   chipAbovePointer(txt, worldToScreen(cursorW));
 }
@@ -3522,7 +3628,7 @@ function vertexDragSegs(o){
 function vertexDragChip(){
   const segs=vertexDragSegs(); if(!segs.length) return;
   const v=vertexDrag.o;
-  chipAbovePointer(segs.map(i=>ftStr(v.lengths[i])).join("  ·  "), worldToScreen(v.pts[vertexDrag.idx]));
+  chipAbovePointer(segs.map(i=>ftStr(segFt(v,i))).join("  ·  "), worldToScreen(v.pts[vertexDrag.idx]));
 }
 function drawInProgress(){
   if(!drawing) return;
@@ -5833,7 +5939,7 @@ function openEditorFor(hit){
     field.value=(o.lengths[hit.seg]===""||o.lengths[hit.seg]==null)?"":o.lengths[hit.seg];
     field.placeholder="ft";
     field.style.width="74px"; field.style.textAlign="center";
-    hintTxt="Length (ft) — Enter for next";
+    hintTxt="Length (ft)"+(o.t==="gutter"?", billed rounded up to the whole ft":"")+" — Enter for next";
   } else if(hit.kind==="dsnote"){
     field=document.createElement("input");
     field.type="text"; field.inputMode="none"; field.value=o.notation||"";
@@ -6354,6 +6460,9 @@ function buildJobPane(){
   h+=`<div class="fld"><label>Gutter color</label><div class="colorsel"><span class="swatch" id="swGut" style="background:${colorHex(P.settings.gutterColor,gutterBrand())}"></span><select id="jiGutColor" aria-label="Gutter color">${colorOptions(P.settings.gutterColor,gutterBrand())}</select></div></div>`;
   h+=`<div class="fld"><label>Downspout brand</label><select id="jiDsBrand" aria-label="Downspout brand">${brandOpts(downspoutBrand())}</select></div>`;
   h+=`<div class="fld"><label>Downspout color</label><div class="colorsel"><span class="swatch" id="swDs" style="background:${colorHex(P.settings.downspoutColor,downspoutBrand())}"></span><select id="jiDsColor" aria-label="Downspout color">${colorOptions(P.settings.downspoutColor,downspoutBrand())}</select></div></div>`;
+  // Options are usually the same house in different styles, so a color picked on one belongs on all of them;
+  // colors live in each option's settings, so without this the rep re-picked four selects per tab.
+  if(OPTIONS.length>1) h+=`<div class="fld"><button class="btn-sm" id="jiColorsAll">Use these colors in all ${OPTIONS.length} options</button></div>`;
   h+=infoNote("colors","About brands and colors",`Pick Spectra, ABC or Senox independently for gutters and downspouts — the proposal shows the matching color chart(s). Individual downspouts can override the color via Select or the Downspout tool.`);
   const multi=OPTIONS.length>1 && OPTIONS[activeOpt];
   h+=`<div class="sec-h">PDF notes &amp; terms${multi?" — "+esc(OPTIONS[activeOpt].name):""}</div>`;
@@ -6378,6 +6487,16 @@ function buildJobPane(){
   byId("jiDsBrand").onchange=e=>{ P.settings.downspoutBrand=e.target.value; const list=brandColorList(e.target.value); if(!list.some(c=>c.n===P.settings.downspoutColor)) P.settings.downspoutColor=list[0].n; buildJobPane(); refreshAll(); };
   byId("jiGutColor").onchange=e=>{ P.settings.gutterColor=e.target.value; byId("swGut").style.background=colorHex(e.target.value,gutterBrand()); refreshAll(); };
   byId("jiDsColor").onchange=e=>{ P.settings.downspoutColor=e.target.value; byId("swDs").style.background=colorHex(e.target.value,downspoutBrand()); refreshAll(); };
+  if(byId("jiColorsAll")) byId("jiColorsAll").onclick=()=>{
+    const s=P.settings, c={gutterBrand:gutterBrand(),gutterColor:s.gutterColor,downspoutBrand:downspoutBrand(),downspoutColor:s.downspoutColor};
+    uiConfirm("Use "+c.gutterBrand+" "+c.gutterColor+" gutters and "+c.downspoutBrand+" "+c.downspoutColor+" downspouts in all "+OPTIONS.length+" options?\n\nA run or downspout given its own color keeps it.",{ok:"Apply to all options"},()=>{
+      captureActive();
+      // job-level colors only: per-object overrides (Select → color) are the rep's deliberate exceptions
+      OPTIONS.forEach(o=>{ if(o.settings) Object.assign(o.settings,c); });
+      buildOptionsBar(); refreshAll(); scheduleSave();
+      setHint("Colors set in all "+OPTIONS.length+" options.");
+    });
+  };
   // Text commits on change WITHOUT rebuilding the pane: a rebuild on blur replaced the DOM
   // under the finger, so the tap that ended the edit never reached the field it was aimed at.
   const pane=byId("paneJob");
@@ -6649,6 +6768,7 @@ function productUsage(p){
     if(p.kind==="gutter" && st.gutterType===p.id) n++;
     if(p.kind==="downspout" && st.defaultDownspoutSize===p.id) n++;
     if(p.kind==="service" && +((st.qty||{})[p.priceKey])) n++;
+    for(const pid in (st.formulas||{})) for(const f of (st.formulas[pid]||[])) if(sameProductId(f.add,p.id) && +f.qty>0) n++;
     for(const x of (o.objects||[])){
       if(p.kind==="gutter" && x.t==="gutter" && x.size===p.id) n++;
       else if(p.kind==="downspout" && x.t==="ds" && x.size===p.id) n++;
@@ -6694,10 +6814,13 @@ function bookKeyInto(s,k){
   const p=s.prices=s.prices||{}, L=s.listPrices=s.listPrices||{}, M=s.minPrices=s.minPrices||{};
   p[k]=BOOK[k].price;
   if(STYLE_PRICE_KEYS.includes(k)){ L[k]=bookList(k); M[k]=BOOK[k].min; }
+  const pr=productOfKey(k); if(pr) formulaInto(s,pr);   // a product's own key carries its formulas
 }
+// a product's own key also drifts when the job froze older formulas for it — so the ⇣ / Apply prompts cover them
 function keyDrifts(s,k){
   if(!BOOK[k]) return false;
   if(cents((s.prices||{})[k])!==cents(BOOK[k].price)) return true;
+  if(formulaDrifts(s,productOfKey(k))) return true;
   return STYLE_PRICE_KEYS.includes(k) && cents((s.listPrices||{})[k])!==cents(bookList(k));
 }
 function bookInto(s){
@@ -6813,6 +6936,11 @@ function productKids(p){
     const rule = fixed ? "Fixed price" : "Follows "+c.follows+(c.allow?" ("+(+s[c.allow]||0)+" ft)":"");
     out.push({name, rule, price:priceCell(book,"ea", key!=null?s.prices[key]:null)});
   }
+  // formulas show under the product as what they add (the BOOK's — a job may have frozen older ones)
+  for(const f of formulasOf(p)){
+    const t=catalogProduct(f.add); if(!t||!(f.qty>0)) continue;
+    out.push({pid:t.id, name:"＋ "+r1(f.qty)+" × "+t.name, rule:"Formula: every "+r1(f.every)+" "+FORMULA_PER[f.per][f.every===1?0:1]});
+  }
   if(p.kind==="gutter"){
     (p.ds||[]).forEach(id=>{ const d=catalogProduct(id); if(d) out.push({pid:d.id, name:"Downspout "+(d.short||d.name)+(id===p.dsDefault?" — default":""), rule:d.hidden?"Hidden":"", price:priceCell(bookPrice(d.priceKey),"/ft",s.prices[d.priceKey])}); });
   }
@@ -6892,7 +7020,8 @@ function productEditorHTML(){
   }
   if(!draft && productBookKeys(p).some(k=>keyDrifts(s,k))){
     const own=!derived && s.prices[p.priceKey]!=null && cents(s.prices[p.priceKey])!==cents(bookPrice(p.priceKey));
-    h+=`<div class="note" style="margin:4px 0 6px">${own?`The open job charges <b>${money(s.prices[p.priceKey])}</b>.`:`The open job prices ${p.kind==="gutter"||p.kind==="downspout"?"this product or its parts":"it"} differently from the book.`}`
+    const fxOnly=!own && formulaDrifts(s,p) && !productBookKeys(p).some(k=>cents((s.prices||{})[k])!==cents(bookPrice(k)));
+    h+=`<div class="note" style="margin:4px 0 6px">${own?`The open job charges <b>${money(s.prices[p.priceKey])}</b>.`:fxOnly?`The open job uses older formulas for it.`:`The open job prices ${p.kind==="gutter"||p.kind==="downspout"?"this product or its parts":"it"} differently from the book.`}`
       + ` <button class="btn-sm" data-pe="applyone" style="margin-left:4px">⇣ Apply this product to the job</button></div>`;
   }
 
@@ -6929,6 +7058,26 @@ function productEditorHTML(){
       h+= m==="item" ? peField("Symbol (2–4 letters)","tag",p.tag,"text",'maxlength="4" style="text-transform:uppercase" placeholder="'+esc(productTag(p))+'"') : "<div></div>";
       h+=`</div>`;
     }
+  }
+
+  // ---- formulas
+  const pers=formulaPers(p);
+  if(pers.length){
+    const fs=p.formulas||[], targets=CATALOG.products.filter(t=>formulaCanAdd(t) && !sameProductId(t.id,p.id));
+    h+=`<div class="sec-h">Formulas</div>`;
+    h+=`<div class="note" style="margin-bottom:9px">Add another product automatically — e.g. every 2 ft, add 1 hanger. Counted ${pers[0]==="each"||pers[0]==="hour"?"over the job":"per run, rounded up"}, at the added product's price.${!targets.length?" Make an accessory, service or custom run to add first.":""}</div>`;
+    fs.forEach((f,i)=>{
+      f=normFormula(f);
+      const t=catalogProduct(f.add), u=t?productUnitLbl(t).replace("/",""):"";
+      const opts=targets.filter(x=>!x.hidden||sameProductId(x.id,f.add));
+      h+=`<div class="pe-fx" data-fx="${i}">Every <input type="number" data-fxf="every" value="${esc(peNum(f.every))}" step="any" min="0" inputmode="decimal">`
+        + `<select class="pe-fx-per" data-fxf="per">${pers.map(k=>`<option value="${k}" ${f.per===k?"selected":""}>${FORMULA_PER[k][+f.every===1?0:1]}</option>`).join("")}</select>`
+        + ` add <input type="number" data-fxf="qty" value="${esc(peNum(f.qty))}" step="any" min="0" inputmode="decimal">${u?`<span class="pe-fx-u">${esc(u)}</span>`:""}`
+        + `<select data-fxf="add"><option value="" ${t?"":"selected"}>Pick a product…</option>${opts.map(x=>`<option value="${esc(x.id)}" ${sameProductId(x.id,f.add)?"selected":""}>${esc(x.name)}</option>`).join("")}</select>`
+        + `<button class="btn-sm danger" data-fxdel="${i}" aria-label="Remove formula">✕</button></div>`;
+    });
+    if(targets.length) h+=`<div class="fld"><button class="btn-sm" data-pe="addfx">＋ Add formula</button></div>`;
+    if(!draft && formulaDrifts(s,p)) h+=`<div class="note" style="margin-bottom:6px">The open job still uses the formulas it was quoted with — <b>⇣ Apply this product to the job</b> above to use these.</div>`;
   }
 
   // ---- actions
@@ -7044,6 +7193,7 @@ function deleteProduct(p){
   uiConfirm('Delete "'+p.name+'" from your products?\n\nSaved jobs that use it keep their own copy.',{ok:"Delete product",danger:true},()=>{
     if(!CATALOG.products.includes(p) || productUsage(p)) return;
     CATALOG.products=CATALOG.products.filter(x=>x!==p);
+    CATALOG.products.forEach(x=>{ if(x.formulas) x.formulas=x.formulas.filter(f=>!sameProductId(f.add,p.id)); });   // no formula left adding nothing
     if(p.kind==="downspout") CATALOG.products.forEach(g=>{ if(g.kind==="gutter" && g.ds){ g.ds=g.ds.filter(id=>id!==p.id); if(g.dsDefault===p.id) g.dsDefault=g.ds[0]; } });
     if(sameProductId(activeCustom,p.id)){ activeCustom=null; setTool("gutter"); }
     prodSel=null;
@@ -7106,6 +7256,15 @@ function wireProductsPage(){
     commit();
   });
   ed.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ p.mode=b.dataset.mode; commit(); });
+  // formulas: edited in place on the book product (a job keeps its frozen copy until Apply)
+  ed.querySelectorAll("[data-fx] [data-fxf]").forEach(inp=>inp.onchange=()=>{
+    const i=+inp.closest("[data-fx]").dataset.fx, f=p&&p.formulas&&p.formulas[i]; if(!f) return;
+    const k=inp.dataset.fxf;
+    f[k] = (k==="per"||k==="add") ? inp.value : (k==="every" ? Math.max(.01,+inp.value||1) : Math.max(0,+inp.value||0));
+    p.formulas[i]=normFormula(f);
+    commit();
+  });
+  ed.querySelectorAll("[data-fxdel]").forEach(b=>b.onclick=()=>{ if(!p||!p.formulas) return; p.formulas.splice(+b.dataset.fxdel,1); commit(); });
   for(const c of [...COMPONENTS.gutter,...COMPONENTS.downspout]){
     ed.querySelectorAll(`[data-rule-${c.id}]`).forEach(b=>b.onclick=()=>{
       const v=b.getAttribute("data-rule-"+c.id);
@@ -7123,6 +7282,7 @@ function wireProductsPage(){
     else if(a==="dock") setOnDock(p,!onDock(p));
     else if(a==="draw"){ setPage("diagram"); setTool("custom:"+p.id); }
     else if(a==="applyone") applyBookKeys(productBookKeys(p));
+    else if(a==="addfx"){ p.formulas=(p.formulas||[]).concat(normFormula({per:formulaPers(p)[0],every:1,qty:1,add:""})); commit(); }
   });
 }
 byId("prodNew").onclick=()=>{ prodNew="pick"; prodDraft=null; prodSel=null; renderProductsPage(); };
@@ -9234,6 +9394,8 @@ function photoNeighborSwap(id,dir){
    while the pane is hidden. */
 const PHOTO_SHEET_TARGET=560, PHOTO_GAP=18, PHOTO_SHEET_PAD=24;
 let photoCardW=0;                  // sheet width laid out now (fit width x photoZoom)
+let photoPanPad={x:0,y:0};         // #photoTable's padding at the last renderPhotos()
+const PHOTO_PAN_KEEP=60;            // px of the pages a pan must leave on screen
 let photoFitW=0;                   // last fit width, so a resize only rebuilds on a real change
 function photoSheetMetrics(){
   const scroll=byId("photoScroll");
@@ -9606,7 +9768,7 @@ function renderPhotos(){
   const scroll=byId("photoScroll");
   // clearing the pane zeroes scrollTop; card heights are set synchronously from the canvas
   // size, so putting it back after the rebuild keeps undo/delete from jumping to the top
-  const keepTop=scroll.scrollTop, keepLeft=scroll.scrollLeft;
+  const keepTop=scroll.scrollTop, keepLeft=scroll.scrollLeft, oldPad=photoPanPad;
   closePhotoMenu(); photoDragEnd(false);
   scroll.innerHTML="";
   const fit=photoSheetMetrics();
@@ -9617,6 +9779,7 @@ function renderPhotos(){
   [...photoImgCache.keys()].forEach(k=>{ if(!live.has(k)) photoImgCache.delete(k); });
   [...photoCardInfo.keys()].forEach(k=>{ if(!live.has(k)) photoCardInfo.delete(k); });
   if(!P.photos.length){
+    photoPanPad={x:0,y:0};
     scroll.innerHTML=`<div class="photo-empty">No photos yet — use “Camera” or “Add photos”.</div>`;
     return;
   }
@@ -9625,7 +9788,10 @@ function renderPhotos(){
   const pages=document.createElement("div"); pages.id="photoPages";
   const gap=Math.max(4,Math.round(PHOTO_GAP*photoZoom));
   pages.style.gap=gap+"px"; pages.style.width=photoCardW+"px";
-  scroll.appendChild(pages);
+  // pan room: the pages can go anywhere that leaves PHOTO_PAN_KEEP px of them on screen (0 while hidden)
+  const pan=photoPanPad={x:Math.max(0,scroll.clientWidth-PHOTO_PAN_KEEP),y:Math.max(0,scroll.clientHeight-PHOTO_PAN_KEEP)};
+  const table=document.createElement("div"); table.id="photoTable"; table.style.padding=pan.y+"px "+pan.x+"px";
+  table.appendChild(pages); scroll.appendChild(table);
   const plan=photoPagePlan(), nSheets=plan.length, slotOf=new Map(), printNo=new Map();
   const pad=Math.round(PHOTO_SHEET_PAD*photoCardW/PDF_PAGE.w), k=(photoCardW-2*pad)/PDF_PAGE.w;
   plan.flatMap(pg=>pg.ids).filter(id=>id!=null).forEach((id,i)=>printNo.set(id,i+1));
@@ -10065,7 +10231,8 @@ function renderPhotos(){
     // synchronously, so a rebuild never shows them blank. (card._view → redrawPhoto must not run any earlier
     // in this loop: redrawPhoto reads state declared above but initialised further down — TDZ.)
   });
-  scroll.scrollTop=keepTop; scroll.scrollLeft=keepLeft;
+  // the pan room grew or shrank by the difference (the pane resized, or it was hidden); shift so nothing moves
+  scroll.scrollTop=keepTop+pan.y-oldPad.y; scroll.scrollLeft=keepLeft+pan.x-oldPad.x;
   photoPlaceControls();
 }
 // hit-test a text/callout mark on a photo (normalized coords) — thin wrapper over markHitN
@@ -10085,6 +10252,7 @@ function photoTextAt(ph,p,cw,chh,pctx){
    slow. Pointers are tracked here on the pane, in the capture phase, so a pinch can span two photos
    or a photo and a gap; the capture stops a pinch's events reaching the cards. */
 let photoZoom=1, photoPinch=null, photoWheel=null, photoCardAbort=null, photoControlsRaf=0;
+let photoPan=null, photoFling=0;   // one-finger pan off the photos (the pane is touch-action:none) + its coast
 // 16x is for fine markup; the canvases stay small because each covers only what's on screen (card._view)
 const PHOTO_ZOOM_MIN=.1, PHOTO_ZOOM_MAX=16, PHOTO_CANVAS_FULL=2.5e6, photoPtrs=new Map();
 const photoZoomClamp=z=>Math.max(PHOTO_ZOOM_MIN,Math.min(PHOTO_ZOOM_MAX,z));
@@ -10119,8 +10287,10 @@ function photoZoomButton(z){
 }
 function updatePhotoZoomBar(){
   byId("pzLabel").textContent=Math.round(photoZoom*100)+"%";
-  byId("pzOut").disabled=photoZoom<=PHOTO_ZOOM_MIN+1e-3; byId("pzIn").disabled=photoZoom>=PHOTO_ZOOM_MAX; byId("pzFit").disabled=Math.abs(photoZoom-1)<1e-3;
+  byId("pzOut").disabled=photoZoom<=PHOTO_ZOOM_MIN+1e-3; byId("pzIn").disabled=photoZoom>=PHOTO_ZOOM_MAX; byId("pzFit").disabled=photoFitted();
 }
+// at 100% and lined up: nothing for Fit to do (it stays live while the page is panned off to one side)
+function photoFitted(){ const sc=byId("photoScroll"); return Math.abs(photoZoom-1)<1e-3 && (!sc||Math.abs(sc.scrollLeft-photoPanPad.x)<2); }
 function photoGestureStart(c){
   const pages=byId("photoPages"), r=pages.getBoundingClientRect();
   return {c,now:c,k:1,z0:photoZoom,left:r.left,top:r.top,anchor:photoAnchorAt(c.x,c.y)};
@@ -10168,19 +10338,44 @@ function photoPlaceControls(){
   const sc=byId("photoScroll"); if(!sc) return;
   byId("pzIn").onclick=()=>photoZoomButton(photoZoom*1.25);
   byId("pzOut").onclick=()=>photoZoomButton(photoZoom/1.25);
-  byId("pzFit").onclick=()=>photoZoomButton(1);
+  // Fit is also the way home after panning the pages off to one side: back to the pane's width, lined up
+  byId("pzFit").onclick=()=>{ photoZoomButton(1); const sc=byId("photoScroll"); sc.scrollLeft=photoPanPad.x; photoPlaceControls(); updatePhotoZoomBar(); };
   updatePhotoZoomBar();
   sc.addEventListener("scroll",()=>{
     if(photoControlsRaf) return;
-    photoControlsRaf=requestAnimationFrame(()=>{ photoControlsRaf=0; photoPlaceControls(); });
+    photoControlsRaf=requestAnimationFrame(()=>{ photoControlsRaf=0; photoPlaceControls(); byId("pzFit").disabled=photoFitted(); });
   },{passive:true});
+  /* The pane is touch-action:none (see its CSS), so every finger reaches us wherever it lands and a pinch
+     acts the same over a photo, a sheet's margin or the grey table. That means scrolling is ours too: a
+     finger that lands off the photos' canvases pans the pane, with a coast on release like a native scroll.
+     A finger on a canvas still belongs to the photo's tool, as before. */
+  const stopFling=()=>{ if(photoFling){ cancelAnimationFrame(photoFling); photoFling=0; } };
+  const fling=(vx,vy)=>{
+    let last=performance.now();
+    const step=now=>{
+      const dt=Math.min(40,now-last); last=now;
+      const f=Math.pow(.95,dt/16);   // ~native deceleration, frame-rate independent
+      vx*=f; vy*=f;
+      if(Math.hypot(vx,vy)<.02){ photoFling=0; return; }
+      sc.scrollLeft-=vx*dt; sc.scrollTop-=vy*dt;
+      photoFling=requestAnimationFrame(step);
+    };
+    photoFling=requestAnimationFrame(step);
+  };
   sc.addEventListener("pointerdown",ev=>{
-    if(ev.pointerType!=="touch") return;
+    stopFling();
+    if(ev.pointerType!=="touch"&&ev.pointerType!=="pen") return;
     // a new first finger: whatever is tracked lifted somewhere unseen (a rebuild removes its canvas)
-    if(ev.isPrimary){ if(photoPinch) photoPinchEnd(); photoPtrs.clear(); }
-    if(photoDrag||(ev.target.closest&&ev.target.closest("button,.pc-menu"))) return;
+    if(ev.isPrimary){ if(photoPinch) photoPinchEnd(); photoPtrs.clear(); photoPan=null; }
+    if(photoDrag||(ev.target.closest&&ev.target.closest("button,.pc-menu,input,textarea,select"))) return;
+    if(ev.pointerType==="pen"){   // a pencil never pinches; off a photo it scrolls, as it did natively
+      if(ev.target.tagName!=="CANVAS") photoPan={id:ev.pointerId,x:ev.clientX,y:ev.clientY,t:ev.timeStamp,vx:0,vy:0};
+      return;
+    }
     photoPtrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+    if(photoPtrs.size===1 && ev.target.tagName!=="CANVAS") photoPan={id:ev.pointerId,x:ev.clientX,y:ev.clientY,t:ev.timeStamp,vx:0,vy:0};
     if(photoPtrs.size===2 && !photoPinch && byId("photoPages")){
+      photoPan=null;   // a pan that gains a second finger becomes the pinch, from where both fingers are now
       if(photoTextEditOpen){ const f=FE.querySelector("textarea"); if(f) f.blur(); }   // blur commits it
       if(photoCardAbort) photoCardAbort();
       closePhotoMenu();
@@ -10191,6 +10386,12 @@ function photoPlaceControls(){
     if(photoPinch) ev.stopPropagation();
   },{capture:true});
   sc.addEventListener("pointermove",ev=>{
+    if(photoPan && photoPan.id===ev.pointerId && !photoPinch){
+      const g=photoPan, dx=ev.clientX-g.x, dy=ev.clientY-g.y, dt=Math.max(1,ev.timeStamp-g.t);
+      sc.scrollLeft-=dx; sc.scrollTop-=dy;
+      g.vx=.8*(dx/dt)+.2*g.vx; g.vy=.8*(dy/dt)+.2*g.vy;   // px/ms, smoothed so one jittery sample can't fling
+      g.x=ev.clientX; g.y=ev.clientY; g.t=ev.timeStamp;
+    }
     if(!photoPtrs.has(ev.pointerId)) return;
     photoPtrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
     if(!photoPinch) return;
@@ -10199,14 +10400,22 @@ function photoPlaceControls(){
     photoGesturePreview(photoPinch,Math.hypot(a.x-b.x,a.y-b.y)/photoPinch.d0,{x:(a.x+b.x)/2,y:(a.y+b.y)/2});
   },{capture:true});
   const lift=ev=>{
+    if(photoPan && photoPan.id===ev.pointerId){
+      const g=photoPan; photoPan=null;
+      // coast only off a moving finger: one that stopped before lifting (>80ms still) lands where it is
+      if(ev.type==="pointerup" && ev.timeStamp-g.t<80) fling(g.vx,g.vy);
+    }
     if(!photoPtrs.delete(ev.pointerId)||!photoPinch) return;
     ev.stopPropagation();
     if(photoPtrs.size<2) photoPinchEnd();
   };
   sc.addEventListener("pointerup",lift,{capture:true});
   sc.addEventListener("pointercancel",lift,{capture:true});
+  // belt and braces for WKWebView: no native scroll or zoom while we own the gesture
+  sc.addEventListener("touchmove",ev=>{ if(photoPan||photoPinch) ev.preventDefault(); },{passive:false});
   // a trackpad pinch arrives as ctrl+wheel; a plain wheel scrolls as usual
   sc.addEventListener("wheel",ev=>{
+    stopFling();
     if(!ev.ctrlKey||!byId("photoPages")) return;
     ev.preventDefault();
     const c={x:ev.clientX,y:ev.clientY};
